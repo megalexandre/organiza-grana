@@ -1,0 +1,23 @@
+class ApiEndpoints {
+ 
+  static const _base = String.fromEnvironment('API_BASE_URL', defaultValue: 'https://app.project-deploy.shop/api/api');
+
+  static const auth = _Auth();  
+  static const user = _User();
+}
+
+class _Auth {
+  const _Auth();
+
+  static const String path = '${ApiEndpoints._base}/auth';
+  final String login = '$path/login';
+  final String refresh = '$path/refresh';
+}
+
+class _User {
+  const _User();
+
+  static const String path = '${ApiEndpoints._base}/users';
+  final String register = '$path/register';
+  final String me = '$path/me';
+}

@@ -1,0 +1,7 @@
+{
+  "@@locale": "pt",
+  "appTitle": "Organiza Grana",
+  "helloWorld": "Olá Mundo!",
+  "validationsEmailRequired": "Informe seu e-mail",
+  "validationsEmailInvalid": "Informe um e-mail valido"
+}
