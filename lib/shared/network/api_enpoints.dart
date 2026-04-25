@@ -1,5 +1,5 @@
 class ApiEndpoints {
- 
+
   static const _base = String.fromEnvironment('API_BASE_URL', defaultValue: 'https://app.project-deploy.shop/api/api');
 
   static const auth = _Auth();  

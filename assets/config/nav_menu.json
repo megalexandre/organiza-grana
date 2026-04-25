@@ -1,0 +1,4 @@
+[
+  { "type": "item", "id": "dashboard", "label": "Dashboard", "icon": "dashboard" },
+  { "type": "item", "id": "recebiveis", "label": "Recebíveis", "icon": "payments" }
+]

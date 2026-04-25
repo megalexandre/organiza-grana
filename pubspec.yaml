@@ -1,6 +1,6 @@
 name: organizagrana
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0+1
 
 environment:
@@ -13,6 +13,10 @@ dependencies:
     sdk: flutter
   intl: any
 
+  go_router: ^17.0.0
+  http: ^1.5.0
+  shared_preferences: ^2.5.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -21,3 +25,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    - assets/config/nav_menu.json
