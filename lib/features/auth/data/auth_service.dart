@@ -1,4 +1,5 @@
 import 'package:organizagrana/features/auth/data/auth_api_client.dart';
+import 'package:organizagrana/features/auth/data/auth_access_token_provider.dart';
 import 'package:organizagrana/features/auth/data/auth_storage.dart';
 import 'package:organizagrana/features/auth/domain/auth_tokens.dart';
 import 'package:organizagrana/features/auth/domain/auth_failure.dart';
@@ -11,7 +12,8 @@ class AuthService {
   final AuthApiClient _apiClient;
 
   AuthService(this._storage, {AuthApiClient? apiClient})
-      : _apiClient = apiClient ?? HttpAuthApiClient();
+    : _apiClient = apiClient
+      ?? HttpAuthApiClient(AuthStorageAccessTokenProvider(_storage));
 
   Future<bool> isAuthenticated() async {
     final accessToken = await _storage.readAccessToken();
@@ -102,12 +104,7 @@ class AuthService {
   }
 
   Future<UserProfile> getMe() async {
-    final accessToken = await _storage.readAccessToken();
-    if (accessToken == null || accessToken.isEmpty) {
-      throw const AuthApiClientException(AuthFailureType.sessionExpired);
-    }
-
-    final response = await _apiClient.getMe(accessToken);
+    final response = await _apiClient.getMe();
     return UserProfile.fromJson(response);
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 
 class AddReceivableDialog extends StatefulWidget {
   const AddReceivableDialog({super.key, required this.service});
@@ -52,7 +53,8 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
 
     setState(() => _loading = true);
 
-    final result = await widget.service.create(value, _selectedDate!);
+    final draft = ReceivableDraft(value: value, receiptDate: _selectedDate!);
+    final result = await widget.service.create(draft);
 
     if (!mounted) return;
     setState(() => _loading = false);

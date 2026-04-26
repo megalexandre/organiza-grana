@@ -1,12 +1,13 @@
 import 'package:organizagrana/features/auth/domain/auth_failure.dart';
 import 'package:organizagrana/features/auth/domain/login_attempt.dart';
+import 'package:organizagrana/shared/network/access_token_provider.dart';
 import 'package:organizagrana/shared/network/api_enpoints.dart';
 import 'package:organizagrana/shared/network/http_api_client.dart';
 
 abstract class AuthApiClient {
   Future<Map<String, dynamic>> login(LoginAttempt attempt);
   Future<Map<String, dynamic>> refresh(String refreshToken);
-  Future<Map<String, dynamic>> getMe(String accessToken);
+  Future<Map<String, dynamic>> getMe();
 }
 
 class AuthApiClientException implements Exception {
@@ -27,9 +28,12 @@ class AuthApiClientException implements Exception {
 
 class HttpAuthApiClient implements AuthApiClient {
   final HttpApiClient _httpClient;
+  final AccessTokenProvider _accessTokenProvider;
 
-  HttpAuthApiClient({HttpApiClient? httpClient})
-      : _httpClient = httpClient ?? HttpApiClient();
+  HttpAuthApiClient(
+    this._accessTokenProvider, {
+    HttpApiClient? httpClient,
+  }) : _httpClient = httpClient ?? HttpApiClient();
 
   @override
   Future<Map<String, dynamic>> login(LoginAttempt attempt) {
@@ -54,7 +58,12 @@ class HttpAuthApiClient implements AuthApiClient {
   }
 
   @override
-  Future<Map<String, dynamic>> getMe(String accessToken) {
+  Future<Map<String, dynamic>> getMe() async {
+    final accessToken = await _accessTokenProvider.readAccessToken();
+    if (accessToken == null || accessToken.isEmpty) {
+      throw const AuthApiClientException(AuthFailureType.sessionExpired);
+    }
+
     return _call(
       () => _httpClient.getJson(
         Uri.parse(ApiEndpoints.user.me),

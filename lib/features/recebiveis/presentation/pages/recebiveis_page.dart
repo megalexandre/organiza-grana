@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:organizagrana/features/auth/data/auth_access_token_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:organizagrana/features/auth/data/auth_storage.dart';
+import 'package:organizagrana/features/recebiveis/data/receivables_api_client.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
@@ -25,7 +27,11 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   @override
   void initState() {
     super.initState();
-    _service = ReceivablesService(AuthStorage());
+    _service = ReceivablesService(
+      HttpReceivablesApiClient(
+        AuthStorageAccessTokenProvider(AuthStorage()),
+      ),
+    );
     _loadReceivables();
   }
 
