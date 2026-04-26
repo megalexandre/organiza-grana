@@ -1,9 +1,17 @@
 class ApiEndpoints {
 
-  static const _base = String.fromEnvironment('API_BASE_URL', defaultValue: 'https://app.project-deploy.shop/api/api');
+  static const _base = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000');
 
   static const auth = _Auth();  
   static const user = _User();
+  static const receivables = _Receivables();
+}
+
+class _Receivables {
+  const _Receivables();
+
+  static const String path = '${ApiEndpoints._base}/receivables';
+  final String create = path;
 }
 
 class _Auth {
