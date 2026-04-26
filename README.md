@@ -1,4 +1,3 @@
 # organizagrana
 
-A new Flutter project.
-flutter run -d chrome --web-browser-flag="--disable-web-security"
+A new Flutter project

@@ -1,12 +1,18 @@
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivables_page_result.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivables_pagination.dart';
 import 'package:organizagrana/shared/network/api_enpoints.dart';
 import 'package:organizagrana/shared/network/access_token_provider.dart';
 import 'package:organizagrana/shared/network/http_api_client.dart';
 
 abstract class ReceivablesApiClient {
-  Future<List<Receivable>> list();
+  Future<ReceivablesPageResult> listPage({
+    required int page,
+    required int perPage,
+    bool withDiscarded = false,
+  });
   Future<void> create(ReceivableDraft draft);
 }
 
@@ -24,24 +30,27 @@ class HttpReceivablesApiClient implements ReceivablesApiClient {
   final HttpApiClient _httpClient;
 
   @override
-  Future<List<Receivable>> list() async {
+  Future<ReceivablesPageResult> listPage({
+    required int page,
+    required int perPage,
+    bool withDiscarded = false,
+  }) async {
     final token = await _readToken();
-    final uri = Uri.parse(ApiEndpoints.receivables.list);
+    final baseUri = Uri.parse(ApiEndpoints.receivables.list);
+    final uri = baseUri.replace(queryParameters: {
+      'page': '$page',
+      'per_page': '$perPage',
+      'with_discarded': '$withDiscarded',
+    });
 
     try {
       final response = await _httpClient.getJson(uri, bearerToken: token);
       final items = _extractListFromMap(response);
-      return items.map(Receivable.fromJson).toList();
+      return ReceivablesPageResult(
+        items: items.map(Receivable.fromJson).toList(),
+        pagination: _extractPagination(response),
+      );
     } on ApiException catch (e) {
-      if (e.type == ApiFailureType.invalidResponse) {
-        try {
-          final response = await _httpClient.getJsonList(uri, bearerToken: token);
-          return response.map(Receivable.fromJson).toList();
-        } on ApiException catch (fallbackError) {
-          throw ReceivablesApiClientException(_mapFailure(fallbackError.type));
-        }
-      }
-
       throw ReceivablesApiClientException(_mapFailure(e.type));
     }
   }
@@ -56,7 +65,7 @@ class HttpReceivablesApiClient implements ReceivablesApiClient {
         {
           'value': draft.value,
           'receipt_date': _formatDate(draft.receiptDate),
-          'status': draft.status,
+          'status': draft.status.toJson(),
         },
         bearerToken: token,
       );
@@ -87,6 +96,20 @@ class HttpReceivablesApiClient implements ReceivablesApiClient {
     }
 
     return const [];
+  }
+
+  ReceivablesPagination _extractPagination(Map<String, dynamic> response) {
+    final rawPagination = response['pagination'];
+    if (rawPagination is Map<String, dynamic>) {
+      return ReceivablesPagination.fromJson(rawPagination);
+    }
+
+    return const ReceivablesPagination(
+      currentPage: 1,
+      perPage: 10,
+      totalPages: 1,
+      totalCount: 0,
+    );
   }
 
   String _formatDate(DateTime date) =>

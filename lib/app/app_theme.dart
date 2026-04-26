@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 
 /// Paleta de cores completa do design system.
 abstract final class AppPalette {
-  // Primary
-  static const primary100 = Color(0xFFE6EFFF);
-  static const primary200 = Color(0xFFC2D6FF);
-  static const primary300 = Color(0xFF99B8FF);
-  static const primary400 = Color(0xFF6690FF);
-  static const primary500 = Color(0xFF3366FF);
-  static const primary600 = Color(0xFF254EDB);
-  static const primary700 = Color(0xFF1938B8);
-  static const primary800 = Color(0xFF102494);
-  static const primary900 = Color(0xFF091370);
+  // Primary — Docker Desktop blue
+  static const primary100 = Color(0xFFD6E4FB);
+  static const primary200 = Color(0xFFAECAF7);
+  static const primary300 = Color(0xFF7DAAEF);
+  static const primary400 = Color(0xFF4D87E8);
+  static const primary500 = Color(0xFF1D63ED);
+  static const primary600 = Color(0xFF1551CC);
+  static const primary700 = Color(0xFF0E3EA8);
+  static const primary800 = Color(0xFF082D84);
+  static const primary900 = Color(0xFF041B60);
 
   // Success
   static const success100 = Color(0xFFF1FCE3);
@@ -58,67 +58,67 @@ abstract final class AppPalette {
   static const danger900 = Color(0xFF700206);
 }
 
-/// Tokens semânticos — tema dark.
+/// Tokens semânticos — tema dark (Docker Desktop).
 abstract final class AppColors {
   // --- Primária ---
-  static const primary = AppPalette.primary500;
+  static const primary = Color(0xFF1D63ED);          // Docker blue
   static const onPrimary = Color(0xFFFFFFFF);
-  static const primaryContainer = AppPalette.primary700;
-  static const onPrimaryContainer = AppPalette.primary100;
+  static const primaryContainer = Color(0xFF0E3EA8);  // Docker blue escuro
+  static const onPrimaryContainer = Color(0xFFD6E4FB);
 
   // --- Secundária ---
-  static const secondary = AppPalette.primary600;
+  static const secondary = Color(0xFF1551CC);
   static const onSecondary = Color(0xFFFFFFFF);
-  static const secondaryContainer = Color(0xFF252526); // sidebar dark
-  static const onSecondaryContainer = Color(0xFFCCCCCC);
+  static const secondaryContainer = Color(0xFF16192A); // Docker sidebar
+  static const onSecondaryContainer = Color(0xFF9EA4B0);
 
   // --- Superfícies dark ---
-  static const surface = Color(0xFF1E1E1E);
-  static const onSurface = Color(0xFFD4D4D4);
-  static const surfaceContainerHighest = Color(0xFF2D2D2D);
+  static const surface = Color(0xFF1C1F2E);            // Docker main bg
+  static const onSurface = Color(0xFFE6EBF5);          // Docker text primário
+  static const surfaceContainerHighest = Color(0xFF252A3A); // Docker row/card
 
   // --- Outline ---
-  static const outline = Color(0xFF474747);
-  static const outlineVariant = Color(0xFF3C3C3C);
+  static const outline = Color(0xFF2D3347);
+  static const outlineVariant = Color(0xFF252A3A);
 
   // --- Semânticas ---
-  static const error = AppPalette.danger400;
-  static const onError = Color(0xFF1E1E1E);
-  static const success = AppPalette.success500;
-  static const onSuccess = Color(0xFF1E1E1E);
-  static const info = AppPalette.info500;
-  static const onInfo = Color(0xFF1E1E1E);
+  static const error = Color(0xFFF24444);     // Docker red
+  static const onError = Color(0xFFFFFFFF);
+  static const success = Color(0xFF23C552);   // Docker green (running)
+  static const onSuccess = Color(0xFF1C1F2E);
+  static const info = AppPalette.info400;
+  static const onInfo = Color(0xFF1C1F2E);
   static const warning = AppPalette.warning500;
-  static const onWarning = Color(0xFF1E1E1E);
+  static const onWarning = Color(0xFF1C1F2E);
 }
 
-/// Tokens semânticos — tema light.
+/// Tokens semânticos — tema light (Docker Desktop).
 abstract final class AcalLightColors {
   // --- Primária ---
-  static const primary = AppPalette.primary500;
+  static const primary = Color(0xFF1D63ED);            // Docker blue
   static const onPrimary = Color(0xFFFFFFFF);
-  static const primaryContainer = AppPalette.primary100;
-  static const onPrimaryContainer = AppPalette.primary900;
+  static const primaryContainer = Color(0xFFD6E4FB);   // azul claro
+  static const onPrimaryContainer = Color(0xFF041B60);
 
   // --- Secundária ---
-  static const secondary = AppPalette.primary600;
+  static const secondary = Color(0xFF1551CC);
   static const onSecondary = Color(0xFFFFFFFF);
-  static const secondaryContainer = Color(0xFFEEF3FF); // sidebar light
-  static const onSecondaryContainer = AppPalette.primary900;
+  static const secondaryContainer = Color(0xFFEEF2FF); // sidebar Docker light
+  static const onSecondaryContainer = Color(0xFF041B60);
 
   // --- Superfícies light ---
-  static const surface = Color(0xFFF3F3F3);
-  static const onSurface = Color(0xFF1E1E1E);
-  static const surfaceContainerHighest = Color(0xFFE8E8E8);
+  static const surface = Color(0xFFF5F7FC);            // branco-azulado
+  static const onSurface = Color(0xFF1C1F2E);          // Docker navy escuro
+  static const surfaceContainerHighest = Color(0xFFE8EDFB);
 
   // --- Outline ---
-  static const outline = Color(0xFFBDBDBD);
-  static const outlineVariant = Color(0xFFD4D4D4);
+  static const outline = Color(0xFFC4CCDF);
+  static const outlineVariant = Color(0xFFD4DAE8);
 
   // --- Semânticas ---
-  static const error = AppPalette.danger600;
+  static const error = Color(0xFFF24444);     // Docker red
   static const onError = Color(0xFFFFFFFF);
-  static const success = AppPalette.success600;
+  static const success = Color(0xFF23C552);   // Docker green
   static const onSuccess = Color(0xFFFFFFFF);
   static const info = AppPalette.info700;
   static const onInfo = Color(0xFFFFFFFF);
@@ -152,7 +152,7 @@ abstract final class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.surface,
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF3C3C3C),
+        backgroundColor: Color(0xFF1A1D2B),  // Docker navbar
         foregroundColor: AppColors.onSurface,
         elevation: 0,
         centerTitle: false,
@@ -160,20 +160,20 @@ abstract final class AppTheme {
       ),
       navigationRailTheme: const NavigationRailThemeData(
         backgroundColor: AppColors.secondaryContainer,
-        indicatorColor: AppPalette.primary800,
+        indicatorColor: AppColors.primaryContainer,
         selectedIconTheme: IconThemeData(color: AppColors.onSurface),
-        unselectedIconTheme: IconThemeData(color: Color(0xFF858585)),
+        unselectedIconTheme: IconThemeData(color: Color(0xFF6B7380)),
         selectedLabelTextStyle: TextStyle(
           color: AppColors.onSurface,
           fontWeight: FontWeight.w600,
         ),
-        unselectedLabelTextStyle: TextStyle(color: Color(0xFF858585)),
+        unselectedLabelTextStyle: TextStyle(color: Color(0xFF6B7380)),
       ),
       drawerTheme: const DrawerThemeData(
         backgroundColor: AppColors.secondaryContainer,
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFF252526),
+        color: const Color(0xFF252A3A),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: const BorderRadius.all(Radius.circular(4)),
@@ -187,8 +187,8 @@ abstract final class AppTheme {
       inputDecorationTheme: const InputDecorationTheme(
         border: OutlineInputBorder(),
         filled: true,
-        fillColor: Color(0xFF3C3C3C),
-        hintStyle: TextStyle(color: Color(0xFF858585)),
+        fillColor: Color(0xFF252A3A),
+        hintStyle: TextStyle(color: Color(0xFF6B7380)),
       ),
       textTheme: const TextTheme(
         bodyMedium: TextStyle(color: AppColors.onSurface),
@@ -197,13 +197,13 @@ abstract final class AppTheme {
         titleLarge: TextStyle(color: AppColors.onSurface),
       ),
       listTileTheme: const ListTileThemeData(
-        selectedTileColor: AppPalette.primary800,
+        selectedTileColor: AppColors.primaryContainer,
         selectedColor: AppColors.onSurface,
-        textColor: Color(0xFFCCCCCC),
-        iconColor: Color(0xFF858585),
+        textColor: Color(0xFF9EA4B0),
+        iconColor: Color(0xFF6B7380),
       ),
       snackBarTheme: const SnackBarThemeData(
-        backgroundColor: Color(0xFF333333),
+        backgroundColor: Color(0xFF252A3A),
         contentTextStyle: TextStyle(color: AppColors.onSurface),
       ),
     );
@@ -234,7 +234,7 @@ abstract final class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: AcalLightColors.surface,
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFFDDDDDD),
+        backgroundColor: Color(0xFFEEF2FF),  // Docker navbar light
         foregroundColor: AcalLightColors.onSurface,
         elevation: 0,
         centerTitle: false,
@@ -244,18 +244,18 @@ abstract final class AppTheme {
         backgroundColor: AcalLightColors.secondaryContainer,
         indicatorColor: AcalLightColors.primaryContainer,
         selectedIconTheme: IconThemeData(color: AcalLightColors.primary),
-        unselectedIconTheme: IconThemeData(color: Color(0xFF6E6E6E)),
+        unselectedIconTheme: IconThemeData(color: Color(0xFF6B7380)),
         selectedLabelTextStyle: TextStyle(
           color: AcalLightColors.primary,
           fontWeight: FontWeight.w600,
         ),
-        unselectedLabelTextStyle: TextStyle(color: Color(0xFF6E6E6E)),
+        unselectedLabelTextStyle: TextStyle(color: Color(0xFF6B7380)),
       ),
       drawerTheme: const DrawerThemeData(
         backgroundColor: AcalLightColors.secondaryContainer,
       ),
       cardTheme: CardThemeData(
-        color: Colors.white,
+        color: Color(0xFFFFFFFF),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: const BorderRadius.all(Radius.circular(4)),
@@ -269,8 +269,8 @@ abstract final class AppTheme {
       inputDecorationTheme: const InputDecorationTheme(
         border: OutlineInputBorder(),
         filled: true,
-        fillColor: Colors.white,
-        hintStyle: TextStyle(color: Color(0xFF9E9E9E)),
+        fillColor: Color(0xFFFFFFFF),
+        hintStyle: TextStyle(color: Color(0xFF9EA4B0)),
       ),
       textTheme: const TextTheme(
         bodyMedium: TextStyle(color: AcalLightColors.onSurface),
@@ -282,11 +282,11 @@ abstract final class AppTheme {
         selectedTileColor: AcalLightColors.primaryContainer,
         selectedColor: AcalLightColors.primary,
         textColor: AcalLightColors.onSurface,
-        iconColor: Color(0xFF6E6E6E),
+        iconColor: Color(0xFF6B7380),
       ),
       snackBarTheme: const SnackBarThemeData(
-        backgroundColor: Color(0xFF323232),
-        contentTextStyle: TextStyle(color: Colors.white),
+        backgroundColor: Color(0xFF1C1F2E),
+        contentTextStyle: TextStyle(color: Color(0xFFE6EBF5)),
       ),
     );
   }

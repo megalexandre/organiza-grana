@@ -1,7 +1,7 @@
 import 'package:organizagrana/features/recebiveis/data/receivables_api_client.dart';
-import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivables_page_result.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_result.dart';
 
 class ReceivablesService {
@@ -9,9 +9,17 @@ class ReceivablesService {
 
   final ReceivablesApiClient _apiClient;
 
-  Future<List<Receivable>> list() async {
+  Future<ReceivablesPageResult> listPage({
+    required int page,
+    required int perPage,
+    bool withDiscarded = false,
+  }) async {
     try {
-      return await _apiClient.list();
+      return await _apiClient.listPage(
+        page: page,
+        perPage: perPage,
+        withDiscarded: withDiscarded,
+      );
     } on ReceivablesApiClientException catch (e) {
       throw ReceivableFailure(
         type: e.type,
