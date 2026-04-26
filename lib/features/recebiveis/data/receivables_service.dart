@@ -1,4 +1,5 @@
 import 'package:organizagrana/features/auth/data/auth_storage.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_result.dart';
 import 'package:organizagrana/shared/network/api_enpoints.dart';
@@ -10,6 +11,41 @@ class ReceivablesService {
 
   final AuthStorage _storage;
   final HttpApiClient _httpClient;
+
+  Future<List<Receivable>> list() async {
+    final token = await _storage.readAccessToken();
+    if (token == null || token.isEmpty) {
+      throw const ReceivableFailure(
+        type: ReceivableFailureType.unauthorized,
+        message: 'Sessão expirada. Faça login novamente.',
+      );
+    }
+
+    final uri = Uri.parse(ApiEndpoints.receivables.list);
+
+    try {
+      final response = await _httpClient.getJson(uri, bearerToken: token);
+      final items = _extractListFromMap(response);
+      return items.map(Receivable.fromJson).toList();
+    } on ApiException catch (e) {
+      if (e.type == ApiFailureType.invalidResponse) {
+        try {
+          final response = await _httpClient.getJsonList(uri, bearerToken: token);
+          return response.map(Receivable.fromJson).toList();
+        } on ApiException catch (fallbackError) {
+          throw ReceivableFailure(
+            type: _mapFailure(fallbackError.type),
+            message: _messageFor(fallbackError.type),
+          );
+        }
+      }
+
+      throw ReceivableFailure(
+        type: _mapFailure(e.type),
+        message: _messageFor(e.type),
+      );
+    }
+  }
 
   Future<ReceivableResult> create(double value, DateTime receiptDate) async {
     final token = await _storage.readAccessToken();
@@ -28,6 +64,7 @@ class ReceivablesService {
         {
           'value': value,
           'receipt_date': _formatDate(receiptDate),
+          'status': 'awating',
         },
         bearerToken: token,
       );
@@ -38,6 +75,22 @@ class ReceivablesService {
         message: _messageFor(e.type),
       ));
     }
+  }
+
+  List<Map<String, dynamic>> _extractListFromMap(Map<String, dynamic> response) {
+    final candidates = [
+      response['data'],
+      response['items'],
+      response['receivables'],
+    ];
+
+    for (final candidate in candidates) {
+      if (candidate is List) {
+        return candidate.whereType<Map<String, dynamic>>().toList();
+      }
+    }
+
+    return const [];
   }
 
   String _formatDate(DateTime date) =>

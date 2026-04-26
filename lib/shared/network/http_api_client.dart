@@ -19,20 +19,16 @@ class HttpApiClient {
     Uri uri, {
     String? bearerToken,
   }) async {
-    http.Response response;
+    final response = await _get(uri, bearerToken: bearerToken);
+    return _parseMapResponse(response);
+  }
 
-    try {
-      response = await _httpClient.get(
-        uri,
-        headers: bearerToken != null
-            ? {'Authorization': 'Bearer $bearerToken'}
-            : const {},
-      );
-    } catch (_) {
-      throw const ApiException(ApiFailureType.network);
-    }
-
-    return _parseResponse(response);
+  Future<List<Map<String, dynamic>>> getJsonList(
+    Uri uri, {
+    String? bearerToken,
+  }) async {
+    final response = await _get(uri, bearerToken: bearerToken);
+    return _parseListResponse(response);
   }
 
   Future<Map<String, dynamic>> postJson(
@@ -55,17 +51,27 @@ class HttpApiClient {
       throw const ApiException(ApiFailureType.network);
     }
 
-    return _parseResponse(response);
+    return _parseMapResponse(response);
   }
 
-  Map<String, dynamic> _parseResponse(http.Response response) {
-    if (response.statusCode == 401) {
-      throw const ApiException(ApiFailureType.unauthorized);
+  Future<http.Response> _get(
+    Uri uri, {
+    String? bearerToken,
+  }) async {
+    try {
+      return await _httpClient.get(
+        uri,
+        headers: bearerToken != null
+            ? {'Authorization': 'Bearer $bearerToken'}
+            : const {},
+      );
+    } catch (_) {
+      throw const ApiException(ApiFailureType.network);
     }
+  }
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw const ApiException(ApiFailureType.server);
-    }
+  Map<String, dynamic> _parseMapResponse(http.Response response) {
+    _validateStatus(response);
 
     final decoded = jsonDecode(response.body);
     if (decoded is! Map<String, dynamic>) {
@@ -73,5 +79,26 @@ class HttpApiClient {
     }
 
     return decoded;
+  }
+
+  List<Map<String, dynamic>> _parseListResponse(http.Response response) {
+    _validateStatus(response);
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) {
+      throw const ApiException(ApiFailureType.invalidResponse);
+    }
+
+    return decoded.whereType<Map<String, dynamic>>().toList();
+  }
+
+  void _validateStatus(http.Response response) {
+    if (response.statusCode == 401) {
+      throw const ApiException(ApiFailureType.unauthorized);
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw const ApiException(ApiFailureType.server);
+    }
   }
 }
