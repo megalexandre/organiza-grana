@@ -62,11 +62,7 @@ class HttpReceivablesApiClient implements ReceivablesApiClient {
     try {
       await _httpClient.postJson(
         Uri.parse(ApiEndpoints.receivables.create),
-        {
-          'value': draft.value,
-          'receipt_date': _formatDate(draft.receiptDate),
-          'status': draft.status.toJson(),
-        },
+        draft.toJson(),
         bearerToken: token,
       );
     } on ApiException catch (e) {

@@ -30,8 +30,10 @@ class ReceivablesService {
 
   Future<ReceivableResult> create(ReceivableDraft draft) async {
     try {
+      
       await _apiClient.create(draft);
       return const ReceivableResult.success();
+
     } on ReceivablesApiClientException catch (e) {
       return ReceivableResult.failure(ReceivableFailure(
         type: e.type,

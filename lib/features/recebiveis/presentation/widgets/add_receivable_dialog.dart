@@ -53,7 +53,7 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
 
     setState(() => _loading = true);
 
-    final draft = ReceivableDraft(value: value, receiptDate: _selectedDate!);
+    final draft = ReceivableDraft(amount: value, dueDate: _selectedDate!);
     final result = await widget.service.create(draft);
 
     if (!mounted) return;

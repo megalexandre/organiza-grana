@@ -98,6 +98,7 @@ Painel do WireMock:
 http://localhost:8080/__admin/mappings
 ```
 
+//flutter run -d chrome --web-browser-flag="--disable-web-security"
 
 -- para testar no emulador
 flutter emulators --launch Pixel_6
