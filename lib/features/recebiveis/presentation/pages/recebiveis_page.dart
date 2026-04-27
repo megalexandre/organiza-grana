@@ -132,7 +132,6 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   void _applyFilters() {
     setState(() {
       _withDiscarded = _pendingWithDiscarded;
-      _filtersExpanded = false;
     });
     _loadReceivables(page: 1);
   }
@@ -264,7 +263,9 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
               ),
             ),
           ),
-          AnimatedCrossFade(
+          ColoredBox(
+            color: Colors.white,
+            child: AnimatedCrossFade(
             firstChild: const SizedBox.shrink(),
             secondChild: Column(
               mainAxisSize: MainAxisSize.min,
@@ -278,14 +279,34 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   child: Row(
                     children: [
-                      FilterChip(
-                        selected: _pendingWithDiscarded,
-                        onSelected: (v) =>
+                      Switch(
+                        value: _pendingWithDiscarded,
+                        onChanged: (v) =>
                             setState(() => _pendingWithDiscarded = v),
-                        label: const Text('Incluir descartados'),
-                        avatar:
-                            const Icon(Icons.delete_outline, size: 18),
-                        showCheckmark: false,
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => setState(
+                            () => _pendingWithDiscarded = !_pendingWithDiscarded),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.delete_outline,
+                              size: 18,
+                              color: colorScheme.onSurface
+                                  .withValues(alpha: 0.75),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Incluir descartados',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.85),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const Spacer(),
                       OutlinedButton(
@@ -306,6 +327,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 200),
+          ),
           ),
         ],
       ),

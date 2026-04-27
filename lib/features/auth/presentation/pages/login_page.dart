@@ -95,71 +95,59 @@ class _LoginPageState extends State<LoginPage> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppPalette.info100, AppPalette.info200],
+            colors: [AppPalette.info100, AppPalette.info100],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.lock_person_rounded,
-                    size: 56,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Acal Panel',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Seja bem Vindo',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.black.withValues(alpha: 0.75),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? theme.colorScheme.surface : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.30),
-                            blurRadius: 48,
-                            offset: const Offset(0, 24),
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height -
+                    MediaQuery.of(context).padding.top -
+                    MediaQuery.of(context).padding.bottom,
+              ),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 40),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 420),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isDark ? theme.colorScheme.surface : Colors.white,
+                            borderRadius: BorderRadius.zero,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.30),
+                                blurRadius: 5,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
                           ),
-                        ],
+                          padding: const EdgeInsets.all(40),
+                          child: _LoginForm(
+                            formKey: _formKey,
+                            emailController: _emailContoller,
+                            passwordController: _passwordController,
+                            obscurePassword: _obscurePassword,
+                            onTogglePasswordVisibility: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                            onSubmit: _submitLogin,
+                            isSubmitting: _isSubmitting,
+                          ),
+                        ),
                       ),
-                      padding: const EdgeInsets.all(40),
-                      child: _LoginForm(
-                        formKey: _formKey,
-                        emailController: _emailContoller,
-                        passwordController: _passwordController,
-                        obscurePassword: _obscurePassword,
-                        onTogglePasswordVisibility: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                        onSubmit: _submitLogin,
-                        isSubmitting: _isSubmitting,
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -255,6 +243,11 @@ class _LoginForm extends StatelessWidget {
             SizedBox(
               height: 48,
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                ),
                 onPressed: isSubmitting ? null : onSubmit,
                 child: isSubmitting
                     ? const SizedBox(

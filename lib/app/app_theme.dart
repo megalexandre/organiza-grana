@@ -185,7 +185,7 @@ abstract final class AppTheme {
         space: 1,
       ),
       inputDecorationTheme: const InputDecorationTheme(
-        border: OutlineInputBorder(),
+        border: OutlineInputBorder(borderRadius: BorderRadius.zero),
         filled: true,
         fillColor: Color(0xFF252A3A),
         hintStyle: TextStyle(color: Color(0xFF6B7380)),
@@ -267,7 +267,7 @@ abstract final class AppTheme {
         space: 1,
       ),
       inputDecorationTheme: const InputDecorationTheme(
-        border: OutlineInputBorder(),
+        border: OutlineInputBorder(borderRadius: BorderRadius.zero),
         filled: true,
         fillColor: Color(0xFFFFFFFF),
         hintStyle: TextStyle(color: Color(0xFF9EA4B0)),
