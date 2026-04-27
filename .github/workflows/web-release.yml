@@ -33,11 +33,11 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: alexandreqrz
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t alexandreqrz/app-panel-web:latest .
+        run: docker build -t alexandreqrz/organizagrana:latest .
 
       - name: Push Docker image
-        run: docker push alexandreqrz/app-panel-web:latest
+        run: docker push alexandreqrz/organizagrana:latest
