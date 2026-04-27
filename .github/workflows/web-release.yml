@@ -30,11 +30,19 @@ jobs:
       - name: Build web
         run: flutter build web
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: alexandreqrz
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Validate Docker Hub token
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -z "$DOCKERHUB_TOKEN" ]; then
+            echo "DOCKERHUB_TOKEN ausente ou vazio em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Log in to Docker Hub with token
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: echo "$DOCKERHUB_TOKEN" | docker login -u alexandreqrz --password-stdin
 
       - name: Build Docker image
         run: docker build -t alexandreqrz/organizagrana:latest .
