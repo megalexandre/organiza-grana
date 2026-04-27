@@ -473,24 +473,19 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   Widget _buildTableFooter(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-    final startItem =
-        _totalCount == 0 ? 0 : ((_currentPage - 1) * _perPage) + 1;
-    final endItem = _totalCount == 0
-        ? 0
-        : math.min(startItem + _receivables.length - 1, _totalCount);
-    final pageAmount =
-        _sortedReceivables.fold<double>(0, (s, r) => s + r.value);
+    final media = MediaQuery.of(context);
+    final isSmall = media.size.width < 500;
+    final startItem = _totalCount == 0 ? 0 : ((_currentPage - 1) * _perPage) + 1;
+    final endItem = _totalCount == 0 ? 0 : math.min(startItem + _receivables.length - 1, _totalCount);
+    final pageAmount = _sortedReceivables.fold<double>(0, (s, r) => s + r.value);
 
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
-          left: BorderSide(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.75)),
-          right: BorderSide(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.75)),
-          bottom: BorderSide(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.75)),
+          left: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.75)),
+          right: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.75)),
+          bottom: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.75)),
         ),
       ),
       child: Column(
@@ -498,33 +493,32 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
         children: [
           // Summary row
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: EdgeInsets.symmetric(horizontal: isSmall ? 8 : 16, vertical: isSmall ? 6 : 10),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.35),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
               border: Border(
-                bottom: BorderSide(
-                  color:
-                      colorScheme.outlineVariant.withValues(alpha: 0.5),
-                ),
+                bottom: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
               ),
             ),
-            child: Row(
+            child: Wrap(
+              spacing: isSmall ? 8 : 16,
+              runSpacing: isSmall ? 8 : 0,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _buildFooterStat(
                   context,
                   label: 'Nesta página',
                   value: '${_sortedReceivables.length} itens',
                 ),
-                _buildFooterDivider(context),
+                if (!isSmall) _buildFooterDivider(context),
                 _buildFooterStat(
                   context,
                   label: 'Total da página',
                   value: _currency.format(pageAmount),
                   valueColor: colorScheme.primary,
                 ),
-                _buildFooterDivider(context),
+                if (!isSmall) _buildFooterDivider(context),
                 _buildFooterStat(
                   context,
                   label: 'Total geral',
@@ -535,11 +529,14 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
           ),
           // Pagination row
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
+            padding: EdgeInsets.symmetric(horizontal: isSmall ? 8 : 16, vertical: isSmall ? 6 : 10),
+            child: Wrap(
+              spacing: isSmall ? 8 : 16,
+              runSpacing: isSmall ? 8 : 0,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Expanded(
+                SizedBox(
+                  width: isSmall ? double.infinity : 180,
                   child: Text(
                     'Mostrando $startItem–$endItem de $_totalCount',
                     style: textTheme.bodySmall?.copyWith(
@@ -548,38 +545,31 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
                   ),
                 ),
                 SizedBox(
-                  width: _paginationButtonWidth,
+                  width: isSmall ? double.infinity : _paginationButtonWidth,
                   child: OutlinedButton.icon(
-                    onPressed: _currentPage > 1
-                        ? () => _changePage(_currentPage - 1)
-                        : null,
+                    onPressed: _currentPage > 1 ? () => _changePage(_currentPage - 1) : null,
                     icon: const Icon(Icons.chevron_left, size: 18),
                     label: const Text('Anterior'),
                   ),
                 ),
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 12),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
-                  width: _paginationInfoWidth,
+                  margin: EdgeInsets.symmetric(horizontal: isSmall ? 4 : 12),
+                  padding: EdgeInsets.symmetric(horizontal: isSmall ? 6 : 14, vertical: isSmall ? 6 : 10),
+                  width: isSmall ? 110 : _paginationInfoWidth,
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.zero,
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(isSmall ? 6 : 0),
                   ),
                   child: Text(
                     'Página $_currentPage de $_totalPages',
                     textAlign: TextAlign.center,
-                    style: textTheme.labelLarge
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
                 SizedBox(
-                  width: _paginationButtonWidth,
+                  width: isSmall ? double.infinity : _paginationButtonWidth,
                   child: FilledButton.icon(
-                    onPressed: _currentPage < _totalPages
-                        ? () => _changePage(_currentPage + 1)
-                        : null,
+                    onPressed: _currentPage < _totalPages ? () => _changePage(_currentPage + 1) : null,
                     iconAlignment: IconAlignment.end,
                     icon: const Icon(Icons.chevron_right, size: 18),
                     label: const Text('Próxima'),

@@ -91,6 +91,9 @@ class _LoginPageState extends State<LoginPage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final media = MediaQuery.of(context);
+    final isSmall = media.size.height < 600 || media.size.width < 350;
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -110,40 +113,49 @@ class _LoginPageState extends State<LoginPage> {
               ),
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmall ? 8 : 24,
+                    vertical: isSmall ? 16 : 40,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(height: 40),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 420),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isDark ? theme.colorScheme.surface : Colors.white,
-                            borderRadius: BorderRadius.zero,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.30),
-                                blurRadius: 5,
-                                offset: const Offset(0, 5),
+                      SizedBox(height: isSmall ? 16 : 40),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          double maxWidth = 420;
+                          if (constraints.maxWidth > 700) maxWidth = 600;
+                          return ConstrainedBox(
+                            constraints: BoxConstraints(maxWidth: maxWidth),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: isDark ? theme.colorScheme.surface : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.08),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(40),
-                          child: _LoginForm(
-                            formKey: _formKey,
-                            emailController: _emailContoller,
-                            passwordController: _passwordController,
-                            obscurePassword: _obscurePassword,
-                            onTogglePasswordVisibility: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                            onSubmit: _submitLogin,
-                            isSubmitting: _isSubmitting,
-                          ),
-                        ),
+                              padding: EdgeInsets.all(isSmall ? 16 : 40),
+                              child: _LoginForm(
+                                formKey: _formKey,
+                                emailController: _emailContoller,
+                                passwordController: _passwordController,
+                                obscurePassword: _obscurePassword,
+                                onTogglePasswordVisibility: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                                onSubmit: _submitLogin,
+                                isSubmitting: _isSubmitting,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
