@@ -12,6 +12,7 @@ concurrency:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: DOCKERHUB_TOKEN
     permissions:
       contents: read
 
