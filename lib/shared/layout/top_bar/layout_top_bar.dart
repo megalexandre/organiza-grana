@@ -13,38 +13,29 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
   final String logoutTooltip;
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 2);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appBarForeground =
         theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
-    final shadowColor = theme.colorScheme.shadow.withValues(alpha: 0.12);
-    final dividerColor = theme.colorScheme.outlineVariant.withValues(alpha: 0.9);
+    final isMobile = MediaQuery.sizeOf(context).width < 800;
 
     return AppBar(
-      elevation: 0,
-      shadowColor: Colors.transparent,
+      elevation: 1,
+      shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.15),
       surfaceTintColor: Colors.transparent,
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(2),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            border: Border(
-              top: BorderSide(color: dividerColor, width: 1),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: shadowColor,
-                blurRadius: 3,
-                offset: const Offset(0, 1),
+      automaticallyImplyLeading: false,
+      leading: isMobile
+          ? Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu),
+                tooltip: 'Menu',
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
               ),
-            ],
-          ),
-          child: const SizedBox(height: 2),
-        ),
-      ),
+            )
+          : null,
       title: Text(
         title,
         style: theme.textTheme.titleMedium?.copyWith(
