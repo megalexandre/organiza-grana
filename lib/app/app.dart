@@ -1,9 +1,12 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:organizagrana/app/app_router.dart';
 import 'package:organizagrana/app/app_theme.dart';
 import 'package:organizagrana/app/auth_session_controller.dart';
+import 'package:organizagrana/features/auth/data/auth_access_token_provider.dart';
+import 'package:organizagrana/features/auth/data/auth_service.dart';
+import 'package:organizagrana/features/auth/data/auth_storage.dart';
+import 'package:organizagrana/features/recebiveis/data/receivables_api_client.dart';
+import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/l10n/app_localizations.dart';
 
 class MainApp extends StatefulWidget {
@@ -20,8 +23,12 @@ class _MainAppState extends State<MainApp> {
   @override
   void initState() {
     super.initState();
-    _session = AuthSessionController();
-    _appRouter = AppRouter(_session);
+    final authStorage = AuthStorage();
+    _session = AuthSessionController(authService: AuthService(authStorage));
+    final receivablesService = ReceivablesService(
+      HttpReceivablesApiClient(AuthStorageAccessTokenProvider(authStorage)),
+    );
+    _appRouter = AppRouter(_session, receivablesService: receivablesService);
     _session.initialize();
   }
 

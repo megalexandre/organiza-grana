@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum ReceivableStatus {
   awaiting(0, 'Aguardando'),
   inAnalysis(1, 'Em análise'),
@@ -9,6 +11,17 @@ enum ReceivableStatus {
 
   final int value;
   final String label;
+
+  Color get badgeColor => switch (this) {
+        ReceivableStatus.paid => Colors.green,
+        ReceivableStatus.awaiting => Colors.orange,
+        ReceivableStatus.inAnalysis => Colors.blue,
+        ReceivableStatus.inTransaction => Colors.purple,
+        ReceivableStatus.overdue => Colors.red,
+      };
+
+  bool get canReceive =>
+      this == awaiting || this == inAnalysis || this == inTransaction;
 
   static ReceivableStatus? fromJson(dynamic raw) {
     if (raw == null) return null;

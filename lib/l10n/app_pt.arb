@@ -3,5 +3,6 @@
   "appTitle": "Organiza Grana",
   "helloWorld": "Olá Mundo!",
   "validationsEmailRequired": "Informe seu e-mail",
-  "validationsEmailInvalid": "Informe um e-mail valido"
+  "validationsEmailInvalid": "Informe um e-mail valido",
+  "validationsPasswordRequired": "Informe sua senha"
 }

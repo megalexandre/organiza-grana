@@ -117,6 +117,12 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Informe um e-mail valido'**
   String get validationsEmailInvalid;
+
+  /// No description provided for @validationsPasswordRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe sua senha'**
+  String get validationsPasswordRequired;
 }
 
 class _AppLocalizationsDelegate

@@ -1,335 +1,132 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:material_table_view/material_table_view.dart';
-import 'package:organizagrana/features/auth/data/auth_access_token_provider.dart';
-import 'package:organizagrana/features/auth/data/auth_storage.dart';
-import 'package:organizagrana/features/recebiveis/data/receivables_api_client.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
-import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
-import 'package:organizagrana/features/recebiveis/presentation/widgets/add_receivable_dialog.dart';
-
-enum _ReceivableColumnId { value, receiptDate, status }
-
-class _ReceivableTableColumn {
-  const _ReceivableTableColumn({
-    required this.id,
-    required this.label,
-    required this.width,
-  });
-
-  final _ReceivableColumnId id;
-  final String label;
-  final double width;
-}
+import 'package:organizagrana/features/recebiveis/domain/receivables_pagination.dart';
+import 'package:organizagrana/features/recebiveis/presentation/widgets/receivable_card.dart';
 
 class RecebiveisPage extends StatefulWidget {
-  const RecebiveisPage({super.key});
+  const RecebiveisPage({super.key, required this.service});
+
+  final ReceivablesService service;
 
   @override
   State<RecebiveisPage> createState() => _RecebiveisPageState();
 }
 
 class _RecebiveisPageState extends State<RecebiveisPage> {
-  static const int _perPage = 10;
-  static const double _paginationButtonWidth = 124;
-  static const double _paginationInfoWidth = 140;
-  static const double _statusBadgeWidth = 128;
+  static const int _perPage = 20;
+  static final _currency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
-  late final ReceivablesService _service;
-  final _currency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
-  final _dateFormat = DateFormat('dd/MM/yyyy');
-
-  bool _loading = true;
+  bool _loading = false;
+  List<Receivable> _receivables = [];
   String? _errorMessage;
-  List<Receivable> _receivables = const [];
-  int _currentPage = 1;
-  int _totalPages = 1;
-  int _totalCount = 0;
   bool _withDiscarded = false;
-
-  // Filter accordion
-  bool _filtersExpanded = false;
-  bool _pendingWithDiscarded = false;
-
-  _ReceivableColumnId _sortBy = _ReceivableColumnId.receiptDate;
-  bool _sortAscending = true;
-  final List<_ReceivableTableColumn> _columns = const [
-    _ReceivableTableColumn(
-      id: _ReceivableColumnId.value,
-      label: 'Valor',
-      width: 220,
-    ),
-    _ReceivableTableColumn(
-      id: _ReceivableColumnId.receiptDate,
-      label: 'Data de vencimento',
-      width: 260,
-    ),
-    _ReceivableTableColumn(
-      id: _ReceivableColumnId.status,
-      label: 'Status',
-      width: 220,
-    ),
-  ];
+  ReceivablesPagination? _pagination;
+  int _currentPage = 1;
 
   @override
   void initState() {
     super.initState();
-    _service = ReceivablesService(
-      HttpReceivablesApiClient(
-        AuthStorageAccessTokenProvider(AuthStorage()),
-      ),
-    );
     _loadReceivables();
   }
 
-  Future<void> _loadReceivables({int? page}) async {
-    final nextPage = page ?? _currentPage;
-
+  Future<void> _loadReceivables() async {
     setState(() {
       _loading = true;
       _errorMessage = null;
     });
-
     try {
-      final result = await _service.listPage(
-        page: nextPage,
+      final result = await widget.service.listPage(
+        page: _currentPage,
         perPage: _perPage,
         withDiscarded: _withDiscarded,
       );
-      if (!mounted) return;
-      setState(() {
-        _receivables = result.items;
-        _currentPage = result.pagination.currentPage;
-        _totalPages = result.pagination.totalPages;
-        _totalCount = result.pagination.totalCount;
-      });
-    } on ReceivableFailure catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = e.message;
-      });
-    } finally {
       if (mounted) {
         setState(() {
-          _loading = false;
+          _receivables = result.items;
+          _pagination = result.pagination;
         });
       }
+    } on ReceivableFailure catch (e) {
+      if (mounted) setState(() => _errorMessage = e.message);
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  Future<void> _changePage(int page) async {
-    if (_loading || page < 1 || page > _totalPages || page == _currentPage) {
-      return;
-    }
-
-    await _loadReceivables(page: page);
-  }
-
-  void _applyFilters() {
-    setState(() {
-      _withDiscarded = _pendingWithDiscarded;
-    });
-    _loadReceivables(page: 1);
-  }
-
-  void _clearFilters() {
-    setState(() {
-      _pendingWithDiscarded = false;
-    });
-  }
-
-  Future<void> _openAddDialog() async {
-    final added = await showDialog<bool>(
-      context: context,
-      builder: (_) => AddReceivableDialog(service: _service),
-    );
-
-    if (added == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recebível adicionado com sucesso.')),
-      );
-      await _loadReceivables();
-    }
+  void _goToPage(int page) {
+    setState(() => _currentPage = page);
+    _loadReceivables();
   }
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Scaffold(
+      appBar: AppBar(title: const Text('Recebíveis')),
+      body: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Recebíveis',
-                      style: textTheme.headlineSmall?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Acompanhe os valores previstos e recebidos em um único lugar.',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.72),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: _loading ? null : _loadReceivables,
-                tooltip: 'Atualizar',
-                icon: const Icon(Icons.refresh),
-              ),
-              const SizedBox(width: 8),
-              FilledButton.icon(
-                onPressed: _openAddDialog,
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Adicionar'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
-          const SizedBox(height: 16),
-          _buildFilterAccordeon(context),
-          const SizedBox(height: 12),
+          _buildToolbar(context),
           Expanded(child: _buildBody(context)),
         ],
       ),
     );
   }
 
-  Widget _buildFilterAccordeon(BuildContext context) {
+  Widget _buildToolbar(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.75),
-        ),
-        color: colorScheme.surface,
+        border: Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
         children: [
-          InkWell(
-            onTap: () =>
-                setState(() => _filtersExpanded = !_filtersExpanded),
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.tune,
-                    size: 18,
-                    color: colorScheme.onSurface.withValues(alpha: 0.75),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Filtros',
-                      style: textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface.withValues(alpha: 0.85),
-                      ),
-                    ),
-                  ),
-                  AnimatedRotation(
-                    turns: _filtersExpanded ? 0.5 : 0.0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      Icons.keyboard_arrow_down,
-                      size: 20,
-                      color: colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
-              ),
+          OutlinedButton.icon(
+            onPressed: () => _showFiltersSheet(context),
+            icon: const Icon(Icons.tune, size: 16),
+            label: const Text('Filtros'),
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
             ),
           ),
-          ColoredBox(
-            color: Colors.white,
-            child: AnimatedCrossFade(
-            firstChild: const SizedBox.shrink(),
-            secondChild: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  child: Row(
-                    children: [
-                      Switch(
-                        value: _pendingWithDiscarded,
-                        onChanged: (v) =>
-                            setState(() => _pendingWithDiscarded = v),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => setState(
-                            () => _pendingWithDiscarded = !_pendingWithDiscarded),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.delete_outline,
-                              size: 18,
-                              color: colorScheme.onSurface
-                                  .withValues(alpha: 0.75),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Incluir descartados',
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurface
-                                    .withValues(alpha: 0.85),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Spacer(),
-                      OutlinedButton(
-                        onPressed: _clearFilters,
-                        child: const Text('Limpar'),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: _loading ? null : _applyFilters,
-                        child: const Text('Aplicar'),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          const SizedBox(width: 8),
+          if (_withDiscarded)
+            Chip(
+              label: const Text('Com descartados'),
+              visualDensity: VisualDensity.compact,
+              onDeleted: () {
+                setState(() {
+                  _withDiscarded = false;
+                  _currentPage = 1;
+                });
+                _loadReceivables();
+              },
             ),
-            crossFadeState: _filtersExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 200),
-          ),
-          ),
         ],
+      ),
+    );
+  }
+
+  void _showFiltersSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: StatefulBuilder(
+          builder: (ctx, setSheetState) => CheckboxListTile(
+            title: const Text('Exibir descartados'),
+            value: _withDiscarded,
+            onChanged: (v) {
+              Navigator.pop(context);
+              setState(() {
+                _withDiscarded = v ?? false;
+                _currentPage = 1;
+              });
+              _loadReceivables();
+            },
+          ),
+        ),
       ),
     );
   }
@@ -343,50 +140,11 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_errorMessage!, style: textTheme.bodyMedium),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: _loadReceivables,
-              child: const Text('Tentar novamente'),
-            ),
-          ],
-        ),
-      );
+      return _buildErrorState(textTheme);
     }
 
     if (_receivables.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.inbox_outlined,
-              size: 48,
-              color: colorScheme.onSurface.withValues(alpha: 0.3),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Nenhum recebível cadastrado.',
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-            ),
-            if (_withDiscarded) ...[
-              const SizedBox(height: 8),
-              Text(
-                'O filtro de descartados está ativo.',
-                style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
+      return _buildEmptyState(colorScheme, textTheme);
     }
 
     return IgnorePointer(
@@ -394,73 +152,22 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
       child: AnimatedOpacity(
         opacity: _loading ? 0.45 : 1.0,
         duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            _buildColumnHeader(context),
             Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: colorScheme.outlineVariant.withValues(alpha: 0.75),
-                  ),
-                ),
-                child: TableView.builder(
-                  columns: _columns
-                      .map((column) => TableColumn(width: column.width))
-                      .toList(),
-                  minScrollableWidth: 540,
-                  rowCount: _sortedReceivables.length,
-                  rowHeight: 60,
-                  headerHeight: 56,
-                  style: TableViewStyle(
-                    scrollbars: const TableViewScrollbarsStyle.symmetric(
-                      TableViewScrollbarStyle(
-                        enabled: TableViewScrollbarEnabled.auto,
-                        interactive: true,
-                      ),
-                    ),
-                    dividers: TableViewDividersStyle(
-                      horizontal: TableViewHorizontalDividersStyle.symmetric(
-                        TableViewHorizontalDividerStyle(
-                          color: colorScheme.outlineVariant
-                              .withValues(alpha: 0.45),
-                          thickness: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                  headerBuilder: (context, contentBuilder) => DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest
-                          .withValues(alpha: 0.55),
-                      border: Border(
-                        bottom: BorderSide(
-                          color: colorScheme.outlineVariant
-                              .withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ),
-                    child: contentBuilder(
-                      context,
-                      (context, column) => _buildHeaderCell(context, column),
-                    ),
-                  ),
-                  rowBuilder: (context, row, contentBuilder) {
-                    final item = _sortedReceivables[row];
-                    return ColoredBox(
-                      color: row.isEven
-                          ? colorScheme.surface
-                          : colorScheme.primaryContainer
-                              .withValues(alpha: 0.06),
-                      child: contentBuilder(
-                        context,
-                        (context, column) =>
-                            _buildDataCell(context, column, item),
-                      ),
-                    );
-                  },
-                ),
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: _receivables.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final r = _receivables[index];
+                  return ReceivableCard(
+                    receivable: r,
+                    onDetails: () {},
+                    onReceive: (r.status?.canReceive ?? false) ? () {} : null,
+                  );
+                },
               ),
             ),
             _buildTableFooter(context),
@@ -470,319 +177,125 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     );
   }
 
-  Widget _buildTableFooter(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-    final media = MediaQuery.of(context);
-    final isSmall = media.size.width < 500;
-    final startItem = _totalCount == 0 ? 0 : ((_currentPage - 1) * _perPage) + 1;
-    final endItem = _totalCount == 0 ? 0 : math.min(startItem + _receivables.length - 1, _totalCount);
-    final pageAmount = _sortedReceivables.fold<double>(0, (s, r) => s + r.value);
+  Widget _buildColumnHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final style = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.8,
+    );
+    final isWide = MediaQuery.sizeOf(context).width >= 600;
 
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: theme.colorScheme.surfaceContainerLow,
         border: Border(
-          left: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.75)),
-          right: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.75)),
-          bottom: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.75)),
+          bottom: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
         children: [
-          // Summary row
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: isSmall ? 8 : 16, vertical: isSmall ? 6 : 10),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-              border: Border(
-                bottom: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
-              ),
-            ),
-            child: Wrap(
-              spacing: isSmall ? 8 : 16,
-              runSpacing: isSmall ? 8 : 0,
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                _buildFooterStat(
-                  context,
-                  label: 'Nesta página',
-                  value: '${_sortedReceivables.length} itens',
-                ),
-                if (!isSmall) _buildFooterDivider(context),
-                _buildFooterStat(
-                  context,
-                  label: 'Total da página',
-                  value: _currency.format(pageAmount),
-                  valueColor: colorScheme.primary,
-                ),
-                if (!isSmall) _buildFooterDivider(context),
-                _buildFooterStat(
-                  context,
-                  label: 'Total geral',
-                  value: '$_totalCount recebíveis',
-                ),
-              ],
-            ),
+          const SizedBox(width: 28 + 10 + 38 + 12),
+          Expanded(flex: 3, child: Text('RECEBÍVEL', style: style)),
+          Expanded(
+            flex: 2,
+            child: Text('VALOR', style: style, textAlign: TextAlign.end),
           ),
-          // Pagination row
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: isSmall ? 8 : 16, vertical: isSmall ? 6 : 10),
-            child: Wrap(
-              spacing: isSmall ? 8 : 16,
-              runSpacing: isSmall ? 8 : 0,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                SizedBox(
-                  width: isSmall ? double.infinity : 180,
-                  child: Text(
-                    'Mostrando $startItem–$endItem de $_totalCount',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.65),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: isSmall ? double.infinity : _paginationButtonWidth,
-                  child: OutlinedButton.icon(
-                    onPressed: _currentPage > 1 ? () => _changePage(_currentPage - 1) : null,
-                    icon: const Icon(Icons.chevron_left, size: 18),
-                    label: const Text('Anterior'),
-                  ),
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: isSmall ? 4 : 12),
-                  padding: EdgeInsets.symmetric(horizontal: isSmall ? 6 : 14, vertical: isSmall ? 6 : 10),
-                  width: isSmall ? 110 : _paginationInfoWidth,
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(isSmall ? 6 : 0),
-                  ),
-                  child: Text(
-                    'Página $_currentPage de $_totalPages',
-                    textAlign: TextAlign.center,
-                    style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ),
-                SizedBox(
-                  width: isSmall ? double.infinity : _paginationButtonWidth,
-                  child: FilledButton.icon(
-                    onPressed: _currentPage < _totalPages ? () => _changePage(_currentPage + 1) : null,
-                    iconAlignment: IconAlignment.end,
-                    icon: const Icon(Icons.chevron_right, size: 18),
-                    label: const Text('Próxima'),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          if (isWide) ...[
+            const SizedBox(width: 24),
+            SizedBox(width: 90, child: Text('STATUS', style: style)),
+          ],
+          const SizedBox(width: 8 + 32 + 18),
         ],
       ),
     );
   }
 
-  Widget _buildFooterStat(
-    BuildContext context, {
-    required String label,
-    required String value,
-    Color? valueColor,
-  }) {
-    final textTheme = Theme.of(context).textTheme;
+  Widget _buildTableFooter(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isWide = MediaQuery.sizeOf(context).width >= 500;
+    final pagination = _pagination;
 
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: valueColor ?? colorScheme.onSurface,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFooterDivider(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      width: 1,
-      height: 32,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-    );
-  }
-
-  List<Receivable> get _sortedReceivables {
-    final items = [..._receivables];
-    items.sort((a, b) {
-      final comparison = switch (_sortBy) {
-        _ReceivableColumnId.value => a.value.compareTo(b.value),
-        _ReceivableColumnId.receiptDate =>
-          a.receiptDate.compareTo(b.receiptDate),
-        _ReceivableColumnId.status => _normalizedStatus(a)
-            .toLowerCase()
-            .compareTo(_normalizedStatus(b).toLowerCase()),
-      };
-      return _sortAscending ? comparison : -comparison;
-    });
-    return items;
-  }
-
-  String _normalizedStatus(Receivable receivable) {
-    return receivable.status?.label ?? 'Pendente';
-  }
-
-  void _sortByColumn(_ReceivableColumnId columnId) {
-    setState(() {
-      if (_sortBy == columnId) {
-        _sortAscending = !_sortAscending;
-      } else {
-        _sortBy = columnId;
-        _sortAscending = true;
-      }
-    });
-  }
-
-  Widget _buildHeaderCell(BuildContext context, int column) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-    final header = _columns[column];
-    final isSortedColumn = _sortBy == header.id;
-    final sortIcon = isSortedColumn
-        ? (_sortAscending ? Icons.arrow_upward : Icons.arrow_downward)
-        : Icons.unfold_more;
-
-    return InkWell(
-      onTap: () => _sortByColumn(header.id),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Align(
-          alignment: _columnAlignment(header.id),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
-                child: Text(
-                  header.label,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: _textAlignFor(header.id),
-                  style: textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: colorScheme.onSurface.withValues(alpha: 0.82),
+              Text(
+                'Total: ${pagination?.totalCount ?? _receivables.length}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (isWide)
+                Text(
+                  'Soma: ${_currency.format(_receivables.fold(0.0, (sum, r) => sum + r.value))}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                sortIcon,
-                size: 16,
-                color: colorScheme.onSurface.withValues(alpha: 0.65),
-              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDataCell(BuildContext context, int column, Receivable item) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-    final columnId = _columns[column].id;
-    final status = _normalizedStatus(item);
-    late final Widget content;
-
-    switch (columnId) {
-      case _ReceivableColumnId.value:
-        content = Text(
-          _currency.format(item.value),
-          textAlign: TextAlign.right,
-          style: textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: colorScheme.onSurface,
-          ),
-        );
-      case _ReceivableColumnId.receiptDate:
-        content = Text(
-          _dateFormat.format(item.receiptDate),
-          textAlign: TextAlign.center,
-          style: textTheme.bodyMedium,
-        );
-      case _ReceivableColumnId.status:
-        content = Container(
-          width: _statusBadgeWidth,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: _statusBackgroundColor(item, colorScheme),
-            borderRadius: BorderRadius.zero,
-          ),
-          child: Text(
-            status,
-            textAlign: TextAlign.center,
-            style: textTheme.labelMedium?.copyWith(
-              color: _statusForegroundColor(item, colorScheme),
-              fontWeight: FontWeight.w700,
+          if (pagination != null && pagination.totalPages > 1)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: pagination.hasPreviousPage
+                      ? () => _goToPage(_currentPage - 1)
+                      : null,
+                ),
+                Text('${pagination.currentPage} / ${pagination.totalPages}'),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: pagination.hasNextPage
+                      ? () => _goToPage(_currentPage + 1)
+                      : null,
+                ),
+              ],
             ),
-          ),
-        );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      child: Align(
-        alignment: _columnAlignment(columnId),
-        child: content,
+        ],
       ),
     );
   }
 
-  Alignment _columnAlignment(_ReceivableColumnId columnId) {
-    return switch (columnId) {
-      _ReceivableColumnId.value => Alignment.centerRight,
-      _ReceivableColumnId.receiptDate => Alignment.center,
-      _ReceivableColumnId.status => Alignment.center,
-    };
+  Widget _buildEmptyState(ColorScheme colorScheme, TextTheme textTheme) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.inbox_outlined,
+            size: 48,
+            color: colorScheme.onSurface.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 12),
+          Text('Nenhum recebível encontrado.', style: textTheme.bodyMedium),
+        ],
+      ),
+    );
   }
 
-  TextAlign _textAlignFor(_ReceivableColumnId columnId) {
-    return switch (columnId) {
-      _ReceivableColumnId.value => TextAlign.right,
-      _ReceivableColumnId.receiptDate => TextAlign.center,
-      _ReceivableColumnId.status => TextAlign.center,
-    };
-  }
-
-  Color _statusBackgroundColor(Receivable item, ColorScheme colorScheme) {
-    return switch (item.status) {
-      ReceivableStatus.paid => Colors.green.withValues(alpha: 0.12),
-      ReceivableStatus.overdue => colorScheme.error.withValues(alpha: 0.12),
-      ReceivableStatus.inAnalysis => Colors.orange.withValues(alpha: 0.12),
-      ReceivableStatus.inTransaction => colorScheme.primary.withValues(alpha: 0.12),
-      _ => colorScheme.surfaceContainerHighest.withValues(alpha: 0.72),
-    };
-  }
-
-  Color _statusForegroundColor(Receivable item, ColorScheme colorScheme) {
-    return switch (item.status) {
-      ReceivableStatus.paid => Colors.green.shade700,
-      ReceivableStatus.overdue => colorScheme.error,
-      ReceivableStatus.inAnalysis => Colors.orange.shade800,
-      ReceivableStatus.inTransaction => colorScheme.primary,
-      _ => colorScheme.onSurface.withValues(alpha: 0.82),
-    };
+  Widget _buildErrorState(TextTheme textTheme) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(_errorMessage!, style: textTheme.bodyMedium),
+          TextButton(
+            onPressed: _loadReceivables,
+            child: const Text('Tentar novamente'),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -3,12 +3,15 @@ import 'package:go_router/go_router.dart';
 import 'package:organizagrana/app/auth_session_controller.dart';
 import 'package:organizagrana/features/auth/presentation/pages/login_page.dart';
 import 'package:organizagrana/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/features/recebiveis/presentation/pages/recebiveis_page.dart';
 
 class AppRouter {
-  AppRouter(this._session);
+  AppRouter(this._session, {required ReceivablesService receivablesService})
+      : _receivablesService = receivablesService;
 
   final AuthSessionController _session;
+  final ReceivablesService _receivablesService;
   static final GlobalKey<NavigatorState> _rootNavigatorKey =
       GlobalKey<NavigatorState>();
 
@@ -74,8 +77,8 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: 'recebiveis',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: RecebiveisPage(),
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: RecebiveisPage(service: _receivablesService),
                 ),
               ),
             ],

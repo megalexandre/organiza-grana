@@ -19,4 +19,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get validationsEmailInvalid => 'Informe um e-mail valido';
+
+  @override
+  String get validationsPasswordRequired => 'Informe sua senha';
 }

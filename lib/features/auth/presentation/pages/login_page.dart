@@ -1,8 +1,10 @@
-import 'package:organizagrana/app/app_theme.dart';
+import 'package:flutter/material.dart';
+import 'package:organizagrana/features/auth/presentation/widgets/login_brand_content.dart';
 import 'package:organizagrana/l10n/app_localizations.dart';
 import 'package:organizagrana/shared/validators/app_validators.dart';
-import 'package:flutter/material.dart';
 
+const double _kTabletBreakpoint = 600;
+const double _kDesktopBreakpoint = 1024;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({
@@ -21,143 +23,125 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailContoller = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _passwordFocusNode = FocusNode();
 
   bool _obscurePassword = true;
   bool _isSubmitting = false;
 
   @override
   void dispose() {
-    _emailContoller.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
   Future<void> _submitLogin() async {
-    final isValid = _formKey.currentState!.validate();
-    final messenger = ScaffoldMessenger.of(context);
+    if (!(_formKey.currentState!.validate())) return;
 
-    if (!isValid) {
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Preencha os campos para continuar.'),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-    });
+    setState(() => _isSubmitting = true);
 
     try {
       await widget.onLogin(
-        email: _emailContoller.text.trim(),
+        email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Login realizado com sucesso.')),
-      );
     } catch (error) {
-      final message = error
-          .toString()
-          .replaceFirst('Exception: ', '')
-          .trim();
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        SnackBar(
+      if (!mounted) return;
+      final message = error.toString().replaceFirst('Exception: ', '').trim();
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
           content: Text(
-            message.isEmpty
-                ? 'Falha no login. Verifique os dados.'
-                : message,
+            message.isEmpty ? 'Falha no login. Verifique os dados.' : message,
           ),
-        ),
-      );
+        ));
     } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    final media = MediaQuery.of(context);
-    final isSmall = media.size.height < 600 || media.size.width < 350;
+    final form = _LoginForm(
+      formKey: _formKey,
+      emailController: _emailController,
+      passwordController: _passwordController,
+      passwordFocusNode: _passwordFocusNode,
+      obscurePassword: _obscurePassword,
+      onTogglePasswordVisibility: () =>
+          setState(() => _obscurePassword = !_obscurePassword),
+      onSubmit: _submitLogin,
+      isSubmitting: _isSubmitting,
+    );
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppPalette.info100, AppPalette.info100],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          if (width >= _kDesktopBreakpoint) return _DesktopLayout(form: form);
+          if (width >= _kTabletBreakpoint) return _TabletLayout(form: form);
+          return _MobileLayout(form: form);
+        },
+      ),
+    );
+  }
+}
+
+// ─── Desktop ──────────────────────────────────────────────────────────────────
+
+class _DesktopLayout extends StatelessWidget {
+  const _DesktopLayout({required this.form});
+
+  final Widget form;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return ColoredBox(
+      color: colorScheme.surfaceContainerLow,
+      child: SafeArea(
+        child: LayoutBuilder(
+          builder: (_, bc) => SingleChildScrollView(
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
-                    MediaQuery.of(context).padding.top -
-                    MediaQuery.of(context).padding.bottom,
-              ),
+              constraints: BoxConstraints(minHeight: bc.maxHeight),
               child: Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isSmall ? 8 : 24,
-                    vertical: isSmall ? 16 : 40,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 48,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(height: isSmall ? 16 : 40),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          double maxWidth = 420;
-                          if (constraints.maxWidth > 700) maxWidth = 600;
-                          return ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: maxWidth),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: isDark ? theme.colorScheme.surface : Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                              ),
-                              padding: EdgeInsets.all(isSmall ? 16 : 40),
-                              child: _LoginForm(
-                                formKey: _formKey,
-                                emailController: _emailContoller,
-                                passwordController: _passwordController,
-                                obscurePassword: _obscurePassword,
-                                onTogglePasswordVisibility: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
-                                onSubmit: _submitLogin,
-                                isSubmitting: _isSubmitting,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: IntrinsicHeight(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 380,
+                            child: ColoredBox(
+                              color: colorScheme.primary,
+                              child: LoginBrandContent(
+                                color: colorScheme.onPrimary,
                               ),
                             ),
-                          );
-                        },
+                          ),
+                          SizedBox(
+                            width: 420,
+                            child: ColoredBox(
+                              color: colorScheme.surface,
+                              child: Padding(
+                                padding: const EdgeInsets.all(48),
+                                child: Center(child: form),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -169,11 +153,96 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
+// ─── Tablet ───────────────────────────────────────────────────────────────────
+
+class _TabletLayout extends StatelessWidget {
+  const _TabletLayout({required this.form});
+
+  final Widget form;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ColoredBox(
+            color: colorScheme.primaryContainer,
+            child: LoginBrandContent(
+              color: colorScheme.onPrimaryContainer,
+              compact: true,
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(40),
+                      child: form,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Mobile ───────────────────────────────────────────────────────────────────
+
+class _MobileLayout extends StatelessWidget {
+  const _MobileLayout({required this.form});
+
+  final Widget form;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.savings_outlined, size: 28, color: colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Organiza Grana',
+                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            form,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Form ─────────────────────────────────────────────────────────────────────
+
 class _LoginForm extends StatelessWidget {
   const _LoginForm({
     required this.formKey,
     required this.emailController,
     required this.passwordController,
+    required this.passwordFocusNode,
     required this.obscurePassword,
     required this.onTogglePasswordVisibility,
     required this.onSubmit,
@@ -183,6 +252,7 @@ class _LoginForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController emailController;
   final TextEditingController passwordController;
+  final FocusNode passwordFocusNode;
   final bool obscurePassword;
   final VoidCallback onTogglePasswordVisibility;
   final Future<void> Function() onSubmit;
@@ -191,87 +261,82 @@ class _LoginForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!
-;
+    final l10n = AppLocalizations.of(context)!;
+
     return Form(
       key: formKey,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-            Text(
-              'Entrar',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          Text(
+            'Entrar',
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Use seu e-mail e senha para acessar sua conta.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Use seu e-mail e senha para acessar sua conta.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 24),
-            TextFormField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) {
-                if (!isSubmitting) {
-                  onSubmit();
-                }
-              },
-              decoration: const InputDecoration(labelText: 'E-mail'),
-              validator: (value) => AppValidators.email(value, l10n),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: passwordController,
-              obscureText: obscurePassword,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) {
-                if (!isSubmitting) {
-                  onSubmit();
-                }
-              },
-              decoration: InputDecoration(
-                labelText: 'Senha',
-                suffixIcon: IconButton(
-                  onPressed: onTogglePasswordVisibility,
-                  icon: Icon(
-                    obscurePassword ? Icons.visibility : Icons.visibility_off,
-                  ),
+          ),
+          const SizedBox(height: 24),
+          TextFormField(
+            controller: emailController,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) {
+              FocusScope.of(context).requestFocus(passwordFocusNode);
+            },
+            decoration: const InputDecoration(labelText: 'E-mail'),
+            validator: (value) => AppValidators.email(value, l10n),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: passwordController,
+            focusNode: passwordFocusNode,
+            obscureText: obscurePassword,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) {
+              if (!isSubmitting) onSubmit();
+            },
+            decoration: InputDecoration(
+              labelText: 'Senha',
+              suffixIcon: IconButton(
+                onPressed: onTogglePasswordVisibility,
+                icon: Icon(
+                  obscurePassword ? Icons.visibility : Icons.visibility_off,
                 ),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Informe sua senha';
-                }
-                return null;
-              },
             ),
-            const SizedBox(height: 20),
-            SizedBox(
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
+            validator: (value) => AppValidators.password(value, l10n),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                onPressed: isSubmitting ? null : onSubmit,
-                child: isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Login'),
               ),
+              onPressed: isSubmitting ? null : onSubmit,
+              child: isSubmitting
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                    )
+                  : const Text('Login'),
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
   }
 }

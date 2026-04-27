@@ -2,6 +2,11 @@ import 'package:organizagrana/l10n/app_localizations.dart';
 
 class AppValidators {
   
+  static String? password(String? value, AppLocalizations l10n) {
+    if (value == null || value.isEmpty) return l10n.validationsPasswordRequired;
+    return null;
+  }
+
   static String? email(String? value, AppLocalizations l10n) {
     final email = value?.trim() ?? '';
 
