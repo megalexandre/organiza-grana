@@ -18,8 +18,19 @@ class LayoutFooter extends StatelessWidget {
       letterSpacing: 0.4,
     );
 
-    return ColoredBox(
-      color: theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface,
+    final bgColor = theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: bgColor,
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.shadow.withValues(alpha: 0.12),
+            blurRadius: 1,
+            offset: const Offset(0, -1),
+          ),
+        ],
+      ),
       child: SafeArea(
         top: false,
         child: Padding(

@@ -82,11 +82,15 @@ class LayoutPage extends StatelessWidget {
         onSelect: onMenuSelect,
         backgroundColor: backgroundColor,
       ),
-      bottomNavigationBar: LayoutFooter(
-        authorLabel: authorLabel,
-        userEmail: userEmail,
+      body: Column(
+        children: [
+          Expanded(child: body),
+          LayoutFooter(
+            authorLabel: authorLabel,
+            userEmail: userEmail,
+          ),
+        ],
       ),
-      body: body,
     );
   }
 }
