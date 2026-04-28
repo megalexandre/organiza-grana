@@ -11,14 +11,16 @@ void showReceivableDetailSheet(
   required String id,
   required ReceivablesService service,
 }) {
-  showModalBottomSheet<void>(
+  showDialog<void>(
     context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    builder: (_) => Dialog(
+      shape: const RoundedRectangleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 580),
+        child: _ReceivableDetailSheet(id: id, service: service),
+      ),
     ),
-    builder: (_) => _ReceivableDetailSheet(id: id, service: service),
   );
 }
 
@@ -63,35 +65,64 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.5,
-      minChildSize: 0.35,
-      maxChildSize: 0.9,
-      expand: false,
-      builder: (_, controller) => Column(
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHeader(theme, colorScheme),
+        Expanded(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+                  ? _buildError(context)
+                  : _buildContent(context),
+        ),
+        _buildFooter(context, colorScheme),
+      ],
+    );
+  }
+
+  Widget _buildHeader(ThemeData theme, ColorScheme colorScheme) {
+    final r = _receivable;
+    return Container(
+      color: colorScheme.surfaceContainerHighest,
+      padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
+      child: Row(
         children: [
-          _buildHandle(context),
+          Icon(Icons.receipt_long_outlined, size: 20, color: colorScheme.primary),
+          const SizedBox(width: 10),
           Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                    ? _buildError(context)
-                    : _buildContent(context, controller),
+            child: Text(
+              'Detalhes do recebível',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+          if (r?.status != null) _buildStatusBadge(r!.status!, theme),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(Icons.close, size: 18),
+            visualDensity: VisualDensity.compact,
+            onPressed: () => Navigator.pop(context),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHandle(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Container(
-        width: 40,
-        height: 4,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.outlineVariant,
-          borderRadius: BorderRadius.circular(2),
+  Widget _buildFooter(BuildContext context, ColorScheme colorScheme) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Fechar'),
         ),
       ),
     );
@@ -112,105 +143,130 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
     );
   }
 
-  Widget _buildContent(BuildContext context, ScrollController controller) {
+  Widget _buildContent(BuildContext context) {
     final r = _receivable!;
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return ListView(
-      controller: controller,
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+      padding: EdgeInsets.zero,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text('Detalhes do recebível', style: theme.textTheme.titleLarge),
-            ),
-            if (r.status != null) _buildStatusBadge(r.status!, theme),
-          ],
-        ),
-        const SizedBox(height: 24),
-        _buildRow(
-          context,
-          icon: Icons.attach_money,
-          label: 'Valor',
-          value: currencyFormat.format(r.value),
-          valueStyle: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
-          ),
-        ),
-        _buildDivider(),
-        _buildRow(
-          context,
+        _buildValueHighlight(r, theme, colorScheme),
+        _buildField(
+          theme,
           icon: Icons.calendar_today_outlined,
           label: 'Vencimento',
           value: _dateFormat.format(r.receiptDate),
         ),
-        if (r.createdAt != null) ...[
-          _buildDivider(),
-          _buildRow(
-            context,
+        if (r.createdAt != null)
+          _buildField(
+            theme,
             icon: Icons.access_time_outlined,
             label: 'Criado em',
             value: _dateTimeFormat.format(r.createdAt!.toLocal()),
           ),
-        ],
-        if (r.updatedAt != null) ...[
-          _buildDivider(),
-          _buildRow(
-            context,
+        if (r.updatedAt != null)
+          _buildField(
+            theme,
             icon: Icons.update_outlined,
             label: 'Atualizado em',
             value: _dateTimeFormat.format(r.updatedAt!.toLocal()),
           ),
-        ],
-        if (r.deletedAt != null) ...[
-          _buildDivider(),
-          _buildRow(
-            context,
+        if (r.deletedAt != null)
+          _buildField(
+            theme,
             icon: Icons.delete_outline,
             label: 'Descartado em',
             value: _dateTimeFormat.format(r.deletedAt!.toLocal()),
-            valueStyle: TextStyle(color: theme.colorScheme.error),
+            valueColor: colorScheme.error,
           ),
-        ],
-        _buildDivider(),
-        _buildRow(
-          context,
+        _buildField(
+          theme,
           icon: Icons.tag_outlined,
           label: 'ID',
           value: r.id,
-          valueStyle: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-          ),
+          valueColor: colorScheme.onSurface.withValues(alpha: 0.45),
+          valueFontSize: 12,
+          isLast: true,
         ),
       ],
     );
   }
 
-  Widget _buildRow(
-    BuildContext context, {
+  Widget _buildValueHighlight(Receivable r, ThemeData theme, ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Valor',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.5),
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                currencyFormat.format(r.value),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildField(
+    ThemeData theme, {
     required IconData icon,
     required String label,
     required String value,
-    TextStyle? valueStyle,
+    Color? valueColor,
+    double? valueFontSize,
+    bool isLast = false,
   }) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+    final colorScheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : Border(bottom: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.6))),
+      ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: theme.colorScheme.onSurface.withValues(alpha: 0.45)),
-          const SizedBox(width: 12),
+          Icon(icon, size: 18, color: colorScheme.onSurface.withValues(alpha: 0.35)),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                )),
-                const SizedBox(height: 2),
-                Text(value, style: valueStyle ?? theme.textTheme.bodyMedium),
+                Text(
+                  label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.5),
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: valueColor,
+                    fontSize: valueFontSize,
+                  ),
+                ),
               ],
             ),
           ),
@@ -219,22 +275,20 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
     );
   }
 
-  Widget _buildDivider() => const Divider(height: 1);
-
   Widget _buildStatusBadge(ReceivableStatus status, ThemeData theme) {
     final color = status.badgeColor;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+        color: color.withValues(alpha: 0.12),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         status.label,
-        style: theme.textTheme.bodySmall?.copyWith(
+        style: theme.textTheme.labelSmall?.copyWith(
           color: color,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
         ),
       ),
     );

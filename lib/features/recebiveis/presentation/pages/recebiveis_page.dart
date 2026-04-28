@@ -3,6 +3,7 @@ import 'package:organizagrana/features/recebiveis/data/receivables_service.dart'
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivables_pagination.dart';
+import 'package:organizagrana/features/recebiveis/presentation/widgets/add_receivable_dialog.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/receivable_card.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/receivable_detail_sheet.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
@@ -19,8 +20,12 @@ class RecebiveisPage extends StatefulWidget {
 class _RecebiveisPageState extends State<RecebiveisPage> {
   static const int _perPage = 20;
   static const double _wideBreakpoint = 600;
+  static const double _loadMoreThreshold = 200;
+
+  final _scrollController = ScrollController();
 
   bool _loading = false;
+  bool _loadingMore = false;
   List<Receivable> _receivables = [];
   String? _errorMessage;
   bool _withDiscarded = false;
@@ -30,17 +35,33 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _loadReceivables();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
+      _loadMore();
+    }
   }
 
   Future<void> _loadReceivables() async {
     setState(() {
       _loading = true;
       _errorMessage = null;
+      _receivables = [];
+      _currentPage = 1;
     });
     try {
       final result = await widget.service.listPage(
-        page: _currentPage,
+        page: 1,
         perPage: _perPage,
         withDiscarded: _withDiscarded,
       );
@@ -51,31 +72,62 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
         });
       }
     } on ReceivableFailure catch (e) {
-      if (!mounted) return;
-      if (_receivables.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            action: SnackBarAction(label: 'Tentar novamente', onPressed: _loadReceivables),
-          ),
-        );
-      } else {
-        setState(() => _errorMessage = e.message);
-      }
+      if (mounted) setState(() => _errorMessage = e.message);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  void _goToPage(int page) {
-    setState(() => _currentPage = page);
-    _loadReceivables();
+  Future<void> _loadMore() async {
+    final pagination = _pagination;
+    if (_loadingMore || _loading || pagination == null || !pagination.hasNextPage) return;
+
+    setState(() => _loadingMore = true);
+    try {
+      final nextPage = _currentPage + 1;
+      final result = await widget.service.listPage(
+        page: nextPage,
+        perPage: _perPage,
+        withDiscarded: _withDiscarded,
+      );
+      if (mounted) {
+        setState(() {
+          _currentPage = nextPage;
+          _receivables = [..._receivables, ...result.items];
+          _pagination = result.pagination;
+        });
+      }
+    } on ReceivableFailure catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            action: SnackBarAction(label: 'Tentar novamente', onPressed: _loadMore),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingMore = false);
+    }
+  }
+
+  Future<void> _openAddDialog() async {
+    final created = await showDialog<bool>(
+      context: context,
+      builder: (_) => AddReceivableDialog(service: widget.service),
+    );
+    if (created == true) _loadReceivables();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Recebíveis')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openAddDialog,
+        tooltip: 'Novo recebível',
+        child: const Icon(Icons.add),
+      ),
       body: Column(
         children: [
           _buildToolbar(context),
@@ -98,9 +150,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
             onPressed: () => _showFiltersSheet(context),
             icon: const Icon(Icons.tune, size: 16),
             label: const Text('Filtros'),
-            style: OutlinedButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-            ),
+            style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
           ),
           const SizedBox(width: 8),
           if (_withDiscarded)
@@ -108,12 +158,15 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
               label: const Text('Com descartados'),
               visualDensity: VisualDensity.compact,
               onDeleted: () {
-                setState(() {
-                  _withDiscarded = false;
-                  _currentPage = 1;
-                });
+                setState(() => _withDiscarded = false);
                 _loadReceivables();
               },
+            ),
+          const Spacer(),
+          if (_pagination != null)
+            Text(
+              '${_receivables.length} / ${_pagination!.totalCount}',
+              style: Theme.of(context).textTheme.bodySmall,
             ),
         ],
       ),
@@ -121,20 +174,27 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   }
 
   void _showFiltersSheet(BuildContext context) {
-    showModalBottomSheet<void>(
+    showDialog<void>(
       context: context,
-      builder: (_) => SafeArea(
-        child: CheckboxListTile(
-          title: const Text('Exibir descartados'),
-          value: _withDiscarded,
-          onChanged: (v) {
-            Navigator.pop(context);
-            setState(() {
-              _withDiscarded = v ?? false;
-              _currentPage = 1;
-            });
-            _loadReceivables();
-          },
+      builder: (_) => StatefulBuilder(
+        builder: (context, setModalState) => AlertDialog(
+          title: const Text('Filtros'),
+          content: CheckboxListTile(
+            title: const Text('Exibir descartados'),
+            value: _withDiscarded,
+            onChanged: (v) {
+              setModalState(() {});
+              Navigator.pop(context);
+              setState(() => _withDiscarded = v ?? false);
+              _loadReceivables();
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Fechar'),
+            ),
+          ],
         ),
       ),
     );
@@ -144,7 +204,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
-    if (_loading && _receivables.isEmpty) {
+    if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -156,92 +216,32 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
       return _buildEmptyState(colorScheme, textTheme);
     }
 
-    return IgnorePointer(
-      ignoring: _loading,
-      child: AnimatedOpacity(
-        opacity: _loading ? 0.45 : 1.0,
-        duration: const Duration(milliseconds: 250),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: _receivables.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final r = _receivables[index];
-                  return ReceivableCard(
-                    receivable: r,
-                    onDetails: () => showReceivableDetailSheet(
-                      context,
-                      id: r.id,
-                      service: widget.service,
-                    ),
-                    onReceive: null,
-                  );
-                },
-              ),
-            ),
-            _buildTableFooter(context),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildTableFooter(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final hasMore = _pagination?.hasNextPage ?? false;
     final isWide = MediaQuery.sizeOf(context).width >= _wideBreakpoint;
-    final pagination = _pagination;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total: ${pagination?.totalCount ?? _receivables.length}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              if (isWide)
-                Text(
-                  'Soma (pág.): ${currencyFormat.format(_receivables.fold(0.0, (sum, r) => sum + r.value))}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
-                  ),
-                ),
-            ],
+    return ListView.separated(
+      controller: _scrollController,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      itemCount: _receivables.length + (hasMore ? 1 : 0),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        if (index == _receivables.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final r = _receivables[index];
+        return ReceivableCard(
+          receivable: r,
+          onDetails: () => showReceivableDetailSheet(
+            context,
+            id: r.id,
+            service: widget.service,
           ),
-          if (pagination != null && pagination.totalPages > 1)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  onPressed: pagination.hasPreviousPage
-                      ? () => _goToPage(_currentPage - 1)
-                      : null,
-                ),
-                Text('${pagination.currentPage} / ${pagination.totalPages}'),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: pagination.hasNextPage
-                      ? () => _goToPage(_currentPage + 1)
-                      : null,
-                ),
-              ],
-            ),
-        ],
-      ),
+          onReceive: null,
+        );
+      },
     );
   }
 
@@ -250,11 +250,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.inbox_outlined,
-            size: 48,
-            color: colorScheme.onSurface.withValues(alpha: 0.3),
-          ),
+          Icon(Icons.inbox_outlined, size: 48, color: colorScheme.onSurface.withValues(alpha: 0.3)),
           const SizedBox(height: 12),
           Text('Nenhum recebível encontrado.', style: textTheme.bodyMedium),
         ],
@@ -271,10 +267,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
           const SizedBox(height: 12),
           Text(_errorMessage!, style: textTheme.bodyMedium),
           const SizedBox(height: 8),
-          TextButton(
-            onPressed: _loadReceivables,
-            child: const Text('Tentar novamente'),
-          ),
+          TextButton(onPressed: _loadReceivables, child: const Text('Tentar novamente')),
         ],
       ),
     );

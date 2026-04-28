@@ -23,9 +23,7 @@ class ReceivableCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-      elevation: 2,
       clipBehavior: Clip.antiAlias,
-      shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.15),
       child: InkWell(
         onTap: onDetails,
         child: Padding(
