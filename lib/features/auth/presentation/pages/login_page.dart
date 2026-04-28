@@ -114,8 +114,11 @@ class _DesktopLayout extends StatelessWidget {
                     horizontal: 40,
                     vertical: 48,
                   ),
-                  child: ClipRRect(
+                  child: Material(
+                    elevation: 6,
                     borderRadius: BorderRadius.circular(16),
+                    shadowColor: colorScheme.shadow.withValues(alpha: 0.8),
+                    clipBehavior: Clip.antiAlias,
                     child: IntrinsicHeight(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -176,16 +179,20 @@ class _TabletLayout extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
-              child: Align(
-                alignment: Alignment.topCenter,
+            child: LayoutBuilder(
+              builder: (_, bc) => SingleChildScrollView(
+                padding: const EdgeInsets.all(32),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 480),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(40),
-                      child: form,
+                  constraints: BoxConstraints(minHeight: bc.maxHeight - 64),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 480),
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(40),
+                          child: form,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -211,24 +218,32 @@ class _MobileLayout extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.savings_outlined, size: 28, color: colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  'Organiza Grana',
-                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ],
+      child: LayoutBuilder(
+        builder: (_, bc) => SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: bc.maxHeight - 64),
+            child: Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.savings_outlined, size: 28, color: colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Organiza Grana',
+                        style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  form,
+                ],
+              ),
             ),
-            const SizedBox(height: 32),
-            form,
-          ],
+          ),
         ),
       ),
     );
