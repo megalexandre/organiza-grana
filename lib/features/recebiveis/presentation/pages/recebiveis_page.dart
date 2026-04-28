@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivables_pagination.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/receivable_card.dart';
+import 'package:organizagrana/features/recebiveis/presentation/widgets/receivable_detail_sheet.dart';
+import 'package:organizagrana/shared/utils/app_formats.dart';
 
 class RecebiveisPage extends StatefulWidget {
   const RecebiveisPage({super.key, required this.service});
@@ -17,7 +18,7 @@ class RecebiveisPage extends StatefulWidget {
 
 class _RecebiveisPageState extends State<RecebiveisPage> {
   static const int _perPage = 20;
-  static final _currency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+  static const double _wideBreakpoint = 600;
 
   bool _loading = false;
   List<Receivable> _receivables = [];
@@ -50,7 +51,17 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
         });
       }
     } on ReceivableFailure catch (e) {
-      if (mounted) setState(() => _errorMessage = e.message);
+      if (!mounted) return;
+      if (_receivables.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            action: SnackBarAction(label: 'Tentar novamente', onPressed: _loadReceivables),
+          ),
+        );
+      } else {
+        setState(() => _errorMessage = e.message);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -113,19 +124,17 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     showModalBottomSheet<void>(
       context: context,
       builder: (_) => SafeArea(
-        child: StatefulBuilder(
-          builder: (ctx, setSheetState) => CheckboxListTile(
-            title: const Text('Exibir descartados'),
-            value: _withDiscarded,
-            onChanged: (v) {
-              Navigator.pop(context);
-              setState(() {
-                _withDiscarded = v ?? false;
-                _currentPage = 1;
-              });
-              _loadReceivables();
-            },
-          ),
+        child: CheckboxListTile(
+          title: const Text('Exibir descartados'),
+          value: _withDiscarded,
+          onChanged: (v) {
+            Navigator.pop(context);
+            setState(() {
+              _withDiscarded = v ?? false;
+              _currentPage = 1;
+            });
+            _loadReceivables();
+          },
         ),
       ),
     );
@@ -139,7 +148,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_errorMessage != null) {
+    if (_errorMessage != null && _receivables.isEmpty) {
       return _buildErrorState(textTheme);
     }
 
@@ -154,7 +163,6 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
         duration: const Duration(milliseconds: 250),
         child: Column(
           children: [
-            _buildColumnHeader(context),
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
@@ -164,8 +172,12 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
                   final r = _receivables[index];
                   return ReceivableCard(
                     receivable: r,
-                    onDetails: () {},
-                    onReceive: (r.status?.canReceive ?? false) ? () {} : null,
+                    onDetails: () => showReceivableDetailSheet(
+                      context,
+                      id: r.id,
+                      service: widget.service,
+                    ),
+                    onReceive: null,
                   );
                 },
               ),
@@ -177,44 +189,10 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     );
   }
 
-  Widget _buildColumnHeader(BuildContext context) {
-    final theme = Theme.of(context);
-    final style = theme.textTheme.labelSmall?.copyWith(
-      color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0.8,
-    );
-    final isWide = MediaQuery.sizeOf(context).width >= 600;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        border: Border(
-          bottom: BorderSide(color: theme.colorScheme.outlineVariant),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          const SizedBox(width: 28 + 10 + 38 + 12),
-          Expanded(flex: 3, child: Text('RECEBÍVEL', style: style)),
-          Expanded(
-            flex: 2,
-            child: Text('VALOR', style: style, textAlign: TextAlign.end),
-          ),
-          if (isWide) ...[
-            const SizedBox(width: 24),
-            SizedBox(width: 90, child: Text('STATUS', style: style)),
-          ],
-          const SizedBox(width: 8 + 32 + 18),
-        ],
-      ),
-    );
-  }
 
   Widget _buildTableFooter(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isWide = MediaQuery.sizeOf(context).width >= 500;
+    final isWide = MediaQuery.sizeOf(context).width >= _wideBreakpoint;
     final pagination = _pagination;
 
     return Container(
@@ -235,7 +213,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
               ),
               if (isWide)
                 Text(
-                  'Soma: ${_currency.format(_receivables.fold(0.0, (sum, r) => sum + r.value))}',
+                  'Soma (pág.): ${currencyFormat.format(_receivables.fold(0.0, (sum, r) => sum + r.value))}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.primary,
@@ -289,7 +267,10 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Icon(Icons.error_outline, size: 48, color: Colors.red.withValues(alpha: 0.6)),
+          const SizedBox(height: 12),
           Text(_errorMessage!, style: textTheme.bodyMedium),
+          const SizedBox(height: 8),
           TextButton(
             onPressed: _loadReceivables,
             child: const Text('Tentar novamente'),

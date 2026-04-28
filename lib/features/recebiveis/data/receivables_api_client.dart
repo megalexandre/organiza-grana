@@ -13,6 +13,7 @@ abstract class ReceivablesApiClient {
     required int perPage,
     bool withDiscarded = false,
   });
+  Future<Receivable> getById(String id);
   Future<void> create(ReceivableDraft draft);
 }
 
@@ -50,6 +51,24 @@ class HttpReceivablesApiClient implements ReceivablesApiClient {
         items: items.map(Receivable.fromJson).toList(),
         pagination: _extractPagination(response),
       );
+    } on ApiException catch (e) {
+      throw ReceivablesApiClientException(_mapFailure(e.type));
+    }
+  }
+
+  @override
+  Future<Receivable> getById(String id) async {
+    final token = await _readToken();
+    try {
+      final response = await _httpClient.getJson(
+        Uri.parse(ApiEndpoints.receivables.byId(id)),
+        bearerToken: token,
+      );
+      final raw = response['receivable'] ?? response;
+      if (raw is! Map<String, dynamic>) {
+        throw const ReceivablesApiClientException(ReceivableFailureType.invalidResponse);
+      }
+      return Receivable.fromJson(raw);
     } on ApiException catch (e) {
       throw ReceivablesApiClientException(_mapFailure(e.type));
     }

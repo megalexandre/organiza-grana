@@ -15,6 +15,7 @@ class _Receivables {
   static const String path = '${ApiEndpoints._base}/receivables';
   final String create = path;
   final String list = path;
+  String byId(String id) => '$path/$id';
 }
 
 class _Auth {

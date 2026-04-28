@@ -1,4 +1,5 @@
 import 'package:organizagrana/features/recebiveis/data/receivables_api_client.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivables_page_result.dart';
@@ -25,6 +26,14 @@ class ReceivablesService {
         type: e.type,
         message: _messageFor(e.type),
       );
+    }
+  }
+
+  Future<Receivable> getById(String id) async {
+    try {
+      return await _apiClient.getById(id);
+    } on ReceivablesApiClientException catch (e) {
+      throw ReceivableFailure(type: e.type, message: _messageFor(e.type));
     }
   }
 

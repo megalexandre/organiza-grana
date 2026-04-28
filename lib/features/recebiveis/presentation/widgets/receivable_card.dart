@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
+import 'package:organizagrana/shared/utils/app_formats.dart';
 
 class ReceivableCard extends StatelessWidget {
   const ReceivableCard({
@@ -15,7 +16,6 @@ class ReceivableCard extends StatelessWidget {
   final VoidCallback? onDetails;
   final VoidCallback? onReceive;
 
-  static final _currency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
   static final _dateFormat = DateFormat('dd/MM/yyyy');
 
   @override
@@ -24,46 +24,40 @@ class ReceivableCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
       elevation: 2,
+      clipBehavior: Clip.antiAlias,
       shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.15),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Recebível', style: theme.textTheme.titleMedium),
-                _buildStatusBadge(receivable.status, theme),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Valor: ${_currency.format(receivable.value)}',
-              style: theme.textTheme.bodyLarge,
-            ),
-            Text(
-              'Vencimento: ${_dateFormat.format(receivable.receiptDate)}',
-              style: theme.textTheme.bodyMedium,
-            ),
-            if (onDetails != null || onReceive != null) ...[
-              const SizedBox(height: 12),
+      child: InkWell(
+        onTap: onDetails,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (onDetails != null)
-                    TextButton(
-                      onPressed: onDetails,
-                      child: const Text('Detalhes'),
-                    ),
-                  if (onReceive != null)
-                    ElevatedButton(
-                      onPressed: onReceive,
-                      child: const Text('Marcar como recebido'),
-                    ),
+                  Text('Recebível', style: theme.textTheme.titleMedium),
+                  _buildStatusBadge(receivable.status, theme),
                 ],
               ),
+              const SizedBox(height: 8),
+              Text(
+                'Valor: ${currencyFormat.format(receivable.value)}',
+                style: theme.textTheme.bodyLarge,
+              ),
+              Text(
+                'Vencimento: ${_dateFormat.format(receivable.receiptDate)}',
+                style: theme.textTheme.bodyMedium,
+              ),
+              if (onReceive != null) ...[
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: onReceive,
+                  child: const Text('Marcar como recebido'),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
