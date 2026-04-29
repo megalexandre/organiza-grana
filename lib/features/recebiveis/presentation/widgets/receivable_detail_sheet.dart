@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
@@ -35,9 +34,6 @@ class _ReceivableDetailSheet extends StatefulWidget {
 }
 
 class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
-  static final _dateFormat = DateFormat('dd/MM/yyyy');
-  static final _dateTimeFormat = DateFormat('dd/MM/yyyy HH:mm');
-
   bool _loading = true;
   Receivable? _receivable;
   String? _error;
@@ -156,14 +152,14 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
           theme,
           icon: Icons.calendar_today_outlined,
           label: 'Vencimento',
-          value: _dateFormat.format(r.dueDate),
+          value: dateFormat.format(r.dueDate),
         ),
         if (r.changeDate != null)
           _buildField(
             theme,
             icon: Icons.edit_calendar_outlined,
             label: 'Data de alteração',
-            value: _dateFormat.format(r.changeDate!),
+            value: dateFormat.format(r.changeDate!),
           ),
         if (r.awaitingDays != null)
           _buildField(
@@ -177,21 +173,21 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
             theme,
             icon: Icons.access_time_outlined,
             label: 'Criado em',
-            value: _dateTimeFormat.format(r.createdAt!.toLocal()),
+            value: dateTimeFormat.format(r.createdAt!.toLocal()),
           ),
         if (r.updatedAt != null)
           _buildField(
             theme,
             icon: Icons.update_outlined,
             label: 'Atualizado em',
-            value: _dateTimeFormat.format(r.updatedAt!.toLocal()),
+            value: dateTimeFormat.format(r.updatedAt!.toLocal()),
           ),
         if (r.deletedAt != null)
           _buildField(
             theme,
             icon: Icons.delete_outline,
             label: 'Descartado em',
-            value: _dateTimeFormat.format(r.deletedAt!.toLocal()),
+            value: dateTimeFormat.format(r.deletedAt!.toLocal()),
             valueColor: colorScheme.error,
           ),
         _buildField(

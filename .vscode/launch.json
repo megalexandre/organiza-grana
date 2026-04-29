@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Dev (prod API)",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=API_BASE_URL=https://calculajuros.online/api"
+      ]
+    },
+    {
+      "name": "Dev (sandbox API)",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=API_BASE_URL=https://sandbox.calculajuros.online/api"
+      ]
+    }
+  ]
+}

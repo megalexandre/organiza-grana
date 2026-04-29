@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
@@ -13,8 +12,6 @@ class ReceivableCard extends StatelessWidget {
 
   final Receivable receivable;
   final VoidCallback? onDetails;
-
-  static final _dateFormat = DateFormat('dd/MM/yyyy');
 
   @override
   Widget build(BuildContext context) {
@@ -68,14 +65,14 @@ class ReceivableCard extends StatelessWidget {
                           _DateRow(
                             label: 'Data da troca',
                             value: r.changeDate != null
-                                ? _dateFormat.format(r.changeDate!)
+                                ? dateFormat.format(r.changeDate!)
                                 : '—',
                             theme: theme,
                           ),
                           const SizedBox(height: 8),
                           _DateRow(
                             label: 'Data do pagamento',
-                            value: _dateFormat.format(r.dueDate),
+                            value: dateFormat.format(r.dueDate),
                             theme: theme,
                           ),
                         ],

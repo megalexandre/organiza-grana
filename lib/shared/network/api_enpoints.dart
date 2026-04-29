@@ -1,7 +1,7 @@
 class ApiEndpoints {
   static const _base = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://calculajuros.online/api',
+    defaultValue: 'https://sandbox.calculajuros.online/api',
   );
 
   static const auth = _Auth();

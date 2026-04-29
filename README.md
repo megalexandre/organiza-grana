@@ -105,7 +105,7 @@ flutter emulators --launch Pixel_6
 flutter run -d Pixel_6
 
 -- build web
-flutter build web
+./scripts/build_web.sh
 docker build -t alexandreqrz/organizagrana . &&
 docker push alexandreqrz/organizagrana:latest
 

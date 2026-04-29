@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
+import 'package:organizagrana/shared/utils/app_formats.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 
 class AddReceivableDialog extends StatefulWidget {
@@ -23,13 +23,11 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
   DateTime? _selectedDueDate;
   bool _loading = false;
 
-  static final _dateFormat = DateFormat('dd/MM/yyyy');
-
   @override
   void initState() {
     super.initState();
     _selectedChangeDate = DateTime.now();
-    _changeDateController.text = _dateFormat.format(_selectedChangeDate!);
+    _changeDateController.text = dateFormat.format(_selectedChangeDate!);
   }
 
   @override
@@ -51,7 +49,7 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
     if (picked != null) {
       setState(() {
         _selectedChangeDate = picked;
-        _changeDateController.text = _dateFormat.format(picked);
+        _changeDateController.text = dateFormat.format(picked);
       });
     }
   }
@@ -67,7 +65,7 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
     if (picked != null) {
       setState(() {
         _selectedDueDate = picked;
-        _dueDateController.text = _dateFormat.format(picked);
+        _dueDateController.text = dateFormat.format(picked);
       });
     }
   }

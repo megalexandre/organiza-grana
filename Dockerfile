@@ -2,11 +2,9 @@ FROM nginx:alpine AS runtime
 
 COPY build/web /usr/share/nginx/html
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-COPY docker/entrypoint.sh /entrypoint.sh
+COPY --chmod=755 docker/entrypoint.sh /entrypoint.sh
 
-RUN chmod +x /entrypoint.sh
-
-ENV API_BASE_URL=https://app.project-deploy.shop/api
+ENV API_BASE_URL=https://calculajuros.online/api
 
 EXPOSE 80
 
