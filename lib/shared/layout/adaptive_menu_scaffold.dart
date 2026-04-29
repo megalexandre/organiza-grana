@@ -25,27 +25,35 @@ class AdaptiveMenuScaffold extends StatelessWidget {
     final isDesktop = MediaQuery.sizeOf(context).width >= desktopBreakpoint;
 
     if (isDesktop && sideMenu != null) {
+      final barHeight = appBar?.preferredSize.height ?? 0;
       return Scaffold(
         backgroundColor: backgroundColor,
         body: SafeArea(
           bottom: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Stack(
             children: [
-              if (appBar != null)
-                SizedBox(
-                  height: appBar!.preferredSize.height,
-                  child: appBar,
-                ),
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    sideMenu!,
-                    Expanded(child: body),
-                  ],
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(height: barHeight),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        sideMenu!,
+                        Expanded(child: body),
+                      ],
+                    ),
+                  ),
+                ],
               ),
+              if (appBar != null)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: SizedBox(height: barHeight, child: appBar),
+                ),
             ],
           ),
         ),

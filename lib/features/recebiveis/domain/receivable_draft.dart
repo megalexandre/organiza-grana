@@ -13,6 +13,7 @@ class ReceivableDraft {
     return {
       'amount_cents': '$amountCents',
       'due_date': _formatDate(dueDate),
+      'status': 'awaiting',
       if (changeDate != null) 'change_date': _formatDate(changeDate!),
     };
   }

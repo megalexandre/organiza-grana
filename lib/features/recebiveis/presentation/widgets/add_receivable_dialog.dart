@@ -106,6 +106,7 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
+      shape: const RoundedRectangleBorder(),
       title: Text(
         'Novo recebível',
         style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
