@@ -1,21 +1,24 @@
-import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
-
 class ReceivableDraft {
   const ReceivableDraft({
-    required this.amount,
+    required this.amountCents,
     required this.dueDate,
-    this.status = ReceivableStatus.awaiting,
+    this.changeDate,
   });
 
-  final double amount;
+  final int amountCents;
   final DateTime dueDate;
+  final DateTime? changeDate;
 
   Map<String, dynamic> toJson() {
     return {
-      'amount': amount.toStringAsFixed(2).replaceAll('.', ','),
-      'due_date': dueDate.toIso8601String().split('T').first,
+      'amount_cents': '$amountCents',
+      'due_date': _formatDate(dueDate),
+      if (changeDate != null) 'change_date': _formatDate(changeDate!),
     };
   }
-  final ReceivableStatus status;
-}
 
+  static String _formatDate(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}'
+      '-${date.month.toString().padLeft(2, '0')}'
+      '-${date.day.toString().padLeft(2, '0')}';
+}

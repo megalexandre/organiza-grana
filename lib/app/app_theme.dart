@@ -234,7 +234,7 @@ abstract final class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: AcalLightColors.surface,
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFFEEF2FF),  // Docker navbar light
+        backgroundColor: Color(0xFFEEF2FF),
         foregroundColor: AcalLightColors.onSurface,
         elevation: 0,
         centerTitle: false,

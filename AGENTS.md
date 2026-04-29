@@ -124,6 +124,10 @@ flutter build linux --release
 http://localhost:8080/__admin/mappings
 ```
 
+## Design
+
+- **Sem cantos arredondados**: não usar `BorderRadius` em nenhum widget de UI (cards, botões, dialogs, badges, inputs, etc.). Usar `BorderRadius.zero` ou `RoundedRectangleBorder()` quando necessário sobrescrever o tema.
+
 ## Convenções de código
 
 - Sem comentários explicativos — nomes de identificadores devem ser autoexplicativos.

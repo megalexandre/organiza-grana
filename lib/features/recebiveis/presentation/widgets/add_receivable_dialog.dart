@@ -16,30 +16,49 @@ class AddReceivableDialog extends StatefulWidget {
 class _AddReceivableDialogState extends State<AddReceivableDialog> {
   final _formKey = GlobalKey<FormState>();
   final _valueController = TextEditingController();
-  final _dateController = TextEditingController();
+  final _changeDateController = TextEditingController();
+  final _dueDateController = TextEditingController();
 
-  DateTime? _selectedDate;
+  DateTime? _selectedChangeDate;
+  DateTime? _selectedDueDate;
   bool _loading = false;
+
+  static final _dateFormat = DateFormat('dd/MM/yyyy');
 
   @override
   void dispose() {
     _valueController.dispose();
-    _dateController.dispose();
+    _changeDateController.dispose();
+    _dueDateController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
+  Future<void> _pickChangeDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate ?? now,
+      initialDate: _selectedChangeDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
     if (picked != null) {
       setState(() {
-        _selectedDate = picked;
-        _dateController.text = DateFormat('dd/MM/yyyy').format(picked);
+        _selectedChangeDate = picked;
+        _changeDateController.text = _dateFormat.format(picked);
+      });
+    }
+  }
+
+  Future<void> _pickDueDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDueDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDueDate = picked;
+        _dueDateController.text = _dateFormat.format(picked);
       });
     }
   }
@@ -51,9 +70,15 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
     final value = double.tryParse(rawValue);
     if (value == null || value <= 0) return;
 
+    final amountCents = (value * 100).round();
+
     setState(() => _loading = true);
 
-    final draft = ReceivableDraft(amount: value, dueDate: _selectedDate!);
+    final draft = ReceivableDraft(
+      amountCents: amountCents,
+      dueDate: _selectedDueDate!,
+      changeDate: _selectedChangeDate,
+    );
     final result = await widget.service.create(draft);
 
     if (!mounted) return;
@@ -92,26 +117,22 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
                   hintText: '0,00',
                   prefixText: 'R\$ ',
                 ),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                 ],
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Informe o valor.';
                   final parsed = double.tryParse(v.trim().replaceAll(',', '.'));
-                  if (parsed == null || parsed <= 0) {
-                    return 'Valor inválido.';
-                  }
+                  if (parsed == null || parsed <= 0) return 'Valor inválido.';
                   return null;
                 },
               ),
               const SizedBox(height: 16),
               TextFormField(
-                controller: _dateController,
+                controller: _changeDateController,
                 decoration: InputDecoration(
-                  labelText: 'Data de recebimento',
+                  labelText: 'Data da troca',
                   hintText: 'dd/mm/aaaa',
                   suffixIcon: Icon(
                     Icons.calendar_today_outlined,
@@ -120,9 +141,24 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
                   ),
                 ),
                 readOnly: true,
-                onTap: _pickDate,
+                onTap: _pickChangeDate,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _dueDateController,
+                decoration: InputDecoration(
+                  labelText: 'Data de vencimento',
+                  hintText: 'dd/mm/aaaa',
+                  suffixIcon: Icon(
+                    Icons.calendar_today_outlined,
+                    size: 18,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                readOnly: true,
+                onTap: _pickDueDate,
                 validator: (v) {
-                  if (_selectedDate == null) return 'Selecione uma data.';
+                  if (_selectedDueDate == null) return 'Selecione a data de vencimento.';
                   return null;
                 },
               ),

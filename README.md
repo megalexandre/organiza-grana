@@ -106,8 +106,8 @@ flutter run -d Pixel_6
 
 -- build web
 flutter build web
-docker build -t alexandreqrz/app-panel-web:latest . &&
-docker push alexandreqrz/app-panel-web:latest
+docker build -t alexandreqrz/organizagrana . &&
+docker push alexandreqrz/organizagrana:latest
 
 -- build android 
 flutter pub get

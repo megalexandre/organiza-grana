@@ -24,33 +24,39 @@ class AdaptiveMenuScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.sizeOf(context).width >= desktopBreakpoint;
 
-    Widget bodyLayout;
-    if (sideMenu == null || !isDesktop) {
-      bodyLayout = body;
-    } else {
-      bodyLayout = Stack(
-        children: [
-          Positioned.fill(
-            child: Padding(
-              padding: EdgeInsets.only(left: sideMenuWidth),
-              child: body,
-            ),
+    if (isDesktop && sideMenu != null) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (appBar != null)
+                SizedBox(
+                  height: appBar!.preferredSize.height,
+                  child: appBar,
+                ),
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    sideMenu!,
+                    Expanded(child: body),
+                  ],
+                ),
+              ),
+            ],
           ),
-          Positioned(
-            left: 0,
-            top: 0,
-            bottom: 0,
-            child: sideMenu!,
-          ),
-        ],
+        ),
       );
     }
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: appBar,
-      drawer: isDesktop ? null : drawer,
-      body: bodyLayout,
+      drawer: drawer,
+      body: body,
     );
   }
 }

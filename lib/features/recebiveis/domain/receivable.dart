@@ -3,58 +3,43 @@ import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart'
 class Receivable {
   const Receivable({
     required this.id,
-    required this.value,
-    required this.receiptDate,
-    this.amountCents,
-    this.status,
+    required this.amountCents,
+    required this.dueDate,
+    required this.awaitingDays,
+    required this.status,
+    this.changeDate,
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
   });
 
   final String id;
-  final double value;
-  final DateTime receiptDate;
-  final int? amountCents;
-  final ReceivableStatus? status;
+  final int amountCents;
+  final DateTime dueDate;
+  final int awaitingDays;
+  final ReceivableStatus status;
+  final DateTime? changeDate;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
 
-  factory Receivable.fromJson(Map<String, dynamic> json) {
-    final rawDate =
-        (json['due_date'] ?? json['receipt_date'] ?? json['receiptDate'])
-            ?.toString();
-    final parsedDate = rawDate != null ? DateTime.tryParse(rawDate) : null;
-    final amountCents = _readInt(json['amount_cents']);
-    final value = _readAmount(json['amount']) ??
-        (json['value'] as num?)?.toDouble() ??
-        ((amountCents ?? 0) / 100);
+  double get value => amountCents / 100;
 
+  factory Receivable.fromJson(Map<String, dynamic> json) {
     return Receivable(
-      id: (json['id'] ?? '${value}_$rawDate').toString(),
-      value: value,
-      receiptDate: parsedDate ?? DateTime.now(),
-      amountCents: amountCents,
-      status: ReceivableStatus.fromJson(json['status']),
-      createdAt: _readDateTime(json['created_at'] ?? json['createdAt']),
-      updatedAt: _readDateTime(json['updated_at'] ?? json['updatedAt']),
-      deletedAt: _readDateTime(json['deleted_at'] ?? json['deletedAt']),
+      id: json['id'].toString(),
+      amountCents: json['amount_cents'] as int,
+      dueDate: DateTime.parse(json['due_date'] as String),
+      awaitingDays: json['awaiting_days'] as int,
+      status: ReceivableStatus.fromJson(json['status']) ?? ReceivableStatus.awaiting,
+      changeDate: _parseDate(json['change_date']),
+      createdAt: _parseDate(json['created_at']),
+      updatedAt: _parseDate(json['updated_at']),
+      deletedAt: _parseDate(json['deleted_at']),
     );
   }
 
-  static double? _readAmount(dynamic value) {
-    if (value is num) return value.toDouble();
-    return double.tryParse(value?.toString() ?? '');
-  }
-
-  static int? _readInt(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    return int.tryParse(value?.toString() ?? '');
-  }
-
-  static DateTime? _readDateTime(dynamic value) {
+  static DateTime? _parseDate(dynamic value) {
     final raw = value?.toString();
     if (raw == null || raw.isEmpty) return null;
     return DateTime.tryParse(raw);

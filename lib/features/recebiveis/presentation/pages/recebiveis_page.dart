@@ -6,7 +6,7 @@ import 'package:organizagrana/features/recebiveis/domain/receivables_pagination.
 import 'package:organizagrana/features/recebiveis/presentation/widgets/add_receivable_dialog.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/receivable_card.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/receivable_detail_sheet.dart';
-import 'package:organizagrana/shared/utils/app_formats.dart';
+
 
 class RecebiveisPage extends StatefulWidget {
   const RecebiveisPage({super.key, required this.service});
@@ -19,7 +19,6 @@ class RecebiveisPage extends StatefulWidget {
 
 class _RecebiveisPageState extends State<RecebiveisPage> {
   static const int _perPage = 20;
-  static const double _wideBreakpoint = 600;
   static const double _loadMoreThreshold = 200;
 
   final _scrollController = ScrollController();
@@ -122,7 +121,6 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Recebíveis')),
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddDialog,
         tooltip: 'Novo recebível',
@@ -146,11 +144,9 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          OutlinedButton.icon(
+          _FilterButton(
+            active: _withDiscarded,
             onPressed: () => _showFiltersSheet(context),
-            icon: const Icon(Icons.tune, size: 16),
-            label: const Text('Filtros'),
-            style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
           ),
           const SizedBox(width: 8),
           if (_withDiscarded)
@@ -178,6 +174,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setModalState) => AlertDialog(
+          shape: const RoundedRectangleBorder(),
           title: const Text('Filtros'),
           content: CheckboxListTile(
             title: const Text('Exibir descartados'),
@@ -217,7 +214,6 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     }
 
     final hasMore = _pagination?.hasNextPage ?? false;
-    final isWide = MediaQuery.sizeOf(context).width >= _wideBreakpoint;
 
     return ListView.separated(
       controller: _scrollController,
@@ -239,7 +235,6 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
             id: r.id,
             service: widget.service,
           ),
-          onReceive: null,
         );
       },
     );
@@ -269,6 +264,43 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
           const SizedBox(height: 8),
           TextButton(onPressed: _loadReceivables, child: const Text('Tentar novamente')),
         ],
+      ),
+    );
+  }
+}
+
+class _FilterButton extends StatelessWidget {
+  const _FilterButton({required this.active, required this.onPressed});
+
+  final bool active;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = active ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.7);
+    final borderColor = active ? colorScheme.primary : colorScheme.outlineVariant;
+    final bg = active ? colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent;
+
+    return InkWell(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: bg,
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.tune, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              'Filtros',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),
+            ),
+          ],
+        ),
       ),
     );
   }

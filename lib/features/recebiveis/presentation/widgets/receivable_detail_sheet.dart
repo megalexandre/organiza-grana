@@ -100,7 +100,7 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
-          if (r?.status != null) _buildStatusBadge(r!.status!, theme),
+          if (r != null) _buildStatusBadge(r.status, theme),
           const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.close, size: 18),
@@ -156,8 +156,22 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
           theme,
           icon: Icons.calendar_today_outlined,
           label: 'Vencimento',
-          value: _dateFormat.format(r.receiptDate),
+          value: _dateFormat.format(r.dueDate),
         ),
+        if (r.changeDate != null)
+          _buildField(
+            theme,
+            icon: Icons.edit_calendar_outlined,
+            label: 'Data de alteração',
+            value: _dateFormat.format(r.changeDate!),
+          ),
+        if (r.awaitingDays != null)
+          _buildField(
+            theme,
+            icon: Icons.hourglass_bottom_outlined,
+            label: 'Dias aguardando',
+            value: '${r.awaitingDays} dias',
+          ),
         if (r.createdAt != null)
           _buildField(
             theme,

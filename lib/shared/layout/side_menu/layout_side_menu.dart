@@ -73,6 +73,7 @@ class LayoutDrawer extends StatelessWidget {
     return Drawer(
       width: _sidebarWidth,
       backgroundColor: resolvedBackgroundColor,
+      shape: const RoundedRectangleBorder(),
       child: SafeArea(
         child: Column(
           children: [
@@ -184,14 +185,10 @@ class _MenuItem extends StatelessWidget {
     final foreground = selected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.75);
     final bgColor = selected ? colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-      child: Material(
+    return Material(
         color: bgColor,
-        borderRadius: BorderRadius.circular(6),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(6),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Row(
@@ -220,7 +217,6 @@ class _MenuItem extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }
