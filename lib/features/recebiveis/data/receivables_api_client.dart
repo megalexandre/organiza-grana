@@ -1,6 +1,7 @@
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_sort.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivables_page_result.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivables_pagination.dart';
 import 'package:organizagrana/shared/network/api_enpoints.dart';
@@ -12,6 +13,8 @@ abstract class ReceivablesApiClient {
     required int page,
     required int perPage,
     bool withDiscarded = false,
+    ReceivableSortField sortBy = ReceivableSortField.dueDate,
+    ReceivableSortDirection sortDirection = ReceivableSortDirection.desc,
   });
   Future<Receivable> getById(String id);
   Future<void> create(ReceivableDraft draft);
@@ -35,6 +38,8 @@ class HttpReceivablesApiClient implements ReceivablesApiClient {
     required int page,
     required int perPage,
     bool withDiscarded = false,
+    ReceivableSortField sortBy = ReceivableSortField.dueDate,
+    ReceivableSortDirection sortDirection = ReceivableSortDirection.desc,
   }) async {
     final token = await _readToken();
     final baseUri = Uri.parse(ApiEndpoints.receivables.list);
@@ -42,6 +47,8 @@ class HttpReceivablesApiClient implements ReceivablesApiClient {
       'page': '$page',
       'per_page': '$perPage',
       'with_discarded': '$withDiscarded',
+      'sort_by': sortBy.toApiValue(),
+      'sort_direction': sortDirection.toApiValue(),
     });
 
     try {

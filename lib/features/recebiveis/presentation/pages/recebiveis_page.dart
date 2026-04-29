@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_sort.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivables_pagination.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/add_receivable_dialog.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/receivable_card.dart';
@@ -30,6 +31,19 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   bool _withDiscarded = false;
   ReceivablesPagination? _pagination;
   int _currentPage = 1;
+  ReceivableSortField _sortBy = ReceivableSortField.dueDate;
+  ReceivableSortDirection _sortDirection = ReceivableSortDirection.asc;
+
+  static const _defaultSortBy = ReceivableSortField.dueDate;
+  static const _defaultSortDirection = ReceivableSortDirection.asc;
+
+  bool get _isSortDefault => _sortBy == _defaultSortBy && _sortDirection == _defaultSortDirection;
+
+  String get _sortChipLabel {
+    final field = _sortBy == ReceivableSortField.dueDate ? 'Vencimento' : 'Valor';
+    final dir = _sortDirection == ReceivableSortDirection.asc ? '↑' : '↓';
+    return '$field $dir';
+  }
 
   @override
   void initState() {
@@ -63,6 +77,8 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
         page: 1,
         perPage: _perPage,
         withDiscarded: _withDiscarded,
+        sortBy: _sortBy,
+        sortDirection: _sortDirection,
       );
       if (mounted) {
         setState(() {
@@ -88,6 +104,8 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
         page: nextPage,
         perPage: _perPage,
         withDiscarded: _withDiscarded,
+        sortBy: _sortBy,
+        sortDirection: _sortDirection,
       );
       if (mounted) {
         setState(() {
@@ -149,6 +167,11 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
             onPressed: () => _showFiltersSheet(context),
           ),
           const SizedBox(width: 8),
+          _SortButton(
+            active: !_isSortDefault,
+            onPressed: () => _showSortSheet(context),
+          ),
+          const SizedBox(width: 8),
           if (_withDiscarded)
             Chip(
               label: const Text('Com descartados'),
@@ -158,6 +181,20 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
                 _loadReceivables();
               },
             ),
+          if (!_isSortDefault) ...[
+            if (_withDiscarded) const SizedBox(width: 4),
+            Chip(
+              label: Text(_sortChipLabel),
+              visualDensity: VisualDensity.compact,
+              onDeleted: () {
+                setState(() {
+                  _sortBy = _defaultSortBy;
+                  _sortDirection = _defaultSortDirection;
+                });
+                _loadReceivables();
+              },
+            ),
+          ],
           const Spacer(),
           if (_pagination != null)
             Text(
@@ -165,6 +202,77 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
         ],
+      ),
+    );
+  }
+
+  void _showSortSheet(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setModalState) => AlertDialog(
+          shape: const RoundedRectangleBorder(),
+          title: const Text('Ordenação'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Ordenar por', style: Theme.of(context).textTheme.labelMedium),
+              RadioGroup<ReceivableSortField>(
+                groupValue: _sortBy,
+                onChanged: (v) {
+                  if (v == null) return;
+                  setModalState(() {});
+                  Navigator.pop(context);
+                  setState(() => _sortBy = v);
+                  _loadReceivables();
+                },
+                child: Column(
+                  children: [
+                    RadioListTile<ReceivableSortField>(
+                      title: const Text('Data de vencimento'),
+                      value: ReceivableSortField.dueDate,
+                    ),
+                    RadioListTile<ReceivableSortField>(
+                      title: const Text('Valor'),
+                      value: ReceivableSortField.amount,
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(),
+              Text('Direção', style: Theme.of(context).textTheme.labelMedium),
+              RadioGroup<ReceivableSortDirection>(
+                groupValue: _sortDirection,
+                onChanged: (v) {
+                  if (v == null) return;
+                  setModalState(() {});
+                  Navigator.pop(context);
+                  setState(() => _sortDirection = v);
+                  _loadReceivables();
+                },
+                child: Column(
+                  children: [
+                    RadioListTile<ReceivableSortDirection>(
+                      title: const Text('Mais recente primeiro'),
+                      value: ReceivableSortDirection.desc,
+                    ),
+                    RadioListTile<ReceivableSortDirection>(
+                      title: const Text('Mais antigo primeiro'),
+                      value: ReceivableSortDirection.asc,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Fechar'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -297,6 +405,43 @@ class _FilterButton extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               'Filtros',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SortButton extends StatelessWidget {
+  const _SortButton({required this.active, required this.onPressed});
+
+  final bool active;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = active ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.7);
+    final borderColor = active ? colorScheme.primary : colorScheme.outlineVariant;
+    final bg = active ? colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent;
+
+    return InkWell(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: bg,
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.sort, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              'Ordenar',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),
             ),
           ],

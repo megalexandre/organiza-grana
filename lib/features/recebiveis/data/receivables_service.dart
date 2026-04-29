@@ -2,8 +2,9 @@ import 'package:organizagrana/features/recebiveis/data/receivables_api_client.da
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
-import 'package:organizagrana/features/recebiveis/domain/receivables_page_result.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_result.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_sort.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivables_page_result.dart';
 
 class ReceivablesService {
   ReceivablesService(this._apiClient);
@@ -14,12 +15,16 @@ class ReceivablesService {
     required int page,
     required int perPage,
     bool withDiscarded = false,
+    ReceivableSortField sortBy = ReceivableSortField.dueDate,
+    ReceivableSortDirection sortDirection = ReceivableSortDirection.desc,
   }) async {
     try {
       return await _apiClient.listPage(
         page: page,
         perPage: perPage,
         withDiscarded: withDiscarded,
+        sortBy: sortBy,
+        sortDirection: sortDirection,
       );
     } on ReceivablesApiClientException catch (e) {
       throw ReceivableFailure(

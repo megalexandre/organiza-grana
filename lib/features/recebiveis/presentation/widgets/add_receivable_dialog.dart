@@ -26,6 +26,13 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
   static final _dateFormat = DateFormat('dd/MM/yyyy');
 
   @override
+  void initState() {
+    super.initState();
+    _selectedChangeDate = DateTime.now();
+    _changeDateController.text = _dateFormat.format(_selectedChangeDate!);
+  }
+
+  @override
   void dispose() {
     _valueController.dispose();
     _changeDateController.dispose();
@@ -39,6 +46,7 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
       initialDate: _selectedChangeDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
+      initialEntryMode: DatePickerEntryMode.input,
     );
     if (picked != null) {
       setState(() {
@@ -54,6 +62,7 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
       initialDate: _selectedDueDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
+      initialEntryMode: DatePickerEntryMode.input,
     );
     if (picked != null) {
       setState(() {
