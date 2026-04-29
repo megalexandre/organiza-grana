@@ -13,8 +13,8 @@ enum ReceivableStatus {
   final String label;
 
   Color get badgeColor => switch (this) {
-        ReceivableStatus.paid => Colors.green,
-        ReceivableStatus.awaiting => Colors.orange,
+        ReceivableStatus.paid => Colors.grey,
+        ReceivableStatus.awaiting => Colors.green,
         ReceivableStatus.inAnalysis => Colors.blue,
         ReceivableStatus.inTransaction => Colors.purple,
         ReceivableStatus.overdue => Colors.red,

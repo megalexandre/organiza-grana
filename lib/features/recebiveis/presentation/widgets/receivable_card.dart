@@ -27,82 +27,121 @@ class ReceivableCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onDetails,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Valor + status
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    currencyFormat.format(r.value),
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _StatusBadge(status: r.status),
-                ],
-              ),
-
-              const SizedBox(width: 24),
-              const VerticalDivider(width: 1, thickness: 1),
-              const SizedBox(width: 24),
-
-              // Datas
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _StatusBar(status: r.status),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _DateRow(
-                      label: 'Data da troca',
-                      value: r.changeDate != null
-                          ? _dateFormat.format(r.changeDate!)
-                          : '—',
-                      theme: theme,
+                    // Valor
+                    Expanded(
+                      flex: 3,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          currencyFormat.format(r.value),
+                          style: theme.textTheme.displaySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                            height: 1,
+                          ),
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    _DateRow(
-                      label: 'Data do pagamento',
-                      value: _dateFormat.format(r.dueDate),
-                      theme: theme,
+
+                    const SizedBox(width: 24),
+                    const VerticalDivider(width: 1, thickness: 1),
+                    const SizedBox(width: 24),
+
+                    // Datas
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _DateRow(
+                            label: 'Data da troca',
+                            value: r.changeDate != null
+                                ? _dateFormat.format(r.changeDate!)
+                                : '—',
+                            theme: theme,
+                          ),
+                          const SizedBox(height: 8),
+                          _DateRow(
+                            label: 'Data do pagamento',
+                            value: _dateFormat.format(r.dueDate),
+                            theme: theme,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 24),
+                    const VerticalDivider(width: 1, thickness: 1),
+                    const SizedBox(width: 24),
+
+                    // Dias em espera
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            '${r.awaitingDays}',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.headlineLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          Text(
+                            'dias em\nespera',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onSurface.withValues(alpha: 0.45),
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-              const SizedBox(width: 24),
-              const VerticalDivider(width: 1, thickness: 1),
-              const SizedBox(width: 24),
+class _StatusBar extends StatelessWidget {
+  const _StatusBar({required this.status});
 
-              // Dias em espera
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${r.awaitingDays}',
-                    style: theme.textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  Text(
-                    'dias em\nespera',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.45),
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+  final ReceivableStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = status.badgeColor;
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      color: color.withValues(alpha: 0.12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      child: Text(
+        status.label,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.4,
         ),
       ),
     );
@@ -136,33 +175,6 @@ class _DateRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-
-  final ReceivableStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = status.badgeColor;
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        status.label,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
     );
   }
 }
