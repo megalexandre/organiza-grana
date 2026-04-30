@@ -61,10 +61,7 @@ class _BorderoPageState extends State<BorderoPage> {
   }
 
   Future<void> _openAddItemDialog() async {
-    final item = await showDialog<BorderoInputItem>(
-      context: context,
-      builder: (_) => const BorderoAddItemDialog(),
-    );
+    final item = await showBorderoAddItem(context);
     if (item != null) {
       setState(() {
         _items.add(item);
@@ -93,7 +90,8 @@ class _BorderoPageState extends State<BorderoPage> {
       return;
     }
 
-    final rate = double.tryParse(_rateController.text.trim().replaceAll(',', '.')) ?? 0;
+    final rate =
+        double.tryParse(_rateController.text.trim().replaceAll(',', '.')) ?? 0;
 
     setState(() {
       _loading = true;
@@ -120,98 +118,165 @@ class _BorderoPageState extends State<BorderoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 600;
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              isNarrow ? 16 : 24,
+              isNarrow ? 16 : 24,
+              isNarrow ? 16 : 24,
+              40,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildParamsSection(context, isNarrow),
+                      const SizedBox(height: 24),
+                      _buildItemsSection(context),
+                      const SizedBox(height: 20),
+                      _buildCalculateButton(context),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        child: _errorMessage != null
+                            ? Padding(
+                                key: const ValueKey('error'),
+                                padding: const EdgeInsets.only(top: 16),
+                                child: _buildError(context),
+                              )
+                            : const SizedBox.shrink(key: ValueKey('no-error')),
+                      ),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        switchInCurve: Curves.easeOut,
+                        child: _result != null
+                            ? Padding(
+                                key: ValueKey(_result),
+                                padding: const EdgeInsets.only(top: 32),
+                                child: _buildResultSection(context, _result!),
+                              )
+                            : const SizedBox.shrink(key: ValueKey('no-result')),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openAddItemDialog,
+        icon: const Icon(Icons.add),
+        label: const Text('Recebível'),
+        tooltip: 'Adicionar recebível',
+      ),
+    );
+  }
+
+  Widget _buildParamsSection(BuildContext context, bool isNarrow) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                _buildHeaderForm(context),
-                const SizedBox(height: 24),
-                _buildItemsSection(context),
-                const SizedBox(height: 24),
-                _buildCalculateButton(context),
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 16),
-                  _buildError(context),
-                ],
-                if (_result != null) ...[
-                  const SizedBox(height: 24),
-                  _buildResultSection(context, _result!),
-                ],
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.tune_outlined,
+                    size: 18,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Parâmetros',
+                  style: textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
               ],
             ),
-          ),
+            const SizedBox(height: 20),
+            if (isNarrow)
+              Column(
+                children: [
+                  _buildDateField(context),
+                  const SizedBox(height: 16),
+                  _buildRateField(),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Expanded(child: _buildDateField(context)),
+                  const SizedBox(width: 16),
+                  Expanded(child: _buildRateField()),
+                ],
+              ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHeaderForm(BuildContext context) {
+  Widget _buildDateField(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    return TextFormField(
+      controller: _changeDateController,
+      decoration: InputDecoration(
+        labelText: 'Data da troca',
+        hintText: 'dd/mm/aaaa',
+        suffixIcon: Icon(
+          Icons.calendar_today_outlined,
+          size: 18,
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+      readOnly: true,
+      onTap: _pickChangeDate,
+    );
+  }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Parâmetros',
-          style: Theme.of(context)
-              .textTheme
-              .titleSmall
-              ?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _changeDateController,
-                decoration: InputDecoration(
-                  labelText: 'Data da troca',
-                  hintText: 'dd/mm/aaaa',
-                  suffixIcon: Icon(
-                    Icons.calendar_today_outlined,
-                    size: 18,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                readOnly: true,
-                onTap: _pickChangeDate,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: _rateController,
-                decoration: const InputDecoration(
-                  labelText: 'Juros ao mês',
-                  hintText: '2,00',
-                  suffixText: '%',
-                ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                ],
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Informe a taxa.';
-                  final parsed =
-                      double.tryParse(v.trim().replaceAll(',', '.'));
-                  if (parsed == null || parsed <= 0) return 'Taxa inválida.';
-                  return null;
-                },
-              ),
-            ),
-          ],
-        ),
+  Widget _buildRateField() {
+    return TextFormField(
+      controller: _rateController,
+      decoration: const InputDecoration(
+        labelText: 'Juros ao mês',
+        hintText: '2,00',
+        suffixText: '%',
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
       ],
+      validator: (v) {
+        if (v == null || v.trim().isEmpty) return 'Informe a taxa.';
+        final parsed = double.tryParse(v.trim().replaceAll(',', '.'));
+        if (parsed == null || parsed <= 0) return 'Taxa inválida.';
+        return null;
+      },
     );
   }
 
   Widget _buildItemsSection(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return Column(
@@ -220,45 +285,88 @@ class _BorderoPageState extends State<BorderoPage> {
         Row(
           children: [
             Text(
-              'Recebíveis (${_items.length})',
+              'Recebíveis',
               style:
                   textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: _openAddItemDialog,
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Adicionar'),
-            ),
-          ],
-        ),
-        if (_items.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: Text(
-                'Nenhum recebível adicionado.',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.5),
+            if (_items.isNotEmpty) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${_items.length}',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-          )
-        else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (_, index) => BorderoItemTile(
-              item: _items[index],
-              onRemove: () => _removeItem(index),
+            ],
+          ],
+        ),
+        const SizedBox(height: 12),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          child: _items.isEmpty
+              ? _buildEmptyState(context)
+              : ListView.separated(
+                  key: const ValueKey('list'),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _items.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (_, index) => BorderoItemTile(
+                    key: ObjectKey(_items[index]),
+                    item: _items[index],
+                    onRemove: () => _removeItem(index),
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      key: const ValueKey('empty'),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+        ),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.inbox_outlined,
+            size: 40,
+            color: colorScheme.onSurface.withValues(alpha: 0.2),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Nenhum recebível adicionado',
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurface.withValues(alpha: 0.4),
             ),
           ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            'Use o botão + para adicionar',
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurface.withValues(alpha: 0.3),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -274,7 +382,7 @@ class _BorderoPageState extends State<BorderoPage> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : const Icon(Icons.calculate_outlined),
-        label: const Text('Calcular Borderô'),
+        label: Text(_loading ? 'Calculando…' : 'Calcular Borderô'),
       ),
     );
   }
@@ -283,14 +391,23 @@ class _BorderoPageState extends State<BorderoPage> {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: colorScheme.errorContainer,
-        border: Border.all(color: colorScheme.error),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: colorScheme.error.withValues(alpha: 0.4)),
       ),
-      child: Text(
-        _errorMessage!,
-        style: TextStyle(color: colorScheme.onErrorContainer),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, size: 18, color: colorScheme.error),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _errorMessage!,
+              style: TextStyle(color: colorScheme.onErrorContainer),
+            ),
+          ),
+        ],
       ),
     );
   }
