@@ -2,16 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:organizagrana/app/auth_session_controller.dart';
 import 'package:organizagrana/features/auth/presentation/pages/login_page.dart';
+import 'package:organizagrana/features/bordero/data/bordero_service.dart';
+import 'package:organizagrana/features/bordero/presentation/pages/bordero_page.dart';
 import 'package:organizagrana/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/features/recebiveis/presentation/pages/recebiveis_page.dart';
 
 class AppRouter {
-  AppRouter(this._session, {required ReceivablesService receivablesService})
-      : _receivablesService = receivablesService;
+  AppRouter(
+    this._session, {
+    required ReceivablesService receivablesService,
+    required BorderoService borderoService,
+  })  : _receivablesService = receivablesService,
+        _borderoService = borderoService;
 
   final AuthSessionController _session;
   final ReceivablesService _receivablesService;
+  final BorderoService _borderoService;
   static final GlobalKey<NavigatorState> _rootNavigatorKey =
       GlobalKey<NavigatorState>();
 
@@ -19,6 +26,13 @@ class AppRouter {
   static const String loginPath = '/login';
   static const String dashboardPath = '/dashboard';
   static const String recebiveisPath = '/dashboard/recebiveis';
+  static const String borderoPath = '/dashboard/bordero';
+
+  static String pathForItem(String itemId) => switch (itemId) {
+        'recebiveis' => recebiveisPath,
+        'bordero' => borderoPath,
+        _ => dashboardPath,
+      };
 
   late final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -58,8 +72,11 @@ class AppRouter {
       ),
       ShellRoute(
         builder: (context, state, child) {
-          final currentItemId =
-              state.uri.path == recebiveisPath ? 'recebiveis' : 'dashboard';
+          final currentItemId = switch (state.uri.path) {
+            recebiveisPath => 'recebiveis',
+            borderoPath => 'bordero',
+            _ => 'dashboard',
+          };
 
           return DashboardPage(
             onLogout: _session.logout,
@@ -79,6 +96,12 @@ class AppRouter {
                 path: 'recebiveis',
                 pageBuilder: (context, state) => NoTransitionPage(
                   child: RecebiveisPage(service: _receivablesService),
+                ),
+              ),
+              GoRoute(
+                path: 'bordero',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: BorderoPage(service: _borderoService),
                 ),
               ),
             ],

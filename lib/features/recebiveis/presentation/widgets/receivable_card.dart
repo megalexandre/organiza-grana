@@ -20,7 +20,7 @@ class ReceivableCard extends StatelessWidget {
     final r = receivable;
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+      margin: const EdgeInsets.symmetric(vertical: 4),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onDetails,
@@ -88,7 +88,6 @@ class ReceivableCard extends StatelessWidget {
                       flex: 2,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             '${r.awaitingDays}',

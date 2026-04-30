@@ -227,14 +227,14 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
                   setState(() => _sortBy = v);
                   _loadReceivables();
                 },
-                child: Column(
+                child: const Column(
                   children: [
                     RadioListTile<ReceivableSortField>(
-                      title: const Text('Data de vencimento'),
+                      title: Text('Data de vencimento'),
                       value: ReceivableSortField.dueDate,
                     ),
                     RadioListTile<ReceivableSortField>(
-                      title: const Text('Valor'),
+                      title: Text('Valor'),
                       value: ReceivableSortField.amount,
                     ),
                   ],
@@ -251,14 +251,14 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
                   setState(() => _sortDirection = v);
                   _loadReceivables();
                 },
-                child: Column(
+                child: const Column(
                   children: [
                     RadioListTile<ReceivableSortDirection>(
-                      title: const Text('Mais recente primeiro'),
+                      title: Text('Mais recente primeiro'),
                       value: ReceivableSortDirection.desc,
                     ),
                     RadioListTile<ReceivableSortDirection>(
-                      title: const Text('Mais antigo primeiro'),
+                      title: Text('Mais antigo primeiro'),
                       value: ReceivableSortDirection.asc,
                     ),
                   ],

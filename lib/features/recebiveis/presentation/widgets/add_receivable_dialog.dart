@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
-import 'package:organizagrana/shared/utils/app_formats.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
+import 'package:organizagrana/shared/utils/app_formats.dart';
 
 class AddReceivableDialog extends StatefulWidget {
   const AddReceivableDialog({super.key, required this.service});
@@ -86,17 +87,17 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
       dueDate: _selectedDueDate!,
       changeDate: _selectedChangeDate,
     );
-    final result = await widget.service.create(draft);
-
-    if (!mounted) return;
-    setState(() => _loading = false);
-
-    if (result.isSuccess) {
+    try {
+      await widget.service.create(draft);
+      if (!mounted) return;
       Navigator.of(context).pop(true);
-    } else {
+    } on ReceivableFailure catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.failure!.message)),
+        SnackBar(content: Text(e.message)),
       );
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 

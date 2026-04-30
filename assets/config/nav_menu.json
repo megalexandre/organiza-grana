@@ -1,4 +1,5 @@
 [
   { "type": "item", "id": "dashboard", "label": "Dashboard", "icon": "dashboard" },
-  { "type": "item", "id": "recebiveis", "label": "Recebíveis", "icon": "payments" }
+  { "type": "item", "id": "recebiveis", "label": "Recebíveis", "icon": "payments" },
+  { "type": "item", "id": "bordero", "label": "Borderô", "icon": "receipt_long" }
 ]

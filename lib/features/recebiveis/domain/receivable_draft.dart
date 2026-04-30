@@ -1,3 +1,5 @@
+import 'package:organizagrana/shared/utils/app_formats.dart';
+
 class ReceivableDraft {
   const ReceivableDraft({
     required this.amountCents,
@@ -12,14 +14,9 @@ class ReceivableDraft {
   Map<String, dynamic> toJson() {
     return {
       'amount_cents': '$amountCents',
-      'due_date': _formatDate(dueDate),
+      'due_date': formatDateIso(dueDate),
       'status': 'awaiting',
-      if (changeDate != null) 'change_date': _formatDate(changeDate!),
+      if (changeDate != null) 'change_date': formatDateIso(changeDate!),
     };
   }
-
-  static String _formatDate(DateTime date) =>
-      '${date.year.toString().padLeft(4, '0')}'
-      '-${date.month.toString().padLeft(2, '0')}'
-      '-${date.day.toString().padLeft(2, '0')}';
 }

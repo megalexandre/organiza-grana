@@ -172,12 +172,12 @@ abstract final class AppTheme {
       drawerTheme: const DrawerThemeData(
         backgroundColor: AppColors.secondaryContainer,
       ),
-      cardTheme: CardThemeData(
-        color: const Color(0xFF252A3A),
+      cardTheme: const CardThemeData(
+        color: Color(0xFF252A3A),
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(4)),
-          side: const BorderSide(color: AppColors.outlineVariant),
+          borderRadius: BorderRadius.all(Radius.circular(4)),
+          side: BorderSide(color: AppColors.outlineVariant),
         ),
       ),
       dividerTheme: const DividerThemeData(
@@ -254,12 +254,12 @@ abstract final class AppTheme {
       drawerTheme: const DrawerThemeData(
         backgroundColor: AcalLightColors.secondaryContainer,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: const CardThemeData(
         color: Color(0xFFFFFFFF),
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(4)),
-          side: const BorderSide(color: AcalLightColors.outlineVariant),
+          borderRadius: BorderRadius.all(Radius.circular(4)),
+          side: BorderSide(color: AcalLightColors.outlineVariant),
         ),
       ),
       dividerTheme: const DividerThemeData(

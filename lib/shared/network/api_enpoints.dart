@@ -7,6 +7,7 @@ class ApiEndpoints {
   static const auth = _Auth();
   static const user = _User();
   static const receivables = _Receivables();
+  static const bordero = _Bordero();
 }
 
 class _Receivables {
@@ -16,6 +17,13 @@ class _Receivables {
   final String create = path;
   final String list = path;
   String byId(String id) => '$path/$id';
+}
+
+class _Bordero {
+  const _Bordero();
+
+  static const String path = '${ApiEndpoints._base}/bordero';
+  final String calculate = '$path/calculate';
 }
 
 class _Auth {

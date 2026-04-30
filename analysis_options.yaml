@@ -1,1 +1,10 @@
 include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    - avoid_print
+    - prefer_const_constructors
+    - prefer_final_fields
+    - avoid_redundant_argument_values
+    - always_use_package_imports
+    - prefer_single_quotes

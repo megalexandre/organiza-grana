@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:organizagrana/app/app_router.dart';
 import 'package:organizagrana/shared/layout/side_menu/layout_menu_config.dart';
 import 'package:organizagrana/shared/layout/side_menu/layout_menu_item.dart';
 import 'package:organizagrana/shared/layout/layout_page.dart';
@@ -44,17 +45,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _handleMenuSelect(int index) {
     final itemId = _menuItems[index].id;
-    context.go(_locationForItem(itemId));
-  }
-
-  String _locationForItem(String itemId) {
-    switch (itemId) {
-      case 'recebiveis':
-        return '/dashboard/recebiveis';
-      case 'dashboard':
-      default:
-        return '/dashboard';
-    }
+    context.go(AppRouter.pathForItem(itemId));
   }
 
   @override

@@ -134,11 +134,6 @@ class HttpReceivablesApiClient implements ReceivablesApiClient {
     );
   }
 
-  String _formatDate(DateTime date) =>
-      '${date.year.toString().padLeft(4, '0')}'
-      '-${date.month.toString().padLeft(2, '0')}'
-      '-${date.day.toString().padLeft(2, '0')}';
-
   ReceivableFailureType _mapFailure(ApiFailureType type) => switch (type) {
         ApiFailureType.network => ReceivableFailureType.network,
         ApiFailureType.unauthorized => ReceivableFailureType.unauthorized,

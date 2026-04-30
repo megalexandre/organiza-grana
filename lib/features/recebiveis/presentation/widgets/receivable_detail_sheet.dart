@@ -161,13 +161,12 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
             label: 'Data de alteração',
             value: dateFormat.format(r.changeDate!),
           ),
-        if (r.awaitingDays != null)
-          _buildField(
-            theme,
-            icon: Icons.hourglass_bottom_outlined,
-            label: 'Dias aguardando',
-            value: '${r.awaitingDays} dias',
-          ),
+        _buildField(
+          theme,
+          icon: Icons.hourglass_bottom_outlined,
+          label: 'Dias aguardando',
+          value: '${r.awaitingDays} dias',
+        ),
         if (r.createdAt != null)
           _buildField(
             theme,

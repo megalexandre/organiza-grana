@@ -25,7 +25,7 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Color.alphaBlend(Colors.black.withValues(alpha: 0.2), theme.colorScheme.surface),
-        border: const Border(bottom: BorderSide(color: Colors.black, width: 1)),
+        border: const Border(bottom: BorderSide()),
       ),
       child: AppBar(
         elevation: 0,
@@ -41,7 +41,7 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
               )
             : null,
         title: Text(
-          "Organiza Grana: $title",
+          'Organiza Grana: $title',
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
             color: appBarForeground,

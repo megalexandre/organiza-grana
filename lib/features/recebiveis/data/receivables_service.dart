@@ -2,7 +2,6 @@ import 'package:organizagrana/features/recebiveis/data/receivables_api_client.da
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
-import 'package:organizagrana/features/recebiveis/domain/receivable_result.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_sort.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivables_page_result.dart';
 
@@ -42,17 +41,11 @@ class ReceivablesService {
     }
   }
 
-  Future<ReceivableResult> create(ReceivableDraft draft) async {
+  Future<void> create(ReceivableDraft draft) async {
     try {
-      
       await _apiClient.create(draft);
-      return const ReceivableResult.success();
-
     } on ReceivablesApiClientException catch (e) {
-      return ReceivableResult.failure(ReceivableFailure(
-        type: e.type,
-        message: _messageFor(e.type),
-      ));
+      throw ReceivableFailure(type: e.type, message: _messageFor(e.type));
     }
   }
 
