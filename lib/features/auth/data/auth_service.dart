@@ -103,6 +103,14 @@ class AuthService {
     );
   }
 
+  Future<String?> refreshAccessToken() async {
+    final refreshToken = await _storage.readRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) return null;
+    final result = await _refreshSession(refreshToken);
+    if (!result.isSuccess) return null;
+    return _storage.readAccessToken();
+  }
+
   Future<UserProfile> getMe() async {
     final response = await _apiClient.getMe();
     return UserProfile.fromJson(response);

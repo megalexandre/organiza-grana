@@ -10,6 +10,7 @@ import 'package:organizagrana/features/bordero/data/bordero_service.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_api_client.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/l10n/app_localizations.dart';
+import 'package:organizagrana/shared/network/http_api_client.dart';
 
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
@@ -26,13 +27,17 @@ class _MainAppState extends State<MainApp> {
   void initState() {
     super.initState();
     final authStorage = AuthStorage();
-    _session = AuthSessionController(authService: AuthService(authStorage));
+    final authService = AuthService(authStorage);
+    _session = AuthSessionController(authService: authService);
+
     final tokenProvider = AuthStorageAccessTokenProvider(authStorage);
+    final httpClient = HttpApiClient(tokenRefresher: authService.refreshAccessToken);
+
     final receivablesService = ReceivablesService(
-      HttpReceivablesApiClient(tokenProvider),
+      HttpReceivablesApiClient(tokenProvider, httpClient: httpClient),
     );
     final borderoService = BorderoService(
-      HttpBorderoApiClient(tokenProvider),
+      HttpBorderoApiClient(tokenProvider, httpClient: httpClient),
     );
     _appRouter = AppRouter(
       _session,
