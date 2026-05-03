@@ -82,7 +82,6 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
   }
 
   Widget _buildHeader(ThemeData theme, ColorScheme colorScheme) {
-    final r = _receivable;
     return Container(
       color: colorScheme.surfaceContainerHighest,
       padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
@@ -96,8 +95,6 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
-          if (r != null) _buildStatusBadge(r.status, theme),
-          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.close, size: 18),
             visualDensity: VisualDensity.compact,
@@ -144,9 +141,14 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return ListView(
-      padding: EdgeInsets.zero,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _buildStatusBar(r.status, theme, colorScheme),
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
         _buildValueHighlight(r, theme, colorScheme),
         _buildField(
           theme,
@@ -197,6 +199,9 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
           valueColor: colorScheme.onSurface.withValues(alpha: 0.45),
           valueFontSize: 12,
           isLast: true,
+        ),
+            ],
+          ),
         ),
       ],
     );
@@ -284,20 +289,21 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
     );
   }
 
-  Widget _buildStatusBadge(ReceivableStatus status, ThemeData theme) {
+  Widget _buildStatusBar(ReceivableStatus status, ThemeData theme, ColorScheme colorScheme) {
     final color = status.badgeColor;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      width: double.infinity,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        border: Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
       ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Text(
         status.label,
-        style: theme.textTheme.labelSmall?.copyWith(
+        style: theme.textTheme.labelMedium?.copyWith(
           color: color,
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.3,
+          letterSpacing: 0.4,
         ),
       ),
     );

@@ -13,13 +13,11 @@ class DashboardPage extends StatefulWidget {
     required this.onLogout,
     required this.currentItemId,
     required this.body,
-    this.userEmail,
   });
 
   final Future<void> Function() onLogout;
   final String currentItemId;
   final Widget body;
-  final String? userEmail;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -63,7 +61,6 @@ class _DashboardPageState extends State<DashboardPage> {
       selectedIndex: selectedIndex,
       onMenuSelect: _handleMenuSelect,
       onLogout: widget.onLogout,
-      userEmail: widget.userEmail,
       body: widget.body,
     );
   }

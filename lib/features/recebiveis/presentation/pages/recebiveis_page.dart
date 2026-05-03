@@ -7,7 +7,7 @@ import 'package:organizagrana/features/recebiveis/domain/receivables_pagination.
 import 'package:organizagrana/features/recebiveis/presentation/widgets/add_receivable_dialog.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/receivable_card.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/receivable_detail_sheet.dart';
-
+import 'package:organizagrana/shared/layout/page_content_constraint.dart';
 
 class RecebiveisPage extends StatefulWidget {
   const RecebiveisPage({super.key, required this.service});
@@ -159,49 +159,51 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          _FilterButton(
-            active: _withDiscarded,
-            onPressed: () => _showFiltersSheet(context),
-          ),
-          const SizedBox(width: 8),
-          _SortButton(
-            active: !_isSortDefault,
-            onPressed: () => _showSortSheet(context),
-          ),
-          const SizedBox(width: 8),
-          if (_withDiscarded)
-            Chip(
-              label: const Text('Com descartados'),
-              visualDensity: VisualDensity.compact,
-              onDeleted: () {
-                setState(() => _withDiscarded = false);
-                _loadReceivables();
-              },
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: PageContentConstraint(
+        child: Row(
+          children: [
+            _FilterButton(
+              active: _withDiscarded,
+              onPressed: () => _showFiltersSheet(context),
             ),
-          if (!_isSortDefault) ...[
-            if (_withDiscarded) const SizedBox(width: 4),
-            Chip(
-              label: Text(_sortChipLabel),
-              visualDensity: VisualDensity.compact,
-              onDeleted: () {
-                setState(() {
-                  _sortBy = _defaultSortBy;
-                  _sortDirection = _defaultSortDirection;
-                });
-                _loadReceivables();
-              },
+            const SizedBox(width: 8),
+            _SortButton(
+              active: !_isSortDefault,
+              onPressed: () => _showSortSheet(context),
             ),
+            const SizedBox(width: 8),
+            if (_withDiscarded)
+              Chip(
+                label: const Text('Com descartados'),
+                visualDensity: VisualDensity.compact,
+                onDeleted: () {
+                  setState(() => _withDiscarded = false);
+                  _loadReceivables();
+                },
+              ),
+            if (!_isSortDefault) ...[
+              if (_withDiscarded) const SizedBox(width: 4),
+              Chip(
+                label: Text(_sortChipLabel),
+                visualDensity: VisualDensity.compact,
+                onDeleted: () {
+                  setState(() {
+                    _sortBy = _defaultSortBy;
+                    _sortDirection = _defaultSortDirection;
+                  });
+                  _loadReceivables();
+                },
+              ),
+            ],
+            const Spacer(),
+            if (_pagination != null)
+              Text(
+                '${_receivables.length} / ${_pagination!.totalCount}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
           ],
-          const Spacer(),
-          if (_pagination != null)
-            Text(
-              '${_receivables.length} / ${_pagination!.totalCount}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -323,28 +325,30 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
 
     final hasMore = _pagination?.hasNextPage ?? false;
 
-    return ListView.separated(
-      controller: _scrollController,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      itemCount: _receivables.length + (hasMore ? 1 : 0),
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        if (index == _receivables.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-        final r = _receivables[index];
-        return ReceivableCard(
-          receivable: r,
-          onDetails: () => showReceivableDetailSheet(
-            context,
-            id: r.id,
-            service: widget.service,
-          ),
-        );
-      },
+    return PageContentConstraint(
+      child: ListView.separated(
+          controller: _scrollController,
+          padding: const EdgeInsets.only(top: 16, bottom: 32),
+          itemCount: _receivables.length + (hasMore ? 1 : 0),
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            if (index == _receivables.length) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final r = _receivables[index];
+            return ReceivableCard(
+              receivable: r,
+              onDetails: () => showReceivableDetailSheet(
+                context,
+                id: r.id,
+                service: widget.service,
+              ),
+            );
+          },
+        ),
     );
   }
 

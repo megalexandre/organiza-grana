@@ -80,7 +80,6 @@ class AppRouter {
 
           return DashboardPage(
             onLogout: _session.logout,
-            userEmail: _session.userEmail,
             currentItemId: currentItemId,
             body: child,
           );

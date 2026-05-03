@@ -42,7 +42,7 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
   final _formKey = GlobalKey<FormState>();
   final _valueController = TextEditingController();
   final _dueDateController = TextEditingController();
-  final _awaitingDaysController = TextEditingController(text: '1');
+  final _awaitingDaysController = TextEditingController(text: '2');
 
   DateTime? _selectedDueDate;
 
@@ -188,7 +188,7 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
               controller: _awaitingDaysController,
               decoration: const InputDecoration(
                 labelText: 'Dias em espera',
-                hintText: '1',
+                hintText: '2',
                 suffixText: 'dias',
               ),
               keyboardType: TextInputType.number,

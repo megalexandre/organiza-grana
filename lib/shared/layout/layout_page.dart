@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:organizagrana/shared/layout/adaptive_menu_scaffold.dart';
-import 'package:organizagrana/shared/layout/footer/layout_footer.dart';
 import 'package:organizagrana/shared/layout/side_menu/layout_menu_item.dart';
 import 'package:organizagrana/shared/layout/side_menu/layout_side_menu.dart';
 import 'package:organizagrana/shared/layout/top_bar/layout_top_bar.dart';
 
-/// Shell de página completa com top bar, menu lateral e footer.
-///
 /// Combina [AdaptiveMenuScaffold] + [LayoutTopBar] + [LayoutSideMenu] /
-/// [LayoutDrawer] + [LayoutFooter] em um único widget configurável.
+/// [LayoutDrawer] em um único widget configurável.
 class LayoutPage extends StatelessWidget {
   const LayoutPage({
     super.key,
@@ -18,8 +15,6 @@ class LayoutPage extends StatelessWidget {
     required this.onMenuSelect,
     required this.onLogout,
     required this.body,
-    this.userEmail,
-    this.authorLabel = 'feito por alexandre queiroz',
     this.logoutTooltip = 'Sair',
     this.backgroundColor = Colors.white,
     this.desktopBreakpoint = 800,
@@ -42,12 +37,6 @@ class LayoutPage extends StatelessWidget {
 
   /// Conteúdo principal da página.
   final Widget body;
-
-  /// Email exibido no footer (opcional).
-  final String? userEmail;
-
-  /// Texto do autor exibido no footer.
-  final String authorLabel;
 
   /// Tooltip do botão de logout na top bar.
   final String logoutTooltip;
@@ -82,15 +71,7 @@ class LayoutPage extends StatelessWidget {
         onSelect: onMenuSelect,
         backgroundColor: backgroundColor,
       ),
-      body: Column(
-        children: [
-          Expanded(child: body),
-          LayoutFooter(
-            authorLabel: authorLabel,
-            userEmail: userEmail,
-          ),
-        ],
-      ),
+      body: body,
     );
   }
 }

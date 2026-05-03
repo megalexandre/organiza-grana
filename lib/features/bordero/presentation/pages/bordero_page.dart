@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import 'package:organizagrana/features/bordero/data/bordero_export_service.dart' show exportBorderoToCsv;
 import 'package:organizagrana/features/bordero/data/bordero_service.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_failure.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input_item.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_result.dart';
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_add_item_dialog.dart';
-import 'package:organizagrana/features/bordero/presentation/widgets/bordero_item_tile.dart';
-import 'package:organizagrana/features/bordero/presentation/widgets/bordero_result_card.dart';
+import 'package:organizagrana/features/bordero/presentation/widgets/bordero_export_table.dart';
+import 'package:organizagrana/features/bordero/presentation/widgets/bordero_item_card.dart';
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_summary_panel.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
+import 'package:organizagrana/shared/layout/page_content_constraint.dart';
+import 'package:organizagrana/shared/utils/web_download.dart';
+import 'package:organizagrana/shared/utils/widget_capture.dart';
 
 class BorderoPage extends StatefulWidget {
   const BorderoPage({super.key, required this.service});
@@ -25,11 +30,12 @@ class _BorderoPageState extends State<BorderoPage> {
   final _changeDateController = TextEditingController();
   final _rateController = TextEditingController();
 
-  DateTime _changeDate = DateTime.now().add(const Duration(days: 2));
+  DateTime _changeDate = DateTime.now();
   final List<BorderoInputItem> _items = [];
   BorderoResult? _result;
   bool _loading = false;
   String? _errorMessage;
+  bool _paramsConfirmed = false;
 
   @override
   void initState() {
@@ -60,53 +66,95 @@ class _BorderoPageState extends State<BorderoPage> {
     }
   }
 
+  void _confirmParams() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _paramsConfirmed = true);
+  }
+
+  void _editParams() {
+    setState(() {
+      _paramsConfirmed = false;
+      _result = null;
+      _errorMessage = null;
+    });
+  }
+
   Future<void> _openAddItemDialog() async {
     final item = await showBorderoAddItem(context);
     if (item != null) {
       setState(() {
         _items.add(item);
-        _result = null;
         _errorMessage = null;
       });
+      _calculate();
     }
   }
 
   void _removeItem(int index) {
     setState(() {
       _items.removeAt(index);
-      _result = null;
       _errorMessage = null;
     });
+    if (_items.isEmpty) {
+      setState(() => _result = null);
+    } else {
+      _calculate();
+    }
+  }
+
+  BorderoInput _buildInput() {
+    final rate =
+        double.tryParse(_rateController.text.trim().replaceAll(',', '.')) ?? 0;
+    return BorderoInput(
+      changeDate: _changeDate,
+      monthlyRatePercent: rate,
+      items: List.unmodifiable(_items),
+    );
+  }
+
+  void _exportToCsv() {
+    if (_result == null) return;
+    try {
+      final bytes = exportBorderoToCsv(_buildInput(), _result!);
+      final filename =
+          'bordero_${DateFormat('yyyy-MM-dd').format(_changeDate)}.csv';
+      downloadFile(bytes, filename, 'text/csv;charset=utf-8');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao exportar CSV: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportToImage() async {
+    if (_result == null) return;
+    try {
+      final input = _buildInput();
+      final bytes = await captureWidgetAsPng(
+        BorderoExportTable(input: input, result: _result!),
+      );
+      final filename =
+          'bordero_${DateFormat('yyyy-MM-dd').format(_changeDate)}.png';
+      downloadFile(bytes, filename, 'image/png');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao exportar imagem: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _calculate() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (_items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Adicione ao menos um recebível antes de calcular.'),
-        ),
-      );
-      return;
-    }
-
-    final rate =
-        double.tryParse(_rateController.text.trim().replaceAll(',', '.')) ?? 0;
-
+    if (_items.isEmpty) return;
     setState(() {
       _loading = true;
       _errorMessage = null;
-      _result = null;
     });
-
     try {
-      final result = await widget.service.calculate(
-        BorderoInput(
-          changeDate: _changeDate,
-          monthlyRatePercent: rate,
-          items: List.unmodifiable(_items),
-        ),
-      );
+      final result = await widget.service.calculate(_buildInput());
       if (mounted) setState(() => _result = result);
     } on BorderoFailure catch (e) {
       if (mounted) setState(() => _errorMessage = e.message);
@@ -118,63 +166,112 @@ class _BorderoPageState extends State<BorderoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isNarrow = constraints.maxWidth < 600;
-          return SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              isNarrow ? 16 : 24,
-              isNarrow ? 16 : 24,
-              isNarrow ? 16 : 24,
-              40,
-            ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 720),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildParamsSection(context, isNarrow),
-                      const SizedBox(height: 24),
-                      _buildItemsSection(context),
-                      const SizedBox(height: 20),
-                      _buildCalculateButton(context),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 250),
-                        child: _errorMessage != null
-                            ? Padding(
-                                key: const ValueKey('error'),
-                                padding: const EdgeInsets.only(top: 16),
-                                child: _buildError(context),
-                              )
-                            : const SizedBox.shrink(key: ValueKey('no-error')),
-                      ),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        switchInCurve: Curves.easeOut,
-                        child: _result != null
-                            ? Padding(
-                                key: ValueKey(_result),
-                                padding: const EdgeInsets.only(top: 32),
-                                child: _buildResultSection(context, _result!),
-                              )
-                            : const SizedBox.shrink(key: ValueKey('no-result')),
-                      ),
-                    ],
+      body: Column(
+        children: [
+          if (_paramsConfirmed) _buildCompactParams(context),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 600;
+                return SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    isNarrow ? 16 : 24,
+                    isNarrow ? 16 : 24,
+                    isNarrow ? 16 : 24,
+                    96,
                   ),
-                ),
-              ),
+                  child: PageContentConstraint(
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!_paramsConfirmed) ...[
+                              _buildParamsSection(context, isNarrow),
+                              const SizedBox(height: 20),
+                              _buildConfirmButton(),
+                            ],
+                            if (_paramsConfirmed) ...[
+                              _buildItemsSection(context),
+                              const SizedBox(height: 20),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 250),
+                                child: _errorMessage != null
+                                    ? Padding(
+                                        key: const ValueKey('error'),
+                                        padding: const EdgeInsets.only(bottom: 16),
+                                        child: _buildError(context),
+                                      )
+                                    : const SizedBox.shrink(
+                                        key: ValueKey('no-error'),
+                                      ),
+                              ),
+                              if (_loading)
+                                const LinearProgressIndicator(minHeight: 2),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                switchInCurve: Curves.easeOut,
+                                child: _result != null
+                                    ? Padding(
+                                        key: ValueKey(_result),
+                                        padding: const EdgeInsets.only(top: 16),
+                                        child: _buildResultSection(
+                                          context,
+                                          _result!,
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(
+                                        key: ValueKey('no-result'),
+                                      ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openAddItemDialog,
-        icon: const Icon(Icons.add),
-        label: const Text('Recebível'),
-        tooltip: 'Adicionar recebível',
+      floatingActionButton: _paramsConfirmed
+          ? FloatingActionButton.extended(
+              onPressed: _openAddItemDialog,
+              icon: const Icon(Icons.add),
+              label: const Text('Recebível'),
+              tooltip: 'Adicionar recebível',
+            )
+          : null,
+    );
+  }
+
+  Widget _buildCompactParams(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        border: Border(
+          bottom: BorderSide(color: colorScheme.outlineVariant),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.tune_outlined, size: 16, color: colorScheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Troca: ${dateFormat.format(_changeDate)}  |  Juros: ${_rateController.text}% a.m.',
+              style: textTheme.bodySmall,
+            ),
+          ),
+          TextButton(
+            onPressed: _editParams,
+            child: const Text('Editar'),
+          ),
+        ],
       ),
     );
   }
@@ -232,6 +329,17 @@ class _BorderoPageState extends State<BorderoPage> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildConfirmButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.icon(
+        onPressed: _confirmParams,
+        icon: const Icon(Icons.arrow_forward),
+        label: const Text('Confirmar e adicionar recebíveis'),
       ),
     );
   }
@@ -319,9 +427,11 @@ class _BorderoPageState extends State<BorderoPage> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _items.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (_, index) => BorderoItemTile(
+                  itemBuilder: (_, index) => BorderoItemCard(
                     key: ObjectKey(_items[index]),
-                    item: _items[index],
+                    index: index,
+                    inputItem: _items[index],
+                    resultItem: _result?.items[index],
                     onRemove: () => _removeItem(index),
                   ),
                 ),
@@ -339,9 +449,7 @@ class _BorderoPageState extends State<BorderoPage> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40),
       decoration: BoxDecoration(
-        border: Border.all(
-          color: colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
@@ -366,23 +474,6 @@ class _BorderoPageState extends State<BorderoPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCalculateButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton.icon(
-        onPressed: _loading ? null : _calculate,
-        icon: _loading
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.calculate_outlined),
-        label: Text(_loading ? 'Calculando…' : 'Calcular Borderô'),
       ),
     );
   }
@@ -413,28 +504,27 @@ class _BorderoPageState extends State<BorderoPage> {
   }
 
   Widget _buildResultSection(BuildContext context, BorderoResult result) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Resultado',
-          style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 12),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: result.items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
-          itemBuilder: (_, index) => BorderoResultCard(
-            index: index,
-            item: result.items[index],
-          ),
-        ),
-        const SizedBox(height: 16),
         BorderoSummaryPanel(result: result),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            OutlinedButton.icon(
+              onPressed: _exportToImage,
+              icon: const Icon(Icons.image_outlined),
+              label: const Text('Exportar Imagem'),
+            ),
+            const SizedBox(width: 12),
+            OutlinedButton.icon(
+              onPressed: _exportToCsv,
+              icon: const Icon(Icons.table_chart_outlined),
+              label: const Text('Exportar CSV'),
+            ),
+          ],
+        ),
       ],
     );
   }
