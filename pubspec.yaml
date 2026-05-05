@@ -19,6 +19,7 @@ dependencies:
   http: ^1.5.0
   shared_preferences: ^2.5.3
   material_table_view: ^5.5.2
+  excel: ^4.0.6
 
 dev_dependencies:
   flutter_test:

@@ -220,25 +220,25 @@ class _MobileLayout extends StatelessWidget {
     return SafeArea(
       child: LayoutBuilder(
         builder: (_, bc) => SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
           child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: bc.maxHeight - 64),
+            constraints: BoxConstraints(minHeight: bc.maxHeight - 80),
             child: Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
+                  Column(
                     children: [
-                      Icon(Icons.savings_outlined, size: 28, color: colorScheme.primary),
-                      const SizedBox(width: 8),
+                      Icon(Icons.savings_outlined, size: 48, color: colorScheme.primary),
+                      const SizedBox(height: 8),
                       Text(
                         'Organiza Grana',
                         style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 40),
                   form,
                 ],
               ),
@@ -278,79 +278,106 @@ class _LoginForm extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
 
-    return Form(
-      key: formKey,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Entrar',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+    final roundedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+    );
+
+    return Theme(
+      data: theme.copyWith(
+        inputDecorationTheme: theme.inputDecorationTheme.copyWith(
+          border: roundedBorder,
+          enabledBorder: roundedBorder,
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Use seu e-mail e senha para acessar sua conta.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: theme.colorScheme.error),
           ),
-          const SizedBox(height: 24),
-          TextFormField(
-            controller: emailController,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) {
-              FocusScope.of(context).requestFocus(passwordFocusNode);
-            },
-            decoration: const InputDecoration(labelText: 'E-mail'),
-            validator: (value) => AppValidators.email(value, l10n),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: theme.colorScheme.error, width: 1.5),
           ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: passwordController,
-            focusNode: passwordFocusNode,
-            obscureText: obscurePassword,
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) {
-              if (!isSubmitting) onSubmit();
-            },
-            decoration: InputDecoration(
-              labelText: 'Senha',
-              suffixIcon: IconButton(
-                onPressed: onTogglePasswordVisibility,
-                icon: Icon(
-                  obscurePassword ? Icons.visibility : Icons.visibility_off,
-                ),
+        ),
+      ),
+      child: Form(
+        key: formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Entrar',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w700,
               ),
             ),
-            validator: (value) => AppValidators.password(value, l10n),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 48,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            const SizedBox(height: 8),
+            Text(
+              'Use seu e-mail e senha para acessar sua conta.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextFormField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) {
+                FocusScope.of(context).requestFocus(passwordFocusNode);
+              },
+              decoration: const InputDecoration(hintText: 'E-mail'),
+              validator: (value) => AppValidators.email(value, l10n),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: passwordController,
+              focusNode: passwordFocusNode,
+              obscureText: obscurePassword,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) {
+                if (!isSubmitting) onSubmit();
+              },
+              decoration: InputDecoration(
+                hintText: 'Senha',
+                suffixIcon: IconButton(
+                  onPressed: onTogglePasswordVisibility,
+                  icon: Icon(
+                    obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  ),
                 ),
               ),
-              onPressed: isSubmitting ? null : onSubmit,
-              child: isSubmitting
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: theme.colorScheme.onPrimary,
-                      ),
-                    )
-                  : const Text('Login'),
+              validator: (value) => AppValidators.password(value, l10n),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 48,
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: isSubmitting ? null : onSubmit,
+                child: isSubmitting
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      )
+                    : const Text('Login'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
