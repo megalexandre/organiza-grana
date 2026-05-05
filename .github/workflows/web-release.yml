@@ -29,7 +29,7 @@ jobs:
         run: flutter pub get
 
       - name: Build web
-        run: flutter build web
+        run: sh scripts/build_web.sh
 
       - name: Validate Docker Hub token
         env:
