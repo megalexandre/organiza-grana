@@ -3,11 +3,13 @@ import 'package:organizagrana/features/recebiveis/data/receivables_service.dart'
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_sort.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_summary.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivables_pagination.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/add_receivable_dialog.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/receivable_card.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/receivable_detail_sheet.dart';
 import 'package:organizagrana/shared/layout/page_content_constraint.dart';
+import 'package:organizagrana/shared/utils/app_formats.dart';
 
 class RecebiveisPage extends StatefulWidget {
   const RecebiveisPage({super.key, required this.service});
@@ -30,9 +32,11 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   String? _errorMessage;
   bool _withDiscarded = false;
   ReceivablesPagination? _pagination;
+  ReceivablesSummary? _summary;
   int _currentPage = 1;
   ReceivableSortField _sortBy = ReceivableSortField.dueDate;
   ReceivableSortDirection _sortDirection = ReceivableSortDirection.asc;
+  bool _compactView = false;
 
   static const _defaultSortBy = ReceivableSortField.dueDate;
   static const _defaultSortDirection = ReceivableSortDirection.asc;
@@ -84,6 +88,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
         setState(() {
           _receivables = result.items;
           _pagination = result.pagination;
+          _summary = result.summary;
         });
       }
     } on ReceivableFailure catch (e) {
@@ -146,9 +151,61 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
       ),
       body: Column(
         children: [
+          _buildSummary(context),
           _buildToolbar(context),
           Expanded(child: _buildBody(context)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSummary(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final summary = _summary;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      child: PageContentConstraint(
+        child: Row(
+          children: [
+            if (summary != null) ...[
+              Text(
+                currencyFormat.format(summary.totalAmount),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${summary.count} Recebivíveis',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSecondaryContainer,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+            ] else if (_loading)
+              Container(
+                height: 28,
+                width: 160,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -159,7 +216,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       child: PageContentConstraint(
         child: Row(
           children: [
@@ -197,11 +254,12 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
               ),
             ],
             const Spacer(),
-            if (_pagination != null)
-              Text(
-                '${_receivables.length} / ${_pagination!.totalCount}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+            _ToolbarIconButton(
+              icon: _compactView ? Icons.view_agenda_outlined : Icons.view_list,
+              tooltip: _compactView ? 'Visualização completa' : 'Visualização compacta',
+              active: _compactView,
+              onPressed: () => setState(() => _compactView = !_compactView),
+            ),
           ],
         ),
       ),
@@ -327,28 +385,29 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
 
     return PageContentConstraint(
       child: ListView.separated(
-          controller: _scrollController,
-          padding: const EdgeInsets.only(top: 16, bottom: 32),
-          itemCount: _receivables.length + (hasMore ? 1 : 0),
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            if (index == _receivables.length) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-            final r = _receivables[index];
-            return ReceivableCard(
-              receivable: r,
-              onDetails: () => showReceivableDetailSheet(
-                context,
-                id: r.id,
-                service: widget.service,
-              ),
+        controller: _scrollController,
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        itemCount: _receivables.length + (hasMore ? 1 : 0),
+        separatorBuilder: (_, _) => SizedBox(height: _compactView ? 4 : 12),
+        itemBuilder: (context, index) {
+          if (index == _receivables.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
             );
-          },
-        ),
+          }
+          final r = _receivables[index];
+          return ReceivableCard(
+            receivable: r,
+            compact: _compactView,
+            onDetails: () => showReceivableDetailSheet(
+              context,
+              id: r.id,
+              service: widget.service,
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -376,6 +435,47 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
           const SizedBox(height: 8),
           TextButton(onPressed: _loadReceivables, child: const Text('Tentar novamente')),
         ],
+      ),
+    );
+  }
+}
+
+class _ToolbarIconButton extends StatelessWidget {
+  const _ToolbarIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.active = false,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = active
+        ? colorScheme.primary
+        : onPressed != null
+            ? colorScheme.onSurface.withValues(alpha: 0.7)
+            : colorScheme.onSurface.withValues(alpha: 0.3);
+    final borderColor = active ? colorScheme.primary : colorScheme.outlineVariant;
+    final bg = active ? colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent;
+
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: bg,
+            border: Border.all(color: borderColor),
+          ),
+          child: Icon(icon, size: 18, color: color),
+        ),
       ),
     );
   }

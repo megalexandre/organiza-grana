@@ -3,7 +3,6 @@ import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_sort.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivables_page_result.dart';
-import 'package:organizagrana/features/recebiveis/domain/receivables_pagination.dart';
 import 'package:organizagrana/shared/network/api_enpoints.dart';
 import 'package:organizagrana/shared/network/access_token_provider.dart';
 import 'package:organizagrana/shared/network/http_api_client.dart';
@@ -53,11 +52,7 @@ class HttpReceivablesApiClient implements ReceivablesApiClient {
 
     try {
       final response = await _httpClient.getJson(uri, bearerToken: token);
-      final items = _extractListFromMap(response);
-      return ReceivablesPageResult(
-        items: items.map(Receivable.fromJson).toList(),
-        pagination: _extractPagination(response),
-      );
+      return ReceivablesPageResult.fromJson(response);
     } on ApiException catch (e) {
       throw ReceivablesApiClientException(_mapFailure(e.type));
     }
@@ -102,36 +97,6 @@ class HttpReceivablesApiClient implements ReceivablesApiClient {
       throw const ReceivablesApiClientException(ReceivableFailureType.unauthorized);
     }
     return token;
-  }
-
-  List<Map<String, dynamic>> _extractListFromMap(Map<String, dynamic> response) {
-    final candidates = [
-      response['data'],
-      response['items'],
-      response['receivables'],
-    ];
-
-    for (final candidate in candidates) {
-      if (candidate is List) {
-        return candidate.whereType<Map<String, dynamic>>().toList();
-      }
-    }
-
-    return const [];
-  }
-
-  ReceivablesPagination _extractPagination(Map<String, dynamic> response) {
-    final rawPagination = response['pagination'];
-    if (rawPagination is Map<String, dynamic>) {
-      return ReceivablesPagination.fromJson(rawPagination);
-    }
-
-    return const ReceivablesPagination(
-      currentPage: 1,
-      perPage: 10,
-      totalPages: 1,
-      totalCount: 0,
-    );
   }
 
   ReceivableFailureType _mapFailure(ApiFailureType type) => switch (type) {

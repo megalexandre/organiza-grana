@@ -40,8 +40,9 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               )
             : null,
+        centerTitle: true,
         title: Text(
-          'Organiza Grana: $title',
+          'Organiza Grana',
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
             color: appBarForeground,
