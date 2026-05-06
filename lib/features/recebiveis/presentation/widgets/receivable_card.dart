@@ -5,7 +5,7 @@ import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart'
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
 final _cardDateFormat = DateFormat('dd MMM yyyy', 'pt_BR');
-final _shortDateFormat = DateFormat('dd MMM', 'pt_BR');
+final _monthYearFormat = DateFormat('MM/yyyy', 'pt_BR');
 
 class ReceivableCard extends StatefulWidget {
   const ReceivableCard({
@@ -206,24 +206,32 @@ class _CompactCardState extends State<_CompactCard> {
 
                       const SizedBox(width: 8),
 
-                      // Datas
+                      // Data de depósito
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _CompactDateRow(
-                              icon: Icons.calendar_today_outlined,
-                              text: _shortDateFormat.format(r.dueDate),
-                            ),
-                            const SizedBox(height: 4),
-                            _CompactDateRow(
-                              icon: Icons.swap_horiz,
-                              text: r.changeDate != null
-                                  ? _shortDateFormat.format(r.changeDate!)
-                                  : '—',
-                            ),
-                          ],
+                        child: Center(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'VENCIMENTO',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.onSurface.withValues(alpha: 0.45),
+                                  letterSpacing: 0.6,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 9,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _monthYearFormat.format(r.dueDate),
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.onSurface.withValues(alpha: 0.75),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
 
@@ -252,12 +260,6 @@ class _CompactCardState extends State<_CompactCard> {
                           ),
                         ],
                       ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.chevron_right,
-                        color: colorScheme.onSurface.withValues(alpha: 0.3),
-                        size: 20,
-                      ),
                     ],
                   ),
                 ),
@@ -272,30 +274,6 @@ class _CompactCardState extends State<_CompactCard> {
   }
 }
 
-class _CompactDateRow extends StatelessWidget {
-  const _CompactDateRow({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Row(
-      children: [
-        Icon(icon, size: 12, color: colorScheme.onSurface.withValues(alpha: 0.45)),
-        const SizedBox(width: 4),
-        Text(
-          text,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurface.withValues(alpha: 0.7),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge({required this.status});
