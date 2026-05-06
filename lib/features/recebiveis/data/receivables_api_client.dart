@@ -2,6 +2,7 @@ import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_sort.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_update.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivables_page_result.dart';
 import 'package:organizagrana/shared/network/api_enpoints.dart';
 import 'package:organizagrana/shared/network/access_token_provider.dart';
@@ -17,6 +18,7 @@ abstract class ReceivablesApiClient {
   });
   Future<Receivable> getById(String id);
   Future<void> create(ReceivableDraft draft);
+  Future<void> update(String id, ReceivableUpdate update);
 }
 
 class ReceivablesApiClientException implements Exception {
@@ -84,6 +86,21 @@ class HttpReceivablesApiClient implements ReceivablesApiClient {
       await _httpClient.postJson(
         Uri.parse(ApiEndpoints.receivables.create),
         draft.toJson(),
+        bearerToken: token,
+      );
+    } on ApiException catch (e) {
+      throw ReceivablesApiClientException(_mapFailure(e.type));
+    }
+  }
+
+  @override
+  Future<void> update(String id, ReceivableUpdate update) async {
+    final token = await _readToken();
+
+    try {
+      await _httpClient.putJson(
+        Uri.parse(ApiEndpoints.receivables.update(id)),
+        update.toJson(),
         bearerToken: token,
       );
     } on ApiException catch (e) {

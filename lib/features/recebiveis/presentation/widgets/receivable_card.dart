@@ -7,7 +7,7 @@ import 'package:organizagrana/shared/utils/app_formats.dart';
 final _cardDateFormat = DateFormat('dd MMM yyyy', 'pt_BR');
 final _shortDateFormat = DateFormat('dd MMM', 'pt_BR');
 
-class ReceivableCard extends StatelessWidget {
+class ReceivableCard extends StatefulWidget {
   const ReceivableCard({
     super.key,
     required this.receivable,
@@ -20,107 +20,137 @@ class ReceivableCard extends StatelessWidget {
   final bool compact;
 
   @override
+  State<ReceivableCard> createState() => _ReceivableCardState();
+}
+
+class _ReceivableCardState extends State<ReceivableCard> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    if (compact) {
-      return _CompactCard(receivable: receivable, onDetails: onDetails);
+    if (widget.compact) {
+      return _CompactCard(receivable: widget.receivable, onDetails: widget.onDetails);
     }
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final r = receivable;
+    final r = widget.receivable;
 
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onDetails,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _StatusBadge(status: r.status),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Valor',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.55),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    currencyFormat.format(r.value),
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _InfoRow(
-                    label: 'Data da Troca',
-                    value: r.changeDate != null
-                        ? _cardDateFormat.format(r.changeDate!)
-                        : '—',
-                  ),
-                  const SizedBox(height: 10),
-                  _InfoRow(
-                    label: 'Data do Pagamento',
-                    value: _cardDateFormat.format(r.dueDate),
-                  ),
-                  const SizedBox(height: 16),
-                  const Divider(height: 1, thickness: 1),
-                  const SizedBox(height: 12),
-                  Row(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedScale(
+        scale: _hovered ? 1.02 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        child: Card(
+          margin: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: widget.onDetails,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _StatusBadge(status: r.status),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'DIAS EM ESPERA',
+                        'Valor',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurface.withValues(alpha: 0.45),
-                          letterSpacing: 1.0,
-                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface.withValues(alpha: 0.55),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(height: 4),
                       Text(
-                        '${r.awaitingDays}',
-                        style: theme.textTheme.displaySmall?.copyWith(
+                        currencyFormat.format(r.value),
+                        style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
-                          height: 1,
+                          color: colorScheme.primary,
                         ),
+                      ),
+                      const SizedBox(height: 16),
+                      _InfoRow(
+                        label: 'Data da Troca',
+                        value: r.changeDate != null
+                            ? _cardDateFormat.format(r.changeDate!)
+                            : '—',
+                      ),
+                      const SizedBox(height: 10),
+                      _InfoRow(
+                        label: 'Data do Pagamento',
+                        value: _cardDateFormat.format(r.dueDate),
+                      ),
+                      const SizedBox(height: 16),
+                      const Divider(height: 1, thickness: 1),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Text(
+                            'DIAS EM ESPERA',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onSurface.withValues(alpha: 0.45),
+                              letterSpacing: 1.0,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${r.awaitingDays}',
+                            style: theme.textTheme.displaySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                              height: 1,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _CompactCard extends StatelessWidget {
+class _CompactCard extends StatefulWidget {
   const _CompactCard({required this.receivable, this.onDetails});
 
   final Receivable receivable;
   final VoidCallback? onDetails;
 
   @override
+  State<_CompactCard> createState() => _CompactCardState();
+}
+
+class _CompactCardState extends State<_CompactCard> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final r = receivable;
+    final r = widget.receivable;
     final statusColor = r.status.badgeColor;
 
-    return Card(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedScale(
+        scale: _hovered ? 1.02 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        child: Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onDetails,
+        onTap: widget.onDetails,
         child: IntrinsicHeight(
           child: Row(
             children: [
@@ -234,6 +264,8 @@ class _CompactCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
         ),
       ),
     );

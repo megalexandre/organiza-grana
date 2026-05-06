@@ -1,7 +1,7 @@
 class ApiEndpoints {
   static const _base = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:3000',
+    defaultValue: 'https://calculajuros.online/api',
   );
 
   static const auth = _Auth();
@@ -17,6 +17,7 @@ class _Receivables {
   final String create = path;
   final String list = path;
   String byId(String id) => '$path/$id';
+  String update(String id) => '$path/$id';
 }
 
 class _Bordero {

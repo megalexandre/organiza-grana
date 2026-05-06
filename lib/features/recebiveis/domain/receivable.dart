@@ -11,6 +11,7 @@ class Receivable {
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
+    this.notes,
   });
 
   final String id;
@@ -22,6 +23,7 @@ class Receivable {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
+  final String? notes;
 
   double get value => amountCents / 100;
 
@@ -36,6 +38,7 @@ class Receivable {
       createdAt: _parseDate(json['created_at']),
       updatedAt: _parseDate(json['updated_at']),
       deletedAt: _parseDate(json['deleted_at']),
+      notes: json['notes'] as String?,
     );
   }
 

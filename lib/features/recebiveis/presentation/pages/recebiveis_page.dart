@@ -164,35 +164,24 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     final colorScheme = theme.colorScheme;
     final summary = _summary;
 
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
-      ),
+    return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: PageContentConstraint(
         child: Row(
           children: [
             if (summary != null) ...[
               Text(
+                '${summary.count} Recebivíveis',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+              const Spacer(),
+              Text(
                 currencyFormat.format(summary.totalAmount),
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  '${summary.count} Recebivíveis',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSecondaryContainer,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                  ),
                 ),
               ),
             ] else if (_loading)
@@ -400,11 +389,14 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
           return ReceivableCard(
             receivable: r,
             compact: _compactView,
-            onDetails: () => showReceivableDetailSheet(
-              context,
-              id: r.id,
-              service: widget.service,
-            ),
+            onDetails: () async {
+              final saved = await showReceivableDetailSheet(
+                context,
+                id: r.id,
+                service: widget.service,
+              );
+              if (saved == true) _loadReceivables();
+            },
           );
         },
       ),

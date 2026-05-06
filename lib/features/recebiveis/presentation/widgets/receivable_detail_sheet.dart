@@ -3,20 +3,21 @@ import 'package:organizagrana/features/recebiveis/data/receivables_service.dart'
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_update.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
-void showReceivableDetailSheet(
+Future<bool?> showReceivableDetailSheet(
   BuildContext context, {
   required String id,
   required ReceivablesService service,
 }) {
-  showDialog<void>(
+  return showDialog<bool>(
     context: context,
     builder: (_) => Dialog(
       shape: const RoundedRectangleBorder(),
       clipBehavior: Clip.antiAlias,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 580),
+        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 660),
         child: _ReceivableDetailSheet(id: id, service: service),
       ),
     ),
@@ -35,13 +36,22 @@ class _ReceivableDetailSheet extends StatefulWidget {
 
 class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
   bool _loading = true;
+  bool _saving = false;
   Receivable? _receivable;
   String? _error;
+  ReceivableStatus? _selectedStatus;
+  final _notesController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _fetch();
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetch() async {
@@ -51,11 +61,37 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
     });
     try {
       final r = await widget.service.getById(widget.id);
-      if (mounted) setState(() => _receivable = r);
+      if (mounted) {
+        setState(() {
+          _receivable = r;
+          _selectedStatus = r.status;
+          _notesController.text = r.notes ?? '';
+        });
+      }
     } on ReceivableFailure catch (e) {
       if (mounted) setState(() => _error = e.message);
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      await widget.service.update(
+        widget.id,
+        ReceivableUpdate(
+          status: _selectedStatus!,
+          notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        ),
+      );
+      if (mounted) Navigator.pop(context, true);
+    } on ReceivableFailure catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -111,12 +147,26 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
         border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Fechar'),
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: _saving ? null : () => Navigator.pop(context, false),
+            child: const Text('Fechar'),
+          ),
+          const SizedBox(width: 8),
+          if (_receivable != null)
+            FilledButton(
+              onPressed: _saving || _selectedStatus == null ? null : _save,
+              child: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Salvar'),
+            ),
+        ],
       ),
     );
   }
@@ -198,12 +248,68 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
           value: r.id,
           valueColor: colorScheme.onSurface.withValues(alpha: 0.45),
           valueFontSize: 12,
-          isLast: true,
         ),
+        _buildEditSection(theme, colorScheme),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildEditSection(ThemeData theme, ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLowest,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Editar',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colorScheme.onSurface.withValues(alpha: 0.5),
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          DropdownMenu<ReceivableStatus>(
+            initialSelection: _selectedStatus,
+            label: const Text('Status'),
+            enabled: !_saving,
+            expandedInsets: EdgeInsets.zero,
+            onSelected: (v) => setState(() => _selectedStatus = v),
+            dropdownMenuEntries: ReceivableStatus.values.map((s) {
+              return DropdownMenuEntry(
+                value: s,
+                label: s.label,
+                leadingIcon: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: s.badgeColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _notesController,
+            enabled: !_saving,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'Notas',
+              border: OutlineInputBorder(),
+              isDense: true,
+              alignLabelWithHint: true,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

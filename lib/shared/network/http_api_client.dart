@@ -50,6 +50,19 @@ class HttpApiClient {
     return _parseMapResponse(response);
   }
 
+  Future<Map<String, dynamic>> putJson(
+    Uri uri,
+    Map<String, dynamic> body, {
+    String? bearerToken,
+  }) async {
+    var response = await _put(uri, body, bearerToken: bearerToken);
+    if (response.statusCode == 401 && _tokenRefresher != null) {
+      final newToken = await _tokenRefresher();
+      if (newToken != null) response = await _put(uri, body, bearerToken: newToken);
+    }
+    return _parseMapResponse(response);
+  }
+
   Future<http.Response> _get(Uri uri, {String? bearerToken}) async {
     try {
       return await _httpClient.get(
@@ -70,6 +83,25 @@ class HttpApiClient {
   }) async {
     try {
       return await _httpClient.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          if (bearerToken != null) 'Authorization': 'Bearer $bearerToken',
+        },
+        body: jsonEncode(body),
+      );
+    } catch (_) {
+      throw const ApiException(ApiFailureType.network);
+    }
+  }
+
+  Future<http.Response> _put(
+    Uri uri,
+    Map<String, dynamic> body, {
+    String? bearerToken,
+  }) async {
+    try {
+      return await _httpClient.put(
         uri,
         headers: {
           'Content-Type': 'application/json',
