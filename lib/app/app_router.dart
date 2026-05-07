@@ -5,6 +5,8 @@ import 'package:organizagrana/features/auth/presentation/pages/login_page.dart';
 import 'package:organizagrana/features/bordero/data/bordero_service.dart';
 import 'package:organizagrana/features/bordero/presentation/pages/bordero_page.dart';
 import 'package:organizagrana/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:organizagrana/features/holidays/data/holidays_service.dart';
+import 'package:organizagrana/features/holidays/presentation/pages/holidays_page.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/features/recebiveis/presentation/pages/recebiveis_page.dart';
 
@@ -13,12 +15,15 @@ class AppRouter {
     this._session, {
     required ReceivablesService receivablesService,
     required BorderoService borderoService,
+    required HolidaysService holidaysService,
   })  : _receivablesService = receivablesService,
-        _borderoService = borderoService;
+        _borderoService = borderoService,
+        _holidaysService = holidaysService;
 
   final AuthSessionController _session;
   final ReceivablesService _receivablesService;
   final BorderoService _borderoService;
+  final HolidaysService _holidaysService;
   static final GlobalKey<NavigatorState> _rootNavigatorKey =
       GlobalKey<NavigatorState>();
 
@@ -27,10 +32,12 @@ class AppRouter {
   static const String dashboardPath = '/dashboard';
   static const String recebiveisPath = '/dashboard/recebiveis';
   static const String borderoPath = '/dashboard/bordero';
+  static const String holidaysPath = '/dashboard/holidays';
 
   static String pathForItem(String itemId) => switch (itemId) {
         'recebiveis' => recebiveisPath,
         'bordero' => borderoPath,
+        'holidays' => holidaysPath,
         _ => dashboardPath,
       };
 
@@ -75,6 +82,7 @@ class AppRouter {
           final currentItemId = switch (state.uri.path) {
             recebiveisPath => 'recebiveis',
             borderoPath => 'bordero',
+            holidaysPath => 'holidays',
             _ => 'dashboard',
           };
 
@@ -101,6 +109,12 @@ class AppRouter {
                 path: 'bordero',
                 pageBuilder: (context, state) => NoTransitionPage(
                   child: BorderoPage(service: _borderoService),
+                ),
+              ),
+              GoRoute(
+                path: 'holidays',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: HolidaysPage(service: _holidaysService),
                 ),
               ),
             ],

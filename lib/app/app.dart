@@ -7,6 +7,8 @@ import 'package:organizagrana/features/auth/data/auth_service.dart';
 import 'package:organizagrana/features/auth/data/auth_storage.dart';
 import 'package:organizagrana/features/bordero/data/bordero_api_client.dart';
 import 'package:organizagrana/features/bordero/data/bordero_service.dart';
+import 'package:organizagrana/features/holidays/data/holidays_api_client.dart';
+import 'package:organizagrana/features/holidays/data/holidays_service.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_api_client.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/l10n/app_localizations.dart';
@@ -39,10 +41,14 @@ class _MainAppState extends State<MainApp> {
     final borderoService = BorderoService(
       HttpBorderoApiClient(tokenProvider, httpClient: httpClient),
     );
+    final holidaysService = HolidaysService(
+      HttpHolidaysApiClient(tokenProvider, httpClient: httpClient),
+    );
     _appRouter = AppRouter(
       _session,
       receivablesService: receivablesService,
       borderoService: borderoService,
+      holidaysService: holidaysService,
     );
     _session.initialize();
   }

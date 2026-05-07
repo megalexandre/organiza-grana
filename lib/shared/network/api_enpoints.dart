@@ -1,13 +1,14 @@
 class ApiEndpoints {
   static const _base = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://calculajuros.online/api',
+    defaultValue: 'http://localhost:3000',
   );
 
   static const auth = _Auth();
   static const user = _User();
   static const receivables = _Receivables();
   static const bordero = _Bordero();
+  static const holidays = _Holidays();
 }
 
 class _Receivables {
@@ -25,6 +26,18 @@ class _Bordero {
 
   static const String path = '${ApiEndpoints._base}/bordero';
   final String calculate = '$path/calculate';
+}
+
+class _Holidays {
+  const _Holidays();
+
+  static const String _path = '${ApiEndpoints._base}/holidays';
+
+  Uri calendar(int year, int month) => Uri.parse('$_path?year=$year&month=$month');
+
+  Uri get createOverride => Uri.parse(_path);
+  Uri updateOverride(String id) => Uri.parse('$_path/$id');
+  Uri deleteOverride(String id) => Uri.parse('$_path/$id');
 }
 
 class _Auth {

@@ -63,6 +63,28 @@ class HttpApiClient {
     return _parseMapResponse(response);
   }
 
+  Future<Map<String, dynamic>> patchJson(
+    Uri uri,
+    Map<String, dynamic> body, {
+    String? bearerToken,
+  }) async {
+    var response = await _patch(uri, body, bearerToken: bearerToken);
+    if (response.statusCode == 401 && _tokenRefresher != null) {
+      final newToken = await _tokenRefresher();
+      if (newToken != null) response = await _patch(uri, body, bearerToken: newToken);
+    }
+    return _parseMapResponse(response);
+  }
+
+  Future<void> deleteVoid(Uri uri, {String? bearerToken}) async {
+    var response = await _delete(uri, bearerToken: bearerToken);
+    if (response.statusCode == 401 && _tokenRefresher != null) {
+      final newToken = await _tokenRefresher();
+      if (newToken != null) response = await _delete(uri, bearerToken: newToken);
+    }
+    _validateStatus(response);
+  }
+
   Future<http.Response> _get(Uri uri, {String? bearerToken}) async {
     try {
       return await _httpClient.get(
@@ -108,6 +130,38 @@ class HttpApiClient {
           if (bearerToken != null) 'Authorization': 'Bearer $bearerToken',
         },
         body: jsonEncode(body),
+      );
+    } catch (_) {
+      throw const ApiException(ApiFailureType.network);
+    }
+  }
+
+  Future<http.Response> _patch(
+    Uri uri,
+    Map<String, dynamic> body, {
+    String? bearerToken,
+  }) async {
+    try {
+      return await _httpClient.patch(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          if (bearerToken != null) 'Authorization': 'Bearer $bearerToken',
+        },
+        body: jsonEncode(body),
+      );
+    } catch (_) {
+      throw const ApiException(ApiFailureType.network);
+    }
+  }
+
+  Future<http.Response> _delete(Uri uri, {String? bearerToken}) async {
+    try {
+      return await _httpClient.delete(
+        uri,
+        headers: bearerToken != null
+            ? {'Authorization': 'Bearer $bearerToken'}
+            : const {},
       );
     } catch (_) {
       throw const ApiException(ApiFailureType.network);
