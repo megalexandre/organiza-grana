@@ -21,21 +21,15 @@ class LayoutSideMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = backgroundColor ?? Theme.of(context).scaffoldBackgroundColor;
-    final shadowColor = Theme.of(context).colorScheme.shadow.withValues(alpha: 0.12);
+    final shadowColor = Theme.of(context).colorScheme.shadow;
 
     return SizedBox(
       width: _sidebarWidth,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: color,
-          boxShadow: [
-            BoxShadow(
-              color: shadowColor,
-              blurRadius: 1,
-              offset: const Offset(2, 0),
-            ),
-          ],
-        ),
+      child: Material(
+        elevation: 4,
+        color: color,
+        shadowColor: shadowColor,
+        surfaceTintColor: Colors.transparent,
         child: _SideMenuContent(
           items: items,
           selectedIndex: selectedIndex,

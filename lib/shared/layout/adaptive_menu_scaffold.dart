@@ -32,20 +32,26 @@ class AdaptiveMenuScaffold extends StatelessWidget {
           bottom: false,
           child: Stack(
             children: [
+              // Body rendered first (behind), with left offset for the side menu
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SizedBox(height: barHeight),
                   Expanded(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        sideMenu!,
-                        Expanded(child: body),
-                      ],
+                    child: Padding(
+                      padding: EdgeInsets.only(left: sideMenuWidth),
+                      child: body,
                     ),
                   ),
                 ],
+              ),
+              // Side menu rendered after body so its shadow paints on top
+              Positioned(
+                top: barHeight,
+                left: 0,
+                bottom: 0,
+                width: sideMenuWidth,
+                child: sideMenu!,
               ),
               if (appBar != null)
                 Positioned(
