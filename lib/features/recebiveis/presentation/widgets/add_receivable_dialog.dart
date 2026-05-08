@@ -5,16 +5,46 @@ import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
-class AddReceivableDialog extends StatefulWidget {
-  const AddReceivableDialog({super.key, required this.service});
+Future<bool?> showAddReceivableSheet(
+  BuildContext context, {
+  required ReceivablesService service,
+}) {
+  final isNarrow = MediaQuery.sizeOf(context).width < 600;
 
-  final ReceivablesService service;
+  if (isNarrow) {
+    return showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _AddReceivableForm(service: service, isSheet: true),
+    );
+  }
 
-  @override
-  State<AddReceivableDialog> createState() => _AddReceivableDialogState();
+  return showDialog<bool>(
+    context: context,
+    builder: (_) => Dialog(
+      child: SizedBox(
+        width: 400,
+        child: _AddReceivableForm(service: service, isSheet: false),
+      ),
+    ),
+  );
 }
 
-class _AddReceivableDialogState extends State<AddReceivableDialog> {
+class _AddReceivableForm extends StatefulWidget {
+  const _AddReceivableForm({required this.service, required this.isSheet});
+
+  final ReceivablesService service;
+  final bool isSheet;
+
+  @override
+  State<_AddReceivableForm> createState() => _AddReceivableFormState();
+}
+
+class _AddReceivableFormState extends State<_AddReceivableForm> {
   final _formKey = GlobalKey<FormState>();
   final _valueController = TextEditingController();
   final _changeDateController = TextEditingController();
@@ -103,94 +133,130 @@ class _AddReceivableDialogState extends State<AddReceivableDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
 
-    return AlertDialog(
-      shape: const RoundedRectangleBorder(),
-      title: Text(
-        'Novo recebível',
-        style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+    final content = Padding(
+      padding: EdgeInsets.fromLTRB(
+        24,
+        widget.isSheet ? 8 : 24,
+        24,
+        24 + MediaQuery.viewInsetsOf(context).bottom,
       ),
-      content: SizedBox(
-        width: 360,
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _valueController,
-                decoration: const InputDecoration(
-                  labelText: 'Valor (R\$)',
-                  hintText: '0,00',
-                  prefixText: 'R\$ ',
-                ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                ],
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Informe o valor.';
-                  final parsed = double.tryParse(v.trim().replaceAll(',', '.'));
-                  if (parsed == null || parsed <= 0) return 'Valor inválido.';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _changeDateController,
-                decoration: InputDecoration(
-                  labelText: 'Data da troca',
-                  hintText: 'dd/mm/aaaa',
-                  suffixIcon: Icon(
-                    Icons.calendar_today_outlined,
-                    size: 18,
-                    color: colorScheme.onSurfaceVariant,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.isSheet)
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: cs.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                readOnly: true,
-                onTap: _pickChangeDate,
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _dueDateController,
-                decoration: InputDecoration(
-                  labelText: 'Data de vencimento',
-                  hintText: 'dd/mm/aaaa',
-                  suffixIcon: Icon(
-                    Icons.calendar_today_outlined,
-                    size: 18,
-                    color: colorScheme.onSurfaceVariant,
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: cs.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
+                  child: Icon(Icons.add_circle_outline, size: 18, color: cs.primary),
                 ),
-                readOnly: true,
-                onTap: _pickDueDate,
-                validator: (v) {
-                  if (_selectedDueDate == null) return 'Selecione a data de vencimento.';
-                  return null;
-                },
+                const SizedBox(width: 12),
+                Text(
+                  'Novo recebível',
+                  style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: _valueController,
+              decoration: const InputDecoration(
+                labelText: 'Valor (R\$)',
+                hintText: '0,00',
+                prefixText: 'R\$ ',
               ),
-            ],
-          ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+              ],
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Informe o valor.';
+                final parsed = double.tryParse(v.trim().replaceAll(',', '.'));
+                if (parsed == null || parsed <= 0) return 'Valor inválido.';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _changeDateController,
+              decoration: InputDecoration(
+                labelText: 'Data da troca',
+                hintText: 'dd/mm/aaaa',
+                suffixIcon: Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+              readOnly: true,
+              onTap: _pickChangeDate,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _dueDateController,
+              decoration: InputDecoration(
+                labelText: 'Data de vencimento',
+                hintText: 'dd/mm/aaaa',
+                suffixIcon: Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+              readOnly: true,
+              onTap: _pickDueDate,
+              validator: (v) {
+                if (_selectedDueDate == null) return 'Selecione a data de vencimento.';
+                return null;
+              },
+            ),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                OutlinedButton(
+                  onPressed: _loading ? null : () => Navigator.of(context).pop(false),
+                  child: const Text('Cancelar'),
+                ),
+                const Spacer(),
+                FilledButton(
+                  onPressed: _loading ? null : _submit,
+                  child: _loading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Salvar'),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _loading ? null : () => Navigator.of(context).pop(false),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: _loading ? null : _submit,
-          child: _loading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Salvar'),
-        ),
-      ],
     );
+
+    return widget.isSheet ? SingleChildScrollView(child: content) : content;
   }
 }

@@ -11,6 +11,23 @@ Future<bool?> showReceivableDetailSheet(
   required String id,
   required ReceivablesService service,
 }) {
+  final isNarrow = MediaQuery.sizeOf(context).width < 600;
+
+  if (isNarrow) {
+    return showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SizedBox(
+        height: MediaQuery.sizeOf(ctx).height * 0.88,
+        child: _ReceivableDetailSheet(id: id, service: service, isSheet: true),
+      ),
+    );
+  }
+
   return showDialog<bool>(
     context: context,
     builder: (_) => Dialog(
@@ -18,17 +35,22 @@ Future<bool?> showReceivableDetailSheet(
       clipBehavior: Clip.antiAlias,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480, maxHeight: 660),
-        child: _ReceivableDetailSheet(id: id, service: service),
+        child: _ReceivableDetailSheet(id: id, service: service, isSheet: false),
       ),
     ),
   );
 }
 
 class _ReceivableDetailSheet extends StatefulWidget {
-  const _ReceivableDetailSheet({required this.id, required this.service});
+  const _ReceivableDetailSheet({
+    required this.id,
+    required this.service,
+    required this.isSheet,
+  });
 
   final String id;
   final ReceivablesService service;
+  final bool isSheet;
 
   @override
   State<_ReceivableDetailSheet> createState() => _ReceivableDetailSheetState();
@@ -120,21 +142,38 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
   Widget _buildHeader(ThemeData theme, ColorScheme colorScheme) {
     return Container(
       color: colorScheme.surfaceContainerHighest,
-      padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
-      child: Row(
+      padding: EdgeInsets.fromLTRB(20, widget.isSheet ? 12 : 16, 16, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.receipt_long_outlined, size: 20, color: colorScheme.primary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Detalhes do recebível',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          if (widget.isSheet)
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, size: 18),
-            visualDensity: VisualDensity.compact,
-            onPressed: () => Navigator.pop(context),
+          Row(
+            children: [
+              Icon(Icons.receipt_long_outlined, size: 20, color: colorScheme.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Detalhes do recebível',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, size: 18),
+                visualDensity: VisualDensity.compact,
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
           ),
         ],
       ),
@@ -142,11 +181,12 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
   }
 
   Widget _buildFooter(BuildContext context, ColorScheme colorScheme) {
+    final keyboardPadding = widget.isSheet ? MediaQuery.viewInsetsOf(context).bottom : 0.0;
     return Container(
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: EdgeInsets.fromLTRB(16, 10, 16, 10 + keyboardPadding),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [

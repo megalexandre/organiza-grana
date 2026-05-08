@@ -1,7 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:organizagrana/shared/layout/side_menu/layout_menu_item.dart';
+import 'package:organizagrana/shared/layout/side_menu/profile_header.dart';
 
-const double _sidebarWidth = 220;
+const double _sidebarMaxWidth = 280;
 
 /// Sidebar de navegacao - versao desktop (coluna fixa lateral).
 class LayoutSideMenu extends StatelessWidget {
@@ -10,12 +13,16 @@ class LayoutSideMenu extends StatelessWidget {
     required this.items,
     required this.selectedIndex,
     required this.onSelect,
+    this.userEmail,
+    this.userAvatarUrl,
     this.backgroundColor,
   });
 
   final List<LayoutMenuItem> items;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
+  final String? userEmail;
+  final String? userAvatarUrl;
   final Color? backgroundColor;
 
   @override
@@ -24,16 +31,23 @@ class LayoutSideMenu extends StatelessWidget {
     final shadowColor = Theme.of(context).colorScheme.shadow;
 
     return SizedBox(
-      width: _sidebarWidth,
+      width: _sidebarMaxWidth,
       child: Material(
         elevation: 4,
         color: color,
         shadowColor: shadowColor,
         surfaceTintColor: Colors.transparent,
-        child: _SideMenuContent(
-          items: items,
-          selectedIndex: selectedIndex,
-          onSelect: onSelect,
+        child: Column(
+          children: [
+            ProfileHeader(userEmail: userEmail, userAvatarUrl: userAvatarUrl),
+            Expanded(
+              child: _SideMenuContent(
+                items: items,
+                selectedIndex: selectedIndex,
+                onSelect: onSelect,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -49,6 +63,8 @@ class LayoutDrawer extends StatelessWidget {
     required this.onSelect,
     required this.onLogout,
     this.logoutLabel = 'Sair',
+    this.userEmail,
+    this.userAvatarUrl,
     this.backgroundColor,
   });
 
@@ -57,6 +73,8 @@ class LayoutDrawer extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final Future<void> Function() onLogout;
   final String logoutLabel;
+  final String? userEmail;
+  final String? userAvatarUrl;
   final Color? backgroundColor;
 
   @override
@@ -64,13 +82,17 @@ class LayoutDrawer extends StatelessWidget {
     final resolvedBackgroundColor =
         backgroundColor ?? Theme.of(context).scaffoldBackgroundColor;
 
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final drawerWidth = min(screenWidth * 0.7, _sidebarMaxWidth);
+
     return Drawer(
-      width: _sidebarWidth,
+      width: drawerWidth,
       backgroundColor: resolvedBackgroundColor,
       shape: const RoundedRectangleBorder(),
       child: SafeArea(
         child: Column(
           children: [
+            ProfileHeader(userEmail: userEmail, userAvatarUrl: userAvatarUrl),
             Expanded(
               child: _SideMenuContent(
                 items: items,

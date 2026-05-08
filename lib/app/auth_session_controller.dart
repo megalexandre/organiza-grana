@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:organizagrana/features/auth/data/auth_service.dart';
 import 'package:organizagrana/features/auth/data/auth_storage.dart';
 import 'package:organizagrana/features/auth/domain/login_attempt.dart';
+import 'package:organizagrana/features/auth/domain/user_profile.dart';
 
 class AuthSessionController extends ChangeNotifier {
   AuthSessionController({AuthService? authService})
@@ -12,10 +13,13 @@ class AuthSessionController extends ChangeNotifier {
   bool _initialized = false;
   bool _authenticated = false;
   String? _userEmail;
+  UserProfile? _userProfile;
 
   bool get initialized => _initialized;
   bool get isAuthenticated => _authenticated;
   String? get userEmail => _userEmail;
+  String? get displayEmail => _userProfile?.email ?? _userEmail;
+  String? get userAvatarUrl => _userProfile?.photoUrl;
 
   Future<void> initialize() async {
     final isAuthenticated = await _authService.isAuthenticated();
@@ -25,6 +29,8 @@ class AuthSessionController extends ChangeNotifier {
     _authenticated = isAuthenticated;
     _userEmail = email;
     notifyListeners();
+
+    if (_authenticated) _fetchProfile();
   }
 
   Future<void> login({
@@ -41,12 +47,23 @@ class AuthSessionController extends ChangeNotifier {
     _authenticated = true;
     _userEmail = await _authService.currentUserEmail();
     notifyListeners();
+
+    _fetchProfile();
   }
 
   Future<void> logout() async {
     await _authService.logout();
     _authenticated = false;
     _userEmail = null;
+    _userProfile = null;
     notifyListeners();
+  }
+
+  Future<void> _fetchProfile() async {
+    try {
+      final profile = await _authService.getMe();
+      _userProfile = profile;
+      notifyListeners();
+    } catch (_) {}
   }
 }

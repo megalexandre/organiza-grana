@@ -89,6 +89,8 @@ class AppRouter {
           return DashboardPage(
             onLogout: _session.logout,
             currentItemId: currentItemId,
+            userEmail: _session.displayEmail,
+            userAvatarUrl: _session.userAvatarUrl,
             body: child,
           );
         },

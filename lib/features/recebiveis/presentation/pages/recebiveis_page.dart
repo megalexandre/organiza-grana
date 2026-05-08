@@ -134,10 +134,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   }
 
   Future<void> _openAddDialog() async {
-    final created = await showDialog<bool>(
-      context: context,
-      builder: (_) => AddReceivableDialog(service: widget.service),
-    );
+    final created = await showAddReceivableSheet(context, service: widget.service);
     if (created == true) _loadReceivables();
   }
 
@@ -256,99 +253,201 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   }
 
   void _showSortSheet(BuildContext context) {
+    final isNarrow = MediaQuery.sizeOf(context).width < 600;
+
+    Widget buildContent(BuildContext ctx, StateSetter setModalState) {
+      final tt = Theme.of(ctx).textTheme;
+      final cs = Theme.of(ctx).colorScheme;
+
+      final body = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isNarrow)
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+          Text('Ordenação', style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 16),
+          Text('Ordenar por', style: tt.labelMedium),
+          RadioGroup<ReceivableSortField>(
+            groupValue: _sortBy,
+            onChanged: (v) {
+              if (v == null) return;
+              Navigator.pop(ctx);
+              setState(() => _sortBy = v);
+              _loadReceivables();
+            },
+            child: const Column(
+              children: [
+                RadioListTile<ReceivableSortField>(
+                  title: Text('Data de vencimento'),
+                  value: ReceivableSortField.dueDate,
+                ),
+                RadioListTile<ReceivableSortField>(
+                  title: Text('Valor'),
+                  value: ReceivableSortField.amount,
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+          Text('Direção', style: tt.labelMedium),
+          RadioGroup<ReceivableSortDirection>(
+            groupValue: _sortDirection,
+            onChanged: (v) {
+              if (v == null) return;
+              Navigator.pop(ctx);
+              setState(() => _sortDirection = v);
+              _loadReceivables();
+            },
+            child: const Column(
+              children: [
+                RadioListTile<ReceivableSortDirection>(
+                  title: Text('Mais recente primeiro'),
+                  value: ReceivableSortDirection.desc,
+                ),
+                RadioListTile<ReceivableSortDirection>(
+                  title: Text('Mais antigo primeiro'),
+                  value: ReceivableSortDirection.asc,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Fechar'),
+            ),
+          ),
+        ],
+      );
+
+      return isNarrow
+          ? SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                child: body,
+              ),
+            )
+          : Padding(padding: EdgeInsets.zero, child: body);
+    }
+
+    if (isNarrow) {
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setModalState) => buildContent(ctx, setModalState),
+        ),
+      );
+      return;
+    }
+
     showDialog<void>(
       context: context,
       builder: (_) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
+        builder: (ctx, setModalState) => AlertDialog(
           shape: const RoundedRectangleBorder(),
-          title: const Text('Ordenação'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Ordenar por', style: Theme.of(context).textTheme.labelMedium),
-              RadioGroup<ReceivableSortField>(
-                groupValue: _sortBy,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setModalState(() {});
-                  Navigator.pop(context);
-                  setState(() => _sortBy = v);
-                  _loadReceivables();
-                },
-                child: const Column(
-                  children: [
-                    RadioListTile<ReceivableSortField>(
-                      title: Text('Data de vencimento'),
-                      value: ReceivableSortField.dueDate,
-                    ),
-                    RadioListTile<ReceivableSortField>(
-                      title: Text('Valor'),
-                      value: ReceivableSortField.amount,
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(),
-              Text('Direção', style: Theme.of(context).textTheme.labelMedium),
-              RadioGroup<ReceivableSortDirection>(
-                groupValue: _sortDirection,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setModalState(() {});
-                  Navigator.pop(context);
-                  setState(() => _sortDirection = v);
-                  _loadReceivables();
-                },
-                child: const Column(
-                  children: [
-                    RadioListTile<ReceivableSortDirection>(
-                      title: Text('Mais recente primeiro'),
-                      value: ReceivableSortDirection.desc,
-                    ),
-                    RadioListTile<ReceivableSortDirection>(
-                      title: Text('Mais antigo primeiro'),
-                      value: ReceivableSortDirection.asc,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Fechar'),
-            ),
-          ],
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+          content: SizedBox(width: 320, child: buildContent(ctx, setModalState)),
         ),
       ),
     );
   }
 
   void _showFiltersSheet(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
-          shape: const RoundedRectangleBorder(),
-          title: const Text('Filtros'),
-          content: CheckboxListTile(
-            title: const Text('Exibir descartados'),
+    final isNarrow = MediaQuery.sizeOf(context).width < 600;
+
+    Widget buildContent(BuildContext ctx, StateSetter setModalState) {
+      final tt = Theme.of(ctx).textTheme;
+      final cs = Theme.of(ctx).colorScheme;
+
+      final body = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isNarrow)
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+          Text('Filtros', style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Exibir arquivados'),
             value: _withDiscarded,
             onChanged: (v) {
-              setModalState(() {});
-              Navigator.pop(context);
+              Navigator.pop(ctx);
               setState(() => _withDiscarded = v ?? false);
               _loadReceivables();
             },
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
               child: const Text('Fechar'),
             ),
-          ],
+          ),
+        ],
+      );
+
+      return isNarrow
+          ? SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                child: body,
+              ),
+            )
+          : Padding(padding: EdgeInsets.zero, child: body);
+    }
+
+    if (isNarrow) {
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setModalState) => buildContent(ctx, setModalState),
+        ),
+      );
+      return;
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setModalState) => AlertDialog(
+          shape: const RoundedRectangleBorder(),
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+          content: SizedBox(width: 280, child: buildContent(ctx, setModalState)),
         ),
       ),
     );

@@ -15,6 +15,8 @@ class LayoutPage extends StatelessWidget {
     required this.onMenuSelect,
     required this.onLogout,
     required this.body,
+    this.userEmail,
+    this.userAvatarUrl,
     this.logoutTooltip = 'Sair',
     this.backgroundColor = Colors.white,
     this.desktopBreakpoint = 800,
@@ -37,6 +39,9 @@ class LayoutPage extends StatelessWidget {
 
   /// Conteúdo principal da página.
   final Widget body;
+
+  final String? userEmail;
+  final String? userAvatarUrl;
 
   /// Tooltip do botão de logout na top bar.
   final String logoutTooltip;
@@ -64,12 +69,16 @@ class LayoutPage extends StatelessWidget {
         onLogout: onLogout,
         logoutLabel: logoutTooltip,
         backgroundColor: backgroundColor,
+        userEmail: userEmail,
+        userAvatarUrl: userAvatarUrl,
       ),
       sideMenu: LayoutSideMenu(
         items: menuItems,
         selectedIndex: selectedIndex,
         onSelect: onMenuSelect,
         backgroundColor: backgroundColor,
+        userEmail: userEmail,
+        userAvatarUrl: userAvatarUrl,
       ),
       body: body,
     );
