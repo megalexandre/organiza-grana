@@ -3,6 +3,7 @@ import 'package:organizagrana/shared/layout/adaptive_menu_scaffold.dart';
 import 'package:organizagrana/shared/layout/side_menu/layout_menu_item.dart';
 import 'package:organizagrana/shared/layout/side_menu/layout_side_menu.dart';
 import 'package:organizagrana/shared/layout/top_bar/layout_top_bar.dart';
+import 'package:organizagrana/shared/layout/top_bar/user_profile_panel.dart';
 
 /// Combina [AdaptiveMenuScaffold] + [LayoutTopBar] + [LayoutSideMenu] /
 /// [LayoutDrawer] em um único widget configurável.
@@ -15,7 +16,7 @@ class LayoutPage extends StatelessWidget {
     required this.onMenuSelect,
     required this.onLogout,
     required this.body,
-    this.userEmail,
+    required this.userEmail,
     this.userAvatarUrl,
     this.logoutTooltip = 'Sair',
     this.backgroundColor = Colors.white,
@@ -40,7 +41,7 @@ class LayoutPage extends StatelessWidget {
   /// Conteúdo principal da página.
   final Widget body;
 
-  final String? userEmail;
+  final String userEmail;
   final String? userAvatarUrl;
 
   /// Tooltip do botão de logout na top bar.
@@ -59,26 +60,25 @@ class LayoutPage extends StatelessWidget {
       desktopBreakpoint: desktopBreakpoint,
       appBar: LayoutTopBar(
         title: title,
+        userEmail: userEmail,
+        userAvatarUrl: userAvatarUrl,
+      ),
+      endDrawer: UserProfilePanel(
         onLogout: onLogout,
-        logoutTooltip: logoutTooltip,
+        userEmail: userEmail,
+        userAvatarUrl: userAvatarUrl,
       ),
       drawer: LayoutDrawer(
         items: menuItems,
         selectedIndex: selectedIndex,
         onSelect: onMenuSelect,
-        onLogout: onLogout,
-        logoutLabel: logoutTooltip,
         backgroundColor: backgroundColor,
-        userEmail: userEmail,
-        userAvatarUrl: userAvatarUrl,
       ),
       sideMenu: LayoutSideMenu(
         items: menuItems,
         selectedIndex: selectedIndex,
         onSelect: onMenuSelect,
         backgroundColor: backgroundColor,
-        userEmail: userEmail,
-        userAvatarUrl: userAvatarUrl,
       ),
       body: body,
     );

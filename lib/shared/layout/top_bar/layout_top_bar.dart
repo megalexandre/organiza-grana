@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 
 class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
+  
   const LayoutTopBar({
     super.key,
     required this.title,
-    required this.onLogout,
-    this.logoutTooltip = 'Sair',
+    required this.userEmail,
+    this.userAvatarUrl,
   });
 
   final String title;
-  final Future<void> Function() onLogout;
-  final String logoutTooltip;
+  final String userEmail;
+  final String? userAvatarUrl;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -18,8 +19,7 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final appBarForeground =
-        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
+    final appBarForeground = theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
     final isMobile = MediaQuery.sizeOf(context).width < 800;
 
     return DecoratedBox(
@@ -55,12 +55,38 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
         actions: [
-          IconButton(
-            tooltip: logoutTooltip,
-            icon: const Icon(Icons.logout),
-            onPressed: onLogout,
+          Builder(
+            builder: (ctx) {
+              final colorScheme = Theme.of(ctx).colorScheme;
+              final initial = (userEmail.isNotEmpty)
+                  ? userEmail[0].toUpperCase()
+                  : '?';
+              return Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => Scaffold.of(ctx).openEndDrawer(),
+                  child: CircleAvatar(
+                    radius: 16,
+                    backgroundColor: colorScheme.primaryContainer,
+                    backgroundImage: userAvatarUrl != null
+                        ? NetworkImage(userAvatarUrl!)
+                        : null,
+                    child: userAvatarUrl == null
+                        ? Text(
+                            initial,
+                            style: TextStyle(
+                              color: colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          )
+                        : null,
+                  ),
+                ),
+              );
+            },
           ),
-          const SizedBox(width: 8),
         ],
       ),
     );

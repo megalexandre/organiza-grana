@@ -12,7 +12,7 @@ class AuthSessionController extends ChangeNotifier {
 
   bool _initialized = false;
   bool _authenticated = false;
-  String? _userEmail;
+  String _userEmail = '';
   UserProfile? _userProfile;
 
   bool get initialized => _initialized;
@@ -27,7 +27,7 @@ class AuthSessionController extends ChangeNotifier {
 
     _initialized = true;
     _authenticated = isAuthenticated;
-    _userEmail = email;
+    _userEmail = email ?? '';
     notifyListeners();
 
     if (_authenticated) _fetchProfile();

@@ -6,6 +6,7 @@ class AdaptiveMenuScaffold extends StatelessWidget {
     required this.body,
     this.appBar,
     this.drawer,
+    this.endDrawer,
     this.sideMenu,
     this.backgroundColor,
     this.desktopBreakpoint = 800,
@@ -15,6 +16,7 @@ class AdaptiveMenuScaffold extends StatelessWidget {
   final Widget body;
   final PreferredSizeWidget? appBar;
   final Widget? drawer;
+  final Widget? endDrawer;
   final Widget? sideMenu;
   final Color? backgroundColor;
   final double desktopBreakpoint;
@@ -28,6 +30,7 @@ class AdaptiveMenuScaffold extends StatelessWidget {
       final barHeight = appBar?.preferredSize.height ?? 0;
       return Scaffold(
         backgroundColor: backgroundColor,
+        endDrawer: endDrawer,
         body: SafeArea(
           bottom: false,
           child: Stack(
@@ -70,6 +73,7 @@ class AdaptiveMenuScaffold extends StatelessWidget {
       backgroundColor: backgroundColor,
       appBar: appBar,
       drawer: drawer,
+      endDrawer: endDrawer,
       body: body,
     );
   }
