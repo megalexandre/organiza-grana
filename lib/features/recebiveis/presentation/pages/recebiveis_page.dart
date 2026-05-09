@@ -36,7 +36,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   int _currentPage = 1;
   ReceivableSortField _sortBy = ReceivableSortField.dueDate;
   ReceivableSortDirection _sortDirection = ReceivableSortDirection.asc;
-  bool _compactView = false;
+  bool _compactView = true;
 
   static const _defaultSortBy = ReceivableSortField.dueDate;
   static const _defaultSortDirection = ReceivableSortDirection.asc;
@@ -243,7 +243,6 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
             _ToolbarIconButton(
               icon: _compactView ? Icons.view_agenda_outlined : Icons.view_list,
               tooltip: _compactView ? 'Visualização completa' : 'Visualização compacta',
-              active: _compactView,
               onPressed: () => setState(() => _compactView = !_compactView),
             ),
           ],
@@ -536,24 +535,18 @@ class _ToolbarIconButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onPressed,
-    this.active = false,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback? onPressed;
-  final bool active;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final color = active
-        ? colorScheme.primary
-        : onPressed != null
-            ? colorScheme.onSurface.withValues(alpha: 0.7)
-            : colorScheme.onSurface.withValues(alpha: 0.3);
-    final borderColor = active ? colorScheme.primary : colorScheme.outlineVariant;
-    final bg = active ? colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent;
+    final color = onPressed != null
+        ? colorScheme.onSurface.withValues(alpha: 0.7)
+        : colorScheme.onSurface.withValues(alpha: 0.3);
 
     return Tooltip(
       message: tooltip,
@@ -562,8 +555,7 @@ class _ToolbarIconButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: bg,
-            border: Border.all(color: borderColor),
+            border: Border.all(color: colorScheme.outlineVariant),
           ),
           child: Icon(icon, size: 18, color: color),
         ),
