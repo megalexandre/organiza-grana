@@ -30,7 +30,7 @@ Future<Uint8List> captureWidgetAsPng(
     container: repaintBoundary,
     child: Directionality(
       textDirection: TextDirection.ltr,
-      child: widget,
+      child: IntrinsicWidth(child: widget),
     ),
   ).attachToRenderTree(buildOwner);
 

@@ -10,17 +10,32 @@ class ApiException implements Exception {
 }
 
 typedef TokenRefresher = Future<String?> Function();
+typedef BearerTokenProvider = Future<String?> Function();
 
 class HttpApiClient {
-  HttpApiClient({http.Client? httpClient, TokenRefresher? tokenRefresher})
-      : _httpClient = httpClient ?? http.Client(),
-        _tokenRefresher = tokenRefresher;
+  HttpApiClient({
+    http.Client? httpClient,
+    TokenRefresher? tokenRefresher,
+    BearerTokenProvider? bearerTokenProvider,
+  })  : _httpClient = httpClient ?? http.Client(),
+        _tokenRefresher = tokenRefresher,
+        _bearerTokenProvider = bearerTokenProvider;
 
   final http.Client _httpClient;
   final TokenRefresher? _tokenRefresher;
+  final BearerTokenProvider? _bearerTokenProvider;
+
+  Future<String?> _resolveToken(String? override) async {
+    if (override != null) return override;
+    if (_bearerTokenProvider == null) return null;
+    final token = await _bearerTokenProvider();
+    if (token == null || token.isEmpty) throw const ApiException(ApiFailureType.unauthorized);
+    return token;
+  }
 
   Future<Map<String, dynamic>> getJson(Uri uri, {String? bearerToken}) async {
-    var response = await _get(uri, bearerToken: bearerToken);
+    final token = await _resolveToken(bearerToken);
+    var response = await _get(uri, bearerToken: token);
     if (response.statusCode == 401 && _tokenRefresher != null) {
       final newToken = await _tokenRefresher();
       if (newToken != null) response = await _get(uri, bearerToken: newToken);
@@ -29,7 +44,8 @@ class HttpApiClient {
   }
 
   Future<List<Map<String, dynamic>>> getJsonList(Uri uri, {String? bearerToken}) async {
-    var response = await _get(uri, bearerToken: bearerToken);
+    final token = await _resolveToken(bearerToken);
+    var response = await _get(uri, bearerToken: token);
     if (response.statusCode == 401 && _tokenRefresher != null) {
       final newToken = await _tokenRefresher();
       if (newToken != null) response = await _get(uri, bearerToken: newToken);
@@ -42,7 +58,8 @@ class HttpApiClient {
     Map<String, dynamic> body, {
     String? bearerToken,
   }) async {
-    var response = await _post(uri, body, bearerToken: bearerToken);
+    final token = await _resolveToken(bearerToken);
+    var response = await _post(uri, body, bearerToken: token);
     if (response.statusCode == 401 && _tokenRefresher != null) {
       final newToken = await _tokenRefresher();
       if (newToken != null) response = await _post(uri, body, bearerToken: newToken);
@@ -55,7 +72,8 @@ class HttpApiClient {
     Map<String, dynamic> body, {
     String? bearerToken,
   }) async {
-    var response = await _put(uri, body, bearerToken: bearerToken);
+    final token = await _resolveToken(bearerToken);
+    var response = await _put(uri, body, bearerToken: token);
     if (response.statusCode == 401 && _tokenRefresher != null) {
       final newToken = await _tokenRefresher();
       if (newToken != null) response = await _put(uri, body, bearerToken: newToken);
@@ -68,7 +86,8 @@ class HttpApiClient {
     Map<String, dynamic> body, {
     String? bearerToken,
   }) async {
-    var response = await _patch(uri, body, bearerToken: bearerToken);
+    final token = await _resolveToken(bearerToken);
+    var response = await _patch(uri, body, bearerToken: token);
     if (response.statusCode == 401 && _tokenRefresher != null) {
       final newToken = await _tokenRefresher();
       if (newToken != null) response = await _patch(uri, body, bearerToken: newToken);
@@ -77,7 +96,8 @@ class HttpApiClient {
   }
 
   Future<void> deleteVoid(Uri uri, {String? bearerToken}) async {
-    var response = await _delete(uri, bearerToken: bearerToken);
+    final token = await _resolveToken(bearerToken);
+    var response = await _delete(uri, bearerToken: token);
     if (response.statusCode == 401 && _tokenRefresher != null) {
       final newToken = await _tokenRefresher();
       if (newToken != null) response = await _delete(uri, bearerToken: newToken);

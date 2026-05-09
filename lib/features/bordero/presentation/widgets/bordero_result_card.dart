@@ -86,7 +86,7 @@ class _BorderoResultCardState extends State<BorderoResultCard>
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      dateFormat.format(widget.item.dueDate),
+                      dateFormat.format(widget.item.settlementDate),
                       style: textTheme.labelMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -118,6 +118,12 @@ class _BorderoResultCardState extends State<BorderoResultCard>
                       icon: Icons.attach_money,
                       label: 'Valor bruto',
                       value: currencyFormat.format(widget.item.value),
+                    ),
+                    const SizedBox(height: 8),
+                    _InfoRow(
+                      icon: Icons.event_available_outlined,
+                      label: 'Depósito',
+                      value: dateFormat.format(widget.item.depositDate),
                     ),
                     const SizedBox(height: 8),
                     _InfoRow(

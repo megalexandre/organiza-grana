@@ -4,7 +4,8 @@ import 'package:organizagrana/features/bordero/domain/bordero_input.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_result.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
-const _headerBg = Color(0xFFBDD7EE);
+const _headerBg = Color(0xFF4472C4);
+const _headerText = Colors.white;
 const _rowAltBg = Color(0xFFDCE6F1);
 const _borderColor = Color(0xFFBFBFBF);
 const _totalBg = Color(0xFFBDD7EE);
@@ -26,15 +27,15 @@ class BorderoExportTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildHeader(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 6),
           _buildTable(),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           _buildFooter(),
         ],
       ),
@@ -109,7 +110,7 @@ class BorderoExportTable extends StatelessWidget {
           final isAlt = i.isOdd;
           return _dataRow([
             '${i + 1}',
-            dateFormat.format(item.dueDate),
+            dateFormat.format(inputItem.dueDate),
             _numFormat.format(item.value),
             '',
             '',
@@ -140,6 +141,7 @@ class BorderoExportTable extends StatelessWidget {
             style: const TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 11,
+              color: _headerText,
             ),
           ),
         );

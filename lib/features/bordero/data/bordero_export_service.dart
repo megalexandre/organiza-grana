@@ -26,7 +26,7 @@ Uint8List exportBorderoToCsv(BorderoInput input, BorderoResult result) {
       final inputItem = input.items[i];
       return [
         '${i + 1}',
-        dateFormat.format(item.dueDate),
+        dateFormat.format(inputItem.dueDate),
         _numFormat.format(item.value),
         '', '', '', '',
         '${inputItem.awaitingDays}',
@@ -108,7 +108,7 @@ Uint8List exportBorderoToExcel(BorderoInput input, BorderoResult result) {
     final bg = i.isOdd ? _altRowBg : null;
 
     _setCell(sheet, r, 0, i + 1, align: HorizontalAlign.Right, bg: bg);
-    _setCell(sheet, r, 1, dateFormat.format(item.dueDate), bg: bg);
+    _setCell(sheet, r, 1, dateFormat.format(inputItem.dueDate), bg: bg);
     _setCell(
       sheet, r, 2, _numFormat.format(item.value),
       align: HorizontalAlign.Right, bg: bg,

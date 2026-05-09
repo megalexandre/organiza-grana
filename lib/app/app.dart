@@ -33,7 +33,10 @@ class _MainAppState extends State<MainApp> {
     _session = AuthSessionController(authService: authService);
 
     final tokenProvider = AuthStorageAccessTokenProvider(authStorage);
-    final httpClient = HttpApiClient(tokenRefresher: authService.refreshAccessToken);
+    final httpClient = HttpApiClient(
+      bearerTokenProvider: tokenProvider.readAccessToken,
+      tokenRefresher: authService.refreshAccessToken,
+    );
 
     final receivablesService = ReceivablesService(
       HttpReceivablesApiClient(tokenProvider, httpClient: httpClient),

@@ -1,7 +1,8 @@
 class BorderoResultItem {
   const BorderoResultItem({
     required this.amountCents,
-    required this.dueDate,
+    required this.depositDate,
+    required this.settlementDate,
     required this.totalDays,
     required this.interestRatePercent,
     required this.interestAmountCents,
@@ -9,7 +10,8 @@ class BorderoResultItem {
   });
 
   final int amountCents;
-  final DateTime dueDate;
+  final DateTime depositDate;
+  final DateTime settlementDate;
   final int totalDays;
   final double interestRatePercent;
   final int interestAmountCents;
@@ -22,7 +24,8 @@ class BorderoResultItem {
   factory BorderoResultItem.fromJson(Map<String, dynamic> json) {
     return BorderoResultItem(
       amountCents: json['amount_cents'] as int,
-      dueDate: DateTime.parse(json['due_date'] as String),
+      depositDate: DateTime.parse(json['deposit_date'] as String),
+      settlementDate: DateTime.parse(json['settlement_date'] as String),
       totalDays: json['total_days'] as int,
       interestRatePercent: (json['interest_rate_percent'] as num).toDouble(),
       interestAmountCents: json['interest_amount_cents'] as int,
