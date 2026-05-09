@@ -166,6 +166,7 @@ class _BorderoPageState extends State<BorderoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Column(
         children: [
           if (_paramsConfirmed) _buildCompactParams(context),
@@ -173,12 +174,13 @@ class _BorderoPageState extends State<BorderoPage> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isNarrow = constraints.maxWidth < 600;
+                final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
                 return SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(
                     isNarrow ? 16 : 24,
                     isNarrow ? 16 : 24,
                     isNarrow ? 16 : 24,
-                    96,
+                    96 + keyboardHeight,
                   ),
                   child: PageContentConstraint(
                       child: Form(
