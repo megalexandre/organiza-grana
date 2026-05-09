@@ -64,7 +64,7 @@ class HttpHolidaysApiClient implements HolidaysApiClient {
     final token = await _readToken();
     try {
       final body = <String, dynamic>{
-        if (holiday != null) 'holiday': holiday,
+        'holiday': ?holiday,
         if (name != null && name.isNotEmpty) 'name': name,
       };
       final response = await _httpClient.patchJson(

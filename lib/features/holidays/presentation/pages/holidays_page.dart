@@ -62,7 +62,7 @@ class _HolidaysPageState extends State<HolidaysPage> {
   }
 
   int get _startOffset {
-    final wd = DateTime(_currentMonth.year, _currentMonth.month, 1).weekday;
+    final wd = DateTime(_currentMonth.year, _currentMonth.month).weekday;
     return wd % 7;
   }
 

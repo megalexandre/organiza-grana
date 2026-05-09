@@ -17,8 +17,8 @@ class AuthSessionController extends ChangeNotifier {
 
   bool get initialized => _initialized;
   bool get isAuthenticated => _authenticated;
-  String? get userEmail => _userEmail;
-  String? get displayEmail => _userProfile?.email ?? _userEmail;
+  String? get displayEmail =>
+      _userProfile?.email ?? (_userEmail.isNotEmpty ? _userEmail : null);
   String? get userAvatarUrl => _userProfile?.photoUrl;
 
   Future<void> initialize() async {
@@ -45,7 +45,7 @@ class AuthSessionController extends ChangeNotifier {
     }
 
     _authenticated = true;
-    _userEmail = await _authService.currentUserEmail();
+    _userEmail = await _authService.currentUserEmail() ?? '';
     notifyListeners();
 
     _fetchProfile();
@@ -54,7 +54,7 @@ class AuthSessionController extends ChangeNotifier {
   Future<void> logout() async {
     await _authService.logout();
     _authenticated = false;
-    _userEmail = null;
+    _userEmail = '';
     _userProfile = null;
     notifyListeners();
   }

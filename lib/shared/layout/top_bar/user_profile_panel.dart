@@ -4,18 +4,20 @@ class UserProfilePanel extends StatelessWidget {
   const UserProfilePanel({
     super.key,
     required this.onLogout,
-    required this.userEmail,
+    this.userEmail,
     this.userAvatarUrl,
   });
 
   final Future<void> Function() onLogout;
-  final String userEmail;
+  final String? userEmail;
   final String? userAvatarUrl;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final initial = userEmail;
+    final initial = (userEmail?.isNotEmpty ?? false)
+        ? userEmail![0].toUpperCase()
+        : '?';
 
     return Drawer(
       width: 280,
@@ -27,6 +29,7 @@ class UserProfilePanel extends StatelessWidget {
               child: Column(
                 children: [
                   CircleAvatar(
+                    radius: 40,
                     backgroundColor: colorScheme.primaryContainer,
                     backgroundImage: userAvatarUrl != null
                         ? NetworkImage(userAvatarUrl!)
@@ -42,9 +45,10 @@ class UserProfilePanel extends StatelessWidget {
                           )
                         : null,
                   ),
+                  if (userEmail != null) ...[
                     const SizedBox(height: 14),
                     Text(
-                      userEmail,
+                      userEmail!,
                       style: TextStyle(
                         color: colorScheme.onSurface.withValues(alpha: 0.75),
                         fontSize: 13,
@@ -54,6 +58,7 @@ class UserProfilePanel extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                   ],
+                ],
               ),
             ),
             const Divider(height: 1),

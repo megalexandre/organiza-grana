@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 
 class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
-  
   const LayoutTopBar({
     super.key,
     required this.title,
-    required this.userEmail,
+    this.userEmail,
     this.userAvatarUrl,
   });
 
   final String title;
-  final String userEmail;
+  final String? userEmail;
   final String? userAvatarUrl;
 
   @override
@@ -19,12 +18,14 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final appBarForeground = theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
+    final appBarForeground =
+        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
     final isMobile = MediaQuery.sizeOf(context).width < 800;
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Color.alphaBlend(Colors.black.withValues(alpha: 0.2), theme.colorScheme.surface),
+        color: Color.alphaBlend(
+            Colors.black.withValues(alpha: 0.2), theme.colorScheme.surface),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -48,7 +49,7 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
             : null,
         centerTitle: true,
         title: Text(
-          'Organiza Grana',
+          title,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
             color: appBarForeground,
@@ -58,8 +59,8 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
           Builder(
             builder: (ctx) {
               final colorScheme = Theme.of(ctx).colorScheme;
-              final initial = (userEmail.isNotEmpty)
-                  ? userEmail[0].toUpperCase()
+              final initial = (userEmail?.isNotEmpty ?? false)
+                  ? userEmail![0].toUpperCase()
                   : '?';
               return Padding(
                 padding: const EdgeInsets.only(right: 12),
