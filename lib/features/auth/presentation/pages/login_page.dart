@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:organizagrana/features/auth/presentation/widgets/login_brand_content.dart';
+import 'package:organizagrana/features/auth/presentation/widgets/piggy_coin_animation.dart';
 import 'package:organizagrana/l10n/app_localizations.dart';
 import 'package:organizagrana/shared/validators/app_validators.dart';
 
@@ -77,15 +78,13 @@ class _LoginPageState extends State<LoginPage> {
       isSubmitting: _isSubmitting,
     );
 
+    final width = MediaQuery.sizeOf(context).width;
     return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
-          if (width >= _kDesktopBreakpoint) return _DesktopLayout(form: form);
-          if (width >= _kTabletBreakpoint) return _TabletLayout(form: form);
-          return _MobileLayout(form: form);
-        },
-      ),
+      body: width >= _kDesktopBreakpoint
+          ? _DesktopLayout(form: form)
+          : width >= _kTabletBreakpoint
+              ? _TabletLayout(form: form)
+              : _MobileLayout(form: form),
     );
   }
 }
@@ -230,7 +229,7 @@ class _MobileLayout extends StatelessWidget {
                 children: [
                   Column(
                     children: [
-                      Icon(Icons.savings_outlined, size: 48, color: colorScheme.primary),
+                      PiggyCoinAnimation(color: colorScheme.primary, size: 48),
                       const SizedBox(height: 8),
                       Text(
                         'Organiza Grana',

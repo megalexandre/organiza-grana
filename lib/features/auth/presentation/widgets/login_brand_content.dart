@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:organizagrana/features/auth/presentation/widgets/piggy_coin_animation.dart';
 
 class LoginBrandContent extends StatelessWidget {
   const LoginBrandContent({
@@ -29,7 +30,7 @@ class LoginBrandContent extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.savings_outlined, size: 56, color: color),
+          PiggyCoinAnimation(color: color),
           const SizedBox(height: 24),
           Text(
             'Organiza Grana',
@@ -77,7 +78,7 @@ class LoginBrandContent extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: [
-          Icon(Icons.savings_outlined, size: 32, color: color),
+          PiggyCoinAnimation(color: color, size: 32),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
