@@ -1,54 +1,5 @@
 # Organiza Grana — Guia para Agentes de IA
 
-## Visão geral
-
-Aplicativo Flutter multiplataforma (Android, iOS, Web, Linux, Windows, macOS) para controle financeiro pessoal. Linguagem padrão do projeto: **português brasileiro**.
-
-## Stack
-
-| Camada | Tecnologia |
-|---|---|
-| UI | Flutter + Material 3 |
-| Navegação | `go_router` (ShellRoute + NoTransitionPage) |
-| HTTP | `http` (cliente manual, sem Dio) |
-| Storage local | `shared_preferences` |
-| Localização | `flutter_localizations` + `intl` (apenas `pt`) |
-| Injeção de dependência | Manual, sem framework |
-
-## Estrutura de pastas
-
-```
-lib/
-  app/                          # Bootstrap: app.dart, app_router.dart, app_theme.dart, auth_session_controller.dart
-  features/
-    auth/
-      data/                     # AuthService, AuthStorage, AuthApiClient, AuthAccessTokenProvider
-      domain/                   # AuthFailure, AuthResult, AuthTokens, LoginAttempt, UserProfile
-      presentation/
-        pages/                  # LoginPage
-        widgets/                # LoginBrandContent
-    bordero/
-      data/                     # BorderoService, HttpBorderoApiClient
-      domain/                   # BorderoInput, BorderoInputItem, BorderoResult, BorderoResultItem, BorderoFailure
-      presentation/
-        pages/                  # BorderoPage
-        widgets/                # BorderoAddItemDialog, BorderoItemTile, BorderoResultCard, BorderoSummaryPanel
-    recebiveis/
-      data/                     # ReceivablesService, HttpReceivablesApiClient
-      domain/                   # Receivable, ReceivableStatus, ReceivableFailure, ReceivablesPageResult, ReceivablesPagination
-      presentation/
-        pages/                  # RecebiveisPage
-        widgets/                # ReceivableCard, AddReceivableDialog, ReceivableDetailSheet
-    dashboard/
-      presentation/pages/       # DashboardPage
-  shared/
-    layout/                     # AdaptiveMenuScaffold, LayoutPage, SurfacePanel, top_bar/, side_menu/, footer/
-    network/                    # AccessTokenProvider, HttpApiClient, ApiEndpoints
-    utils/                      # app_formats.dart (currencyFormat, dateFormat, dateTimeFormat, formatDateIso)
-    validators/                 # AppValidators
-  l10n/                         # AppLocalizations (gerado), AppLocalizationsPt, app_pt.arb
-  main.dart
-```
 
 ## Padrões arquiteturais
 
@@ -134,9 +85,20 @@ LayoutBuilder(builder: (_, bc) => SingleChildScrollView(
 
 ### Cores — sem hardcode
 
-Todas as cores vêm de `Theme.of(context).colorScheme`. Tokens usados: `primary`, `onPrimary`, `primaryContainer`, `onPrimaryContainer`, `surface`, `onSurface`, `onSurfaceVariant`, `surfaceContainerLow`.
+Todas as cores vêm de `Theme.of(context).colorScheme`. **Nunca usar cores absolutas** como `Colors.white`, `Colors.black`, `Colors.grey`, `Colors.red`, `Colors.blue`, etc. — nem mesmo para fundos, divisores ou sombras.
 
-Para opacidade, usar `color.withValues(alpha: 0.8)` — nunca `Color(0xFF...)`.
+Mapeamento de substituições comuns:
+
+| Proibido | Usar |
+|---|---|
+| `Colors.white` | `colorScheme.surface` |
+| `Colors.black` | `colorScheme.onSurface` |
+| `Colors.grey` | `colorScheme.onSurface.withValues(alpha: 0.45)` |
+| `Colors.transparent` | `Colors.transparent` ✅ (único permitido) |
+
+Para opacidade, usar `color.withValues(alpha: 0.8)` — nunca `Color(0xFF...)` ou `color.withOpacity()`.
+
+Tokens usados no projeto: `primary`, `onPrimary`, `primaryContainer`, `onPrimaryContainer`, `surface`, `onSurface`, `onSurfaceVariant`, `surfaceContainerLow`, `shadow`.
 
 ### Localização (l10n)
 

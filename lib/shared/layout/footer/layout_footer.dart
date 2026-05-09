@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:organizagrana/shared/layout/user_display_profile.dart';
 
 class LayoutFooter extends StatelessWidget {
   const LayoutFooter({
     super.key,
     this.authorLabel = 'feito por alexandre queiroz',
-    this.userEmail,
+    this.profile,
   });
 
   final String authorLabel;
-  final String? userEmail;
+  final UserDisplayProfile? profile;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +40,7 @@ class LayoutFooter extends StatelessWidget {
             children: [
               Text(authorLabel, style: subtleStyle),
               const Spacer(),
-              if (userEmail != null) Text(userEmail!, style: subtleStyle),
+              if (profile != null) Text(profile!.email, style: subtleStyle),
             ],
           ),
         ),

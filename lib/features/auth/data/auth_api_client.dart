@@ -1,7 +1,7 @@
 import 'package:organizagrana/features/auth/domain/auth_failure.dart';
 import 'package:organizagrana/features/auth/domain/login_attempt.dart';
 import 'package:organizagrana/shared/network/access_token_provider.dart';
-import 'package:organizagrana/shared/network/api_enpoints.dart';
+import 'package:organizagrana/shared/network/api_endpoints.dart';
 import 'package:organizagrana/shared/network/http_api_client.dart';
 
 abstract class AuthApiClient {

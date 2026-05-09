@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:organizagrana/shared/layout/user_display_profile.dart';
 
 class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
   const LayoutTopBar({
     super.key,
     required this.title,
-    this.userEmail,
-    this.userAvatarUrl,
+    this.profile,
   });
 
   final String title;
-  final String? userEmail;
-  final String? userAvatarUrl;
+  final UserDisplayProfile? profile;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -59,9 +58,6 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
           Builder(
             builder: (ctx) {
               final colorScheme = Theme.of(ctx).colorScheme;
-              final initial = (userEmail?.isNotEmpty ?? false)
-                  ? userEmail![0].toUpperCase()
-                  : '?';
               return Padding(
                 padding: const EdgeInsets.only(right: 12),
                 child: InkWell(
@@ -70,12 +66,12 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
                   child: CircleAvatar(
                     radius: 16,
                     backgroundColor: colorScheme.primaryContainer,
-                    backgroundImage: userAvatarUrl != null
-                        ? NetworkImage(userAvatarUrl!)
+                    backgroundImage: profile?.avatarUrl != null
+                        ? NetworkImage(profile!.avatarUrl!)
                         : null,
-                    child: userAvatarUrl == null
+                    child: profile?.avatarUrl == null
                         ? Text(
-                            initial,
+                            profile?.initial ?? '?',
                             style: TextStyle(
                               color: colorScheme.onPrimaryContainer,
                               fontWeight: FontWeight.w600,

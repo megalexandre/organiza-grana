@@ -6,6 +6,7 @@ import 'package:organizagrana/shared/layout/side_menu/layout_menu_item.dart';
 import 'package:organizagrana/shared/layout/layout_page.dart';
 import 'package:organizagrana/shared/layout/page_section_layout.dart';
 import 'package:organizagrana/shared/layout/surface_panel.dart';
+import 'package:organizagrana/shared/layout/user_display_profile.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({
@@ -13,15 +14,13 @@ class DashboardPage extends StatefulWidget {
     required this.onLogout,
     required this.currentItemId,
     required this.body,
-    this.userEmail,
-    this.userAvatarUrl,
+    this.profile,
   });
 
   final Future<void> Function() onLogout;
   final String currentItemId;
   final Widget body;
-  final String? userEmail;
-  final String? userAvatarUrl;
+  final UserDisplayProfile? profile;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -65,8 +64,7 @@ class _DashboardPageState extends State<DashboardPage> {
       selectedIndex: selectedIndex,
       onMenuSelect: _handleMenuSelect,
       onLogout: widget.onLogout,
-      userEmail: widget.userEmail,
-      userAvatarUrl: widget.userAvatarUrl,
+      profile: widget.profile,
       body: widget.body,
     );
   }

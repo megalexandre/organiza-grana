@@ -4,6 +4,7 @@ import 'package:organizagrana/shared/layout/side_menu/layout_menu_item.dart';
 import 'package:organizagrana/shared/layout/side_menu/layout_side_menu.dart';
 import 'package:organizagrana/shared/layout/top_bar/layout_top_bar.dart';
 import 'package:organizagrana/shared/layout/top_bar/user_profile_panel.dart';
+import 'package:organizagrana/shared/layout/user_display_profile.dart';
 
 class LayoutPage extends StatelessWidget {
   const LayoutPage({
@@ -14,8 +15,7 @@ class LayoutPage extends StatelessWidget {
     required this.onMenuSelect,
     required this.onLogout,
     required this.body,
-    this.userEmail,
-    this.userAvatarUrl,
+    this.profile,
     this.backgroundColor = Colors.white,
     this.desktopBreakpoint = 800,
   });
@@ -26,8 +26,7 @@ class LayoutPage extends StatelessWidget {
   final ValueChanged<int> onMenuSelect;
   final Future<void> Function() onLogout;
   final Widget body;
-  final String? userEmail;
-  final String? userAvatarUrl;
+  final UserDisplayProfile? profile;
   final Color backgroundColor;
   final double desktopBreakpoint;
 
@@ -36,16 +35,8 @@ class LayoutPage extends StatelessWidget {
     return AdaptiveMenuScaffold(
       backgroundColor: backgroundColor,
       desktopBreakpoint: desktopBreakpoint,
-      appBar: LayoutTopBar(
-        title: title,
-        userEmail: userEmail,
-        userAvatarUrl: userAvatarUrl,
-      ),
-      endDrawer: UserProfilePanel(
-        onLogout: onLogout,
-        userEmail: userEmail,
-        userAvatarUrl: userAvatarUrl,
-      ),
+      appBar: LayoutTopBar(title: title, profile: profile),
+      endDrawer: UserProfilePanel(onLogout: onLogout, profile: profile),
       drawer: LayoutDrawer(
         items: menuItems,
         selectedIndex: selectedIndex,

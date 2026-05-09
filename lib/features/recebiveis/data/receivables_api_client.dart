@@ -4,7 +4,7 @@ import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart
 import 'package:organizagrana/features/recebiveis/domain/receivable_sort.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_update.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivables_page_result.dart';
-import 'package:organizagrana/shared/network/api_enpoints.dart';
+import 'package:organizagrana/shared/network/api_endpoints.dart';
 import 'package:organizagrana/shared/network/access_token_provider.dart';
 import 'package:organizagrana/shared/network/http_api_client.dart';
 

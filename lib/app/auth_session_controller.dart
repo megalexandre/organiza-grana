@@ -3,6 +3,7 @@ import 'package:organizagrana/features/auth/data/auth_service.dart';
 import 'package:organizagrana/features/auth/data/auth_storage.dart';
 import 'package:organizagrana/features/auth/domain/login_attempt.dart';
 import 'package:organizagrana/features/auth/domain/user_profile.dart';
+import 'package:organizagrana/shared/layout/user_display_profile.dart';
 
 class AuthSessionController extends ChangeNotifier {
   AuthSessionController({AuthService? authService})
@@ -12,22 +13,24 @@ class AuthSessionController extends ChangeNotifier {
 
   bool _initialized = false;
   bool _authenticated = false;
-  String _userEmail = '';
+  String? _userEmail;
   UserProfile? _userProfile;
 
   bool get initialized => _initialized;
   bool get isAuthenticated => _authenticated;
-  String? get displayEmail =>
-      _userProfile?.email ?? (_userEmail.isNotEmpty ? _userEmail : null);
-  String? get userAvatarUrl => _userProfile?.photoUrl;
+
+  UserDisplayProfile? get displayProfile {
+    final email = _userProfile?.email ?? _userEmail;
+    if (email == null) return null;
+    return UserDisplayProfile(email: email, avatarUrl: _userProfile?.photoUrl);
+  }
 
   Future<void> initialize() async {
     final isAuthenticated = await _authService.isAuthenticated();
-    final email = isAuthenticated ? await _authService.currentUserEmail() : null;
 
     _initialized = true;
     _authenticated = isAuthenticated;
-    _userEmail = email ?? '';
+    _userEmail = isAuthenticated ? await _authService.currentUserEmail() : null;
     notifyListeners();
 
     if (_authenticated) _fetchProfile();
@@ -37,15 +40,14 @@ class AuthSessionController extends ChangeNotifier {
     required String email,
     required String password,
   }) async {
-    final attempt = LoginAttempt(email: email, password: password);
-    final result = await _authService.login(attempt);
+    final result = await _authService.login(LoginAttempt(email: email, password: password));
 
     if (!result.isSuccess) {
       throw Exception(result.failure?.message ?? 'Falha no login.');
     }
 
     _authenticated = true;
-    _userEmail = await _authService.currentUserEmail() ?? '';
+    _userEmail = await _authService.currentUserEmail();
     notifyListeners();
 
     _fetchProfile();
@@ -54,7 +56,7 @@ class AuthSessionController extends ChangeNotifier {
   Future<void> logout() async {
     await _authService.logout();
     _authenticated = false;
-    _userEmail = '';
+    _userEmail = null;
     _userProfile = null;
     notifyListeners();
   }

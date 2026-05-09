@@ -1,10 +1,13 @@
 class UserProfile {
+
   final String id;
   final String email;
   final List<String> roles;
   final String? photoUrl;
 
-  const UserProfile({
+  late final String name = email.split('@').first;
+  
+  UserProfile({
     required this.id,
     required this.email,
     required this.roles,

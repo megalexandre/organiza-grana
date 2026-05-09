@@ -1,26 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:organizagrana/shared/layout/user_display_profile.dart';
 
 class UserProfilePanel extends StatelessWidget {
   const UserProfilePanel({
     super.key,
     required this.onLogout,
-    this.userEmail,
-    this.userAvatarUrl,
+    this.profile,
   });
 
   final Future<void> Function() onLogout;
-  final String? userEmail;
-  final String? userAvatarUrl;
+  final UserDisplayProfile? profile;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final initial = (userEmail?.isNotEmpty ?? false)
-        ? userEmail![0].toUpperCase()
-        : '?';
 
     return Drawer(
       width: 280,
+      shape: const RoundedRectangleBorder(),
       child: SafeArea(
         child: Column(
           children: [
@@ -31,12 +28,12 @@ class UserProfilePanel extends StatelessWidget {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: colorScheme.primaryContainer,
-                    backgroundImage: userAvatarUrl != null
-                        ? NetworkImage(userAvatarUrl!)
+                    backgroundImage: profile?.avatarUrl != null
+                        ? NetworkImage(profile!.avatarUrl!)
                         : null,
-                    child: userAvatarUrl == null
+                    child: profile?.avatarUrl == null
                         ? Text(
-                            initial,
+                            profile?.initial ?? '?',
                             style: TextStyle(
                               color: colorScheme.onPrimaryContainer,
                               fontWeight: FontWeight.w600,
@@ -45,10 +42,10 @@ class UserProfilePanel extends StatelessWidget {
                           )
                         : null,
                   ),
-                  if (userEmail != null) ...[
+                  if (profile != null) ...[
                     const SizedBox(height: 14),
                     Text(
-                      userEmail!,
+                      profile!.email,
                       style: TextStyle(
                         color: colorScheme.onSurface.withValues(alpha: 0.75),
                         fontSize: 13,

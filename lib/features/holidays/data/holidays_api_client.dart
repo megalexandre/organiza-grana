@@ -2,7 +2,7 @@ import 'package:organizagrana/features/holidays/domain/calendar_month.dart';
 import 'package:organizagrana/features/holidays/domain/holidays_failure.dart';
 import 'package:organizagrana/features/holidays/domain/holiday_override.dart';
 import 'package:organizagrana/shared/network/access_token_provider.dart';
-import 'package:organizagrana/shared/network/api_enpoints.dart';
+import 'package:organizagrana/shared/network/api_endpoints.dart';
 import 'package:organizagrana/shared/network/http_api_client.dart';
 
 abstract class HolidaysApiClient {
