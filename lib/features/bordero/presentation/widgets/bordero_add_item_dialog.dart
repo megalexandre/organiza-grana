@@ -79,6 +79,7 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
     final awaitingDays =
         int.tryParse(_awaitingDaysController.text.trim()) ?? 1;
 
+    FocusScope.of(context).unfocus();
     Navigator.of(context).pop(
       BorderoInputItem(
         amountCents: amountCents,
@@ -204,7 +205,10 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      Navigator.of(context).pop();
+                    },
                     child: const Text('Cancelar'),
                   ),
                 ),

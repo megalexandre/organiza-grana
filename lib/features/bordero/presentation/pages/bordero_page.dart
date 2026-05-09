@@ -81,6 +81,7 @@ class _BorderoPageState extends State<BorderoPage> {
 
   Future<void> _openAddItemDialog() async {
     final item = await showBorderoAddItem(context);
+    if (mounted) FocusManager.instance.primaryFocus?.unfocus();
     if (item != null) {
       setState(() {
         _items.add(item);
