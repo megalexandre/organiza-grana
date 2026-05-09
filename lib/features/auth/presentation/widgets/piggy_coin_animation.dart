@@ -24,6 +24,8 @@ class _PiggyCoinAnimationState extends State<PiggyCoinAnimation>
   late final Animation<double> _coinOpacity;
   // Piggy jiggle: slight rotation after coin enters
   late final Animation<double> _piggyJiggle;
+  // Piggy scale: grows when coin lands, then settles back
+  late final Animation<double> _piggyScale;
 
   @override
   void initState() {
@@ -64,6 +66,17 @@ class _PiggyCoinAnimationState extends State<PiggyCoinAnimation>
         curve: const Interval(0.72, 0.88, curve: Curves.easeOut),
       ),
     );
+
+    _piggyScale = TweenSequence<double>([
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.18), weight: 20),
+      TweenSequenceItem(tween: Tween(begin: 1.18, end: 1.0), weight: 40),
+    ]).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.65, 0.92, curve: Curves.easeInOut),
+      ),
+    );
   }
 
   @override
@@ -97,12 +110,15 @@ class _PiggyCoinAnimationState extends State<PiggyCoinAnimation>
                 bottom: 0,
                 left: 0,
                 right: 0,
-                child: Transform.rotate(
-                  angle: _piggyJiggle.value * 0.12,
-                  child: Icon(
-                    Icons.savings_outlined,
-                    size: size,
-                    color: widget.color,
+                child: Transform.scale(
+                  scale: _piggyScale.value,
+                  child: Transform.rotate(
+                    angle: _piggyJiggle.value * 0.12,
+                    child: Icon(
+                      Icons.savings_outlined,
+                      size: size,
+                      color: widget.color,
+                    ),
                   ),
                 ),
               ),
