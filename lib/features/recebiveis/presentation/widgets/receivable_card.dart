@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:organizagrana/app/app_theme.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
+
+Color _statusColor(ReceivableStatus status, ColorScheme cs) {
+  final isDark = cs.brightness == Brightness.dark;
+  return switch (status) {
+    ReceivableStatus.paid          => isDark ? AppColors.statusPaid          : AcalLightColors.statusPaid,
+    ReceivableStatus.awaiting      => isDark ? AppColors.statusAwaiting      : AcalLightColors.statusAwaiting,
+    ReceivableStatus.inAnalysis    => isDark ? AppColors.statusInAnalysis    : AcalLightColors.statusInAnalysis,
+    ReceivableStatus.inTransaction => isDark ? AppColors.statusInTransaction : AcalLightColors.statusInTransaction,
+    ReceivableStatus.overdue       => isDark ? AppColors.statusOverdue       : AcalLightColors.statusOverdue,
+  };
+}
 
 final _cardDateFormat = DateFormat('dd/MMM/yyyy', 'pt_BR');
 final _monthYearFormat = DateFormat('dd/MM/yyyy', 'pt_BR');
@@ -158,7 +170,7 @@ class _CompactCardState extends State<_CompactCard> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final r = widget.receivable;
-    final statusColor = r.status.badgeColor;
+    final statusColor = _statusColor(r.status, colorScheme);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -317,7 +329,7 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = status.badgeColor;
+    final color = _statusColor(status, Theme.of(context).colorScheme);
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,

@@ -148,6 +148,11 @@ class _PiggyCoinAnimationState extends State<PiggyCoinAnimation>
 class _Coin extends StatelessWidget {
   const _Coin({required this.size});
 
+  static const _fill   = Color(0xFFFFCA28); // amber 400
+  static const _border = Color(0xFFFFB300); // amber 700
+  static const _shadow = Color(0x99FFB300); // amber 700 @ 60%
+  static const _symbol = Color(0xFFFF6F00); // amber 900
+
   final double size;
 
   @override
@@ -157,11 +162,11 @@ class _Coin extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.amber.shade400,
-        border: Border.all(color: Colors.amber.shade700, width: size * 0.06),
+        color: _fill,
+        border: Border.all(color: _border, width: size * 0.06),
         boxShadow: [
           BoxShadow(
-            color: Colors.amber.withValues(alpha: 0.6),
+            color: _shadow,
             blurRadius: size * 0.3,
             spreadRadius: size * 0.05,
           ),
@@ -173,7 +178,7 @@ class _Coin extends StatelessWidget {
           style: TextStyle(
             fontSize: size * 0.32,
             fontWeight: FontWeight.w900,
-            color: Colors.amber.shade900,
+            color: _symbol,
             height: 1,
           ),
         ),

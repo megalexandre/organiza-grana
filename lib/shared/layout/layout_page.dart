@@ -16,7 +16,7 @@ class LayoutPage extends StatelessWidget {
     required this.onLogout,
     required this.body,
     this.profile,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor,
     this.desktopBreakpoint = 800,
   });
 
@@ -27,7 +27,7 @@ class LayoutPage extends StatelessWidget {
   final Future<void> Function() onLogout;
   final Widget body;
   final UserDisplayProfile? profile;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final double desktopBreakpoint;
 
   @override

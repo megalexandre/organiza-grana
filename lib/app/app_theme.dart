@@ -90,6 +90,18 @@ abstract final class AppColors {
   static const onInfo = Color(0xFF1C1F2E);
   static const warning = AppPalette.warning500;
   static const onWarning = Color(0xFF1C1F2E);
+
+  // --- Superfícies adicionais ---
+  static const onSurfaceVariant = Color(0xFF6B7380);   // ícones/texto muted
+  static const surfaceContainer = Color(0xFF252A3A);   // cards, inputs
+  static const navBarBackground = Color(0xFF1A1D2B);   // top app bar
+
+  // --- Status dos recebíveis (dark) ---
+  static const statusAwaiting      = AppPalette.success500;
+  static const statusInAnalysis    = AppPalette.info400;
+  static const statusInTransaction = AppPalette.primary400;
+  static const statusPaid          = Color(0xFF6B7380);
+  static const statusOverdue       = AppPalette.danger400;
 }
 
 /// Tokens semânticos — tema light (Docker Desktop).
@@ -124,6 +136,18 @@ abstract final class AcalLightColors {
   static const onInfo = Color(0xFFFFFFFF);
   static const warning = AppPalette.warning600;
   static const onWarning = Color(0xFFFFFFFF);
+
+  // --- Superfícies adicionais ---
+  static const onSurfaceVariant = Color(0xFF6B7380);   // ícones/texto muted
+  static const surfaceContainer = Color(0xFFFFFFFF);   // cards, inputs
+  static const navBarBackground = Color(0xFFEEF2FF);   // top app bar
+
+  // --- Status dos recebíveis (light) ---
+  static const statusAwaiting      = AppPalette.success600;
+  static const statusInAnalysis    = AppPalette.info600;
+  static const statusInTransaction = AppPalette.primary600;
+  static const statusPaid          = Color(0xFF9EA4B0);
+  static const statusOverdue       = AppPalette.danger600;
 }
 
 abstract final class AppTheme {
@@ -152,7 +176,7 @@ abstract final class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.surface,
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1A1D2B),  // Docker navbar
+        backgroundColor: AppColors.navBarBackground,
         foregroundColor: AppColors.onSurface,
         elevation: 0,
         centerTitle: false,
@@ -162,18 +186,18 @@ abstract final class AppTheme {
         backgroundColor: AppColors.secondaryContainer,
         indicatorColor: AppColors.primaryContainer,
         selectedIconTheme: IconThemeData(color: AppColors.onSurface),
-        unselectedIconTheme: IconThemeData(color: Color(0xFF6B7380)),
+        unselectedIconTheme: IconThemeData(color: AppColors.onSurfaceVariant),
         selectedLabelTextStyle: TextStyle(
           color: AppColors.onSurface,
           fontWeight: FontWeight.w600,
         ),
-        unselectedLabelTextStyle: TextStyle(color: Color(0xFF6B7380)),
+        unselectedLabelTextStyle: TextStyle(color: AppColors.onSurfaceVariant),
       ),
       drawerTheme: const DrawerThemeData(
         backgroundColor: AppColors.secondaryContainer,
       ),
       cardTheme: const CardThemeData(
-        color: Color(0xFF252A3A),
+        color: AppColors.surfaceContainer,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(4)),
@@ -187,8 +211,8 @@ abstract final class AppTheme {
       inputDecorationTheme: const InputDecorationTheme(
         border: OutlineInputBorder(borderRadius: BorderRadius.zero),
         filled: true,
-        fillColor: Color(0xFF252A3A),
-        hintStyle: TextStyle(color: Color(0xFF6B7380)),
+        fillColor: AppColors.surfaceContainer,
+        hintStyle: TextStyle(color: AppColors.onSurfaceVariant),
       ),
       textTheme: const TextTheme(
         bodyMedium: TextStyle(color: AppColors.onSurface),
@@ -199,11 +223,11 @@ abstract final class AppTheme {
       listTileTheme: const ListTileThemeData(
         selectedTileColor: AppColors.primaryContainer,
         selectedColor: AppColors.onSurface,
-        textColor: Color(0xFF9EA4B0),
-        iconColor: Color(0xFF6B7380),
+        textColor: AppColors.onSecondaryContainer,
+        iconColor: AppColors.onSurfaceVariant,
       ),
       snackBarTheme: const SnackBarThemeData(
-        backgroundColor: Color(0xFF252A3A),
+        backgroundColor: AppColors.surfaceContainer,
         contentTextStyle: TextStyle(color: AppColors.onSurface),
       ),
     );
@@ -234,7 +258,7 @@ abstract final class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: AcalLightColors.surface,
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFFEEF2FF),
+        backgroundColor: AcalLightColors.navBarBackground,
         foregroundColor: AcalLightColors.onSurface,
         elevation: 0,
         centerTitle: false,
@@ -244,18 +268,18 @@ abstract final class AppTheme {
         backgroundColor: AcalLightColors.secondaryContainer,
         indicatorColor: AcalLightColors.primaryContainer,
         selectedIconTheme: IconThemeData(color: AcalLightColors.primary),
-        unselectedIconTheme: IconThemeData(color: Color(0xFF6B7380)),
+        unselectedIconTheme: IconThemeData(color: AcalLightColors.onSurfaceVariant),
         selectedLabelTextStyle: TextStyle(
           color: AcalLightColors.primary,
           fontWeight: FontWeight.w600,
         ),
-        unselectedLabelTextStyle: TextStyle(color: Color(0xFF6B7380)),
+        unselectedLabelTextStyle: TextStyle(color: AcalLightColors.onSurfaceVariant),
       ),
       drawerTheme: const DrawerThemeData(
         backgroundColor: AcalLightColors.secondaryContainer,
       ),
       cardTheme: const CardThemeData(
-        color: Color(0xFFFFFFFF),
+        color: AcalLightColors.surfaceContainer,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(4)),
@@ -269,8 +293,8 @@ abstract final class AppTheme {
       inputDecorationTheme: const InputDecorationTheme(
         border: OutlineInputBorder(borderRadius: BorderRadius.zero),
         filled: true,
-        fillColor: Color(0xFFFFFFFF),
-        hintStyle: TextStyle(color: Color(0xFF9EA4B0)),
+        fillColor: AcalLightColors.surfaceContainer,
+        hintStyle: TextStyle(color: AcalLightColors.onSurfaceVariant),
       ),
       textTheme: const TextTheme(
         bodyMedium: TextStyle(color: AcalLightColors.onSurface),
@@ -282,11 +306,11 @@ abstract final class AppTheme {
         selectedTileColor: AcalLightColors.primaryContainer,
         selectedColor: AcalLightColors.primary,
         textColor: AcalLightColors.onSurface,
-        iconColor: Color(0xFF6B7380),
+        iconColor: AcalLightColors.onSurfaceVariant,
       ),
       snackBarTheme: const SnackBarThemeData(
-        backgroundColor: Color(0xFF1C1F2E),
-        contentTextStyle: TextStyle(color: Color(0xFFE6EBF5)),
+        backgroundColor: AppColors.surface,
+        contentTextStyle: TextStyle(color: AppColors.onSurface),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:organizagrana/app/app_theme.dart';
 
 enum ReceivableStatus {
   awaiting(0, 'Aguardando'),
@@ -13,11 +14,11 @@ enum ReceivableStatus {
   final String label;
 
   Color get badgeColor => switch (this) {
-        ReceivableStatus.paid => Colors.grey,
-        ReceivableStatus.awaiting => Colors.green,
-        ReceivableStatus.inAnalysis => Colors.blue,
-        ReceivableStatus.inTransaction => Colors.purple,
-        ReceivableStatus.overdue => Colors.red,
+        ReceivableStatus.paid => AppColors.statusPaid,
+        ReceivableStatus.awaiting => AppColors.statusAwaiting,
+        ReceivableStatus.inAnalysis => AppColors.statusInAnalysis,
+        ReceivableStatus.inTransaction => AppColors.statusInTransaction,
+        ReceivableStatus.overdue => AppColors.statusOverdue,
       };
 
   bool get canReceive =>

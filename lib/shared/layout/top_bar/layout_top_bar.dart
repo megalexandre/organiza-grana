@@ -24,10 +24,10 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Color.alphaBlend(
-            Colors.black.withValues(alpha: 0.2), theme.colorScheme.surface),
+            theme.colorScheme.shadow.withValues(alpha: 0.2), theme.colorScheme.surface),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.2),
             blurRadius: 0.5,
             offset: const Offset(0, 1),
           ),

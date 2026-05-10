@@ -12,6 +12,7 @@ import 'package:organizagrana/features/bordero/presentation/widgets/bordero_expo
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_item_card.dart';
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_summary_panel.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
+import 'package:organizagrana/shared/utils/date_input_formatter.dart';
 import 'package:organizagrana/shared/layout/page_content_constraint.dart';
 import 'package:organizagrana/shared/utils/web_download.dart';
 import 'package:organizagrana/shared/utils/widget_capture.dart';
@@ -167,7 +168,6 @@ class _BorderoPageState extends State<BorderoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
       body: Column(
         children: [
           if (_paramsConfirmed) _buildCompactParams(context),
@@ -175,13 +175,12 @@ class _BorderoPageState extends State<BorderoPage> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isNarrow = constraints.maxWidth < 600;
-                final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
                 return SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(
                     isNarrow ? 16 : 24,
                     isNarrow ? 16 : 24,
                     isNarrow ? 16 : 24,
-                    96 + keyboardHeight,
+                    96,
                   ),
                   child: PageContentConstraint(
                       child: Form(
@@ -354,14 +353,34 @@ class _BorderoPageState extends State<BorderoPage> {
       decoration: InputDecoration(
         labelText: 'Data da troca',
         hintText: 'dd/mm/aaaa',
-        suffixIcon: Icon(
-          Icons.calendar_today_outlined,
-          size: 18,
-          color: colorScheme.onSurfaceVariant,
+        suffixIcon: IconButton(
+          icon: Icon(
+            Icons.calendar_today_outlined,
+            size: 18,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          onPressed: _pickChangeDate,
         ),
       ),
-      readOnly: true,
-      onTap: _pickChangeDate,
+      keyboardType: TextInputType.number,
+      inputFormatters: [DateTextInputFormatter()],
+      onChanged: (value) {
+        if (value.length == 10) {
+          try {
+            setState(() => _changeDate = dateFormat.parseStrict(value));
+          } catch (_) {}
+        }
+      },
+      validator: (v) {
+        if (v == null || v.trim().isEmpty) return 'Informe a data.';
+        if (v.length < 10) return 'Data incompleta.';
+        try {
+          dateFormat.parseStrict(v.trim());
+          return null;
+        } catch (_) {
+          return 'Data inválida.';
+        }
+      },
     );
   }
 

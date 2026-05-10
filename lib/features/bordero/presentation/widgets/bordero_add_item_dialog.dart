@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input_item.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
+import 'package:organizagrana/shared/utils/date_input_formatter.dart';
 
 Future<BorderoInputItem?> showBorderoAddItem(BuildContext context) {
   final isNarrow = MediaQuery.sizeOf(context).width < 600;
@@ -169,19 +170,33 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
               decoration: InputDecoration(
                 labelText: 'Data de vencimento',
                 hintText: 'dd/mm/aaaa',
-                suffixIcon: Icon(
-                  Icons.calendar_today_outlined,
-                  size: 18,
-                  color: colorScheme.onSurfaceVariant,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    Icons.calendar_today_outlined,
+                    size: 18,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  onPressed: _pickDueDate,
                 ),
               ),
-              readOnly: true,
-              onTap: _pickDueDate,
-              validator: (_) {
-                if (_selectedDueDate == null) {
-                  return 'Selecione a data de vencimento.';
+              keyboardType: TextInputType.number,
+              inputFormatters: [DateTextInputFormatter()],
+              onChanged: (value) {
+                try {
+                  setState(() => _selectedDueDate = dateFormat.parseStrict(value));
+                } catch (_) {
+                  setState(() => _selectedDueDate = null);
                 }
-                return null;
+              },
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Informe a data de vencimento.';
+                if (v.length < 10) return 'Data incompleta.';
+                try {
+                  dateFormat.parseStrict(v.trim());
+                  return null;
+                } catch (_) {
+                  return 'Data inválida.';
+                }
               },
             ),
             const SizedBox(height: 16),

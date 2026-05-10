@@ -216,7 +216,7 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.error_outline, size: 40, color: Colors.red.withValues(alpha: 0.6)),
+          Icon(Icons.error_outline, size: 40, color: Theme.of(context).colorScheme.error.withValues(alpha: 0.6)),
           const SizedBox(height: 12),
           Text(_error!, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 8),

@@ -162,7 +162,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     final summary = _summary;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: PageContentConstraint(
         child: Row(
           children: [
@@ -461,7 +461,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     }
 
     if (_errorMessage != null && _receivables.isEmpty) {
-      return _buildErrorState(textTheme);
+      return _buildErrorState(context, textTheme);
     }
 
     if (_receivables.isEmpty) {
@@ -514,12 +514,12 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     );
   }
 
-  Widget _buildErrorState(TextTheme textTheme) {
+  Widget _buildErrorState(BuildContext context, TextTheme textTheme) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.error_outline, size: 48, color: Colors.red.withValues(alpha: 0.6)),
+          Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error.withValues(alpha: 0.6)),
           const SizedBox(height: 12),
           Text(_errorMessage!, style: textTheme.bodyMedium),
           const SizedBox(height: 8),

@@ -272,12 +272,6 @@ class _CalendarGrid extends StatelessWidget {
   }
 }
 
-class _CalendarColors {
-  static const weekend = Color(0xFFDDE6FF);
-  static const holiday = Color(0xFFFFDDD4);
-  static const businessDay = Colors.white;
-}
-
 class _DayCell extends StatelessWidget {
   const _DayCell({required this.day, required this.onTap});
 
@@ -286,18 +280,16 @@ class _DayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final Color bg;
-    final Color fg;
+    final Color fg = cs.onSurface;
 
     if (day.holiday) {
-      bg = _CalendarColors.holiday;
-      fg = Colors.black87;
+      bg = cs.error.withValues(alpha: 0.12);
     } else if (day.weekend) {
-      bg = _CalendarColors.weekend;
-      fg = Colors.black87;
+      bg = cs.primary.withValues(alpha: 0.10);
     } else {
-      bg = _CalendarColors.businessDay;
-      fg = Colors.black87;
+      bg = cs.surface;
     }
 
     Widget cell = Material(
@@ -338,14 +330,15 @@ class _Legend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Wrap(
+    final cs = Theme.of(context).colorScheme;
+    return Wrap(
       spacing: 24,
       runSpacing: 8,
       alignment: WrapAlignment.center,
       children: [
-        _LegendItem(color: _CalendarColors.businessDay, label: 'Dias Úteis', bordered: true),
-        _LegendItem(color: _CalendarColors.weekend, label: 'Finais de Semana'),
-        _LegendItem(color: _CalendarColors.holiday, label: 'Feriados'),
+        _LegendItem(color: cs.surface, label: 'Dias Úteis', bordered: true),
+        _LegendItem(color: cs.primary.withValues(alpha: 0.10), label: 'Finais de Semana'),
+        _LegendItem(color: cs.error.withValues(alpha: 0.12), label: 'Feriados'),
       ],
     );
   }
