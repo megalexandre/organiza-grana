@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:organizagrana/shared/layout/user_display_profile.dart';
+import 'package:organizagrana/shared/theme/theme_controller.dart';
 
 class UserProfilePanel extends StatelessWidget {
   const UserProfilePanel({
@@ -14,6 +15,7 @@ class UserProfilePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final themeController = ThemeModeProvider.of(context);
 
     return Drawer(
       width: 280,
@@ -60,6 +62,38 @@ class UserProfilePanel extends StatelessWidget {
             ),
             const Divider(height: 1),
             const Spacer(),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: ValueListenableBuilder(
+                valueListenable: themeController,
+                builder: (_, current, _) => SegmentedButton<ThemeMode>(
+                  style: SegmentedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  segments: const [
+                    ButtonSegment(
+                      value: ThemeMode.system,
+                      icon: Icon(Icons.brightness_auto, size: 18),
+                      tooltip: 'Automático',
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.light,
+                      icon: Icon(Icons.light_mode, size: 18),
+                      tooltip: 'Claro',
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.dark,
+                      icon: Icon(Icons.dark_mode, size: 18),
+                      tooltip: 'Escuro',
+                    ),
+                  ],
+                  selected: {current},
+                  onSelectionChanged: (selection) =>
+                      themeController.setMode(selection.first),
+                ),
+              ),
+            ),
             const Divider(height: 1),
             ListTile(
               leading: Icon(

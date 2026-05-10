@@ -13,6 +13,7 @@ import 'package:organizagrana/features/recebiveis/data/receivables_api_client.da
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/l10n/app_localizations.dart';
 import 'package:organizagrana/shared/network/http_api_client.dart';
+import 'package:organizagrana/shared/theme/theme_controller.dart';
 
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
@@ -24,10 +25,13 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   late final AuthSessionController _session;
   late final AppRouter _appRouter;
+  final _themeController = ThemeController();
 
   @override
   void initState() {
     super.initState();
+    _themeController.load();
+
     final authStorage = AuthStorage();
     final authService = AuthService(authStorage);
     _session = AuthSessionController(authService: authService);
@@ -57,13 +61,26 @@ class _MainAppState extends State<MainApp> {
   }
 
   @override
+  void dispose() {
+    _themeController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: _appRouter.router,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      theme: AppTheme.light,
-      themeMode: ThemeMode.light,
+    return ThemeModeProvider(
+      controller: _themeController,
+      child: ValueListenableBuilder(
+        valueListenable: _themeController,
+        builder: (_, themeMode, _) => MaterialApp.router(
+          routerConfig: _appRouter.router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
+        ),
+      ),
     );
   }
 }
