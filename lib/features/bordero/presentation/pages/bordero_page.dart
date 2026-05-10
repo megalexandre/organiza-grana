@@ -168,6 +168,7 @@ class _BorderoPageState extends State<BorderoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Column(
         children: [
           if (_paramsConfirmed) _buildCompactParams(context),
@@ -180,7 +181,7 @@ class _BorderoPageState extends State<BorderoPage> {
                     isNarrow ? 16 : 24,
                     isNarrow ? 16 : 24,
                     isNarrow ? 16 : 24,
-                    96,
+                    96 + MediaQuery.viewInsetsOf(context).bottom,
                   ),
                   child: PageContentConstraint(
                       child: Form(
