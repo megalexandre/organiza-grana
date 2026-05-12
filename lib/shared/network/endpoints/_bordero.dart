@@ -5,4 +5,5 @@ class _Bordero {
 
   static const String _path = '${ApiEndpoints._base}/bordero';
   final String calculate = '$_path/calculate';
+  final String save = _path;
 }

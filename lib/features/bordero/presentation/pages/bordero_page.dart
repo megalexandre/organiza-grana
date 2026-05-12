@@ -35,6 +35,7 @@ class _BorderoPageState extends State<BorderoPage> {
   final List<BorderoInputItem> _items = [];
   BorderoResult? _result;
   bool _loading = false;
+  bool _saving = false;
   String? _errorMessage;
   bool _paramsConfirmed = false;
 
@@ -78,6 +79,32 @@ class _BorderoPageState extends State<BorderoPage> {
       _result = null;
       _errorMessage = null;
     });
+  }
+
+  Future<void> _save() async {
+    if (_result == null) return;
+    setState(() {
+      _saving = true;
+      _errorMessage = null;
+    });
+    try {
+      await widget.service.save(_buildInput());
+      if (mounted) {
+        setState(() {
+          _items.clear();
+          _result = null;
+          _paramsConfirmed = false;
+          _errorMessage = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Borderô salvo com sucesso!')),
+        );
+      }
+    } on BorderoFailure catch (e) {
+      if (mounted) setState(() => _errorMessage = e.message);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   Future<void> _openAddItemDialog() async {
@@ -545,6 +572,18 @@ class _BorderoPageState extends State<BorderoPage> {
               onPressed: _exportToCsv,
               icon: const Icon(Icons.table_chart_outlined),
               label: const Text('Exportar CSV'),
+            ),
+            const SizedBox(width: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
+              label: const Text('Salvar'),
             ),
           ],
         ),

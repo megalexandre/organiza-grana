@@ -61,6 +61,14 @@ const Map<String, dynamic> receivableDetailBody = {
   },
 };
 
+const Map<String, dynamic> savedBorderoBody = {
+  'id': 'bdro-saved-1',
+  'change_date': '2026-08-01',
+  'total_amount_cents': 300000,
+  'total_proceeds_cents': 291500,
+  'total_interest_amount_cents': 8500,
+};
+
 const Map<String, dynamic> borderoResultBody = {
   'items': [
     {

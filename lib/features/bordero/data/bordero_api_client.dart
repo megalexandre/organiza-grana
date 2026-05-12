@@ -1,6 +1,7 @@
 import 'package:organizagrana/features/bordero/domain/bordero_failure.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_result.dart';
+import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
 import 'package:organizagrana/shared/network/access_token_provider.dart';
 import 'package:organizagrana/shared/network/api_endpoints.dart';
 import 'package:organizagrana/shared/network/authenticated_api_client.dart';
@@ -8,6 +9,7 @@ import 'package:organizagrana/shared/network/http_api_client.dart';
 
 abstract class BorderoApiClient {
   Future<BorderoResult> calculate(BorderoInput input);
+  Future<SavedBordero> save(BorderoInput input);
 }
 
 class BorderoApiClientException implements Exception {
@@ -28,6 +30,14 @@ class HttpBorderoApiClient with AuthenticatedApiClient implements BorderoApiClie
         () => httpClient
             .postJson(Uri.parse(ApiEndpoints.bordero.calculate), input.toJson())
             .then(BorderoResult.fromJson),
+        (type) => BorderoApiClientException(_toFailureType(type)),
+      );
+
+  @override
+  Future<SavedBordero> save(BorderoInput input) => guarded(
+        () => httpClient
+            .postJson(Uri.parse(ApiEndpoints.bordero.save), input.toJson())
+            .then(SavedBordero.fromJson),
         (type) => BorderoApiClientException(_toFailureType(type)),
       );
 
