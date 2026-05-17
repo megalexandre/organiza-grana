@@ -3,6 +3,7 @@ import 'package:organizagrana/features/recebiveis/data/receivables_service.dart'
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_sort.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_summary.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivables_pagination.dart';
 import 'package:organizagrana/features/recebiveis/presentation/widgets/add_receivable_dialog.dart';
@@ -138,6 +139,169 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     if (created == true) _loadReceivables();
   }
 
+  Future<void> _changeStatus(Receivable r, ReceivableStatus newStatus) async {
+    try {
+      await widget.service.changeStatus(r.id, newStatus);
+      if (mounted) _loadReceivables();
+    } on ReceivableFailure catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
+  }
+
+  void _showAdaptiveSheet(
+    BuildContext context, {
+    required String title,
+    double dialogWidth = 320,
+    required Widget Function(BuildContext ctx, StateSetter setModalState) builder,
+  }) {
+    final isNarrow = MediaQuery.sizeOf(context).width < 600;
+
+    Widget buildContent(BuildContext ctx, StateSetter setModalState) {
+      final tt = Theme.of(ctx).textTheme;
+      final cs = Theme.of(ctx).colorScheme;
+
+      final body = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isNarrow)
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+          Text(title, style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 16),
+          builder(ctx, setModalState),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Fechar'),
+            ),
+          ),
+        ],
+      );
+
+      return isNarrow
+          ? SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                child: body,
+              ),
+            )
+          : body;
+    }
+
+    if (isNarrow) {
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (ctx) => StatefulBuilder(builder: buildContent),
+      );
+      return;
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setModalState) => AlertDialog(
+          shape: const RoundedRectangleBorder(),
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+          content: SizedBox(width: dialogWidth, child: buildContent(ctx, setModalState)),
+        ),
+      ),
+    );
+  }
+
+  void _showSortSheet(BuildContext context) {
+    _showAdaptiveSheet(
+      context,
+      title: 'Ordenação',
+      builder: (ctx, setModalState) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Ordenar por', style: Theme.of(ctx).textTheme.labelMedium),
+          RadioGroup<ReceivableSortField>(
+            groupValue: _sortBy,
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() => _sortBy = v);
+              setModalState(() {});
+              _loadReceivables();
+            },
+            child: const Column(
+              children: [
+                RadioListTile<ReceivableSortField>(
+                  title: Text('Data de vencimento'),
+                  value: ReceivableSortField.dueDate,
+                ),
+                RadioListTile<ReceivableSortField>(
+                  title: Text('Valor'),
+                  value: ReceivableSortField.amount,
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+          Text('Direção', style: Theme.of(ctx).textTheme.labelMedium),
+          RadioGroup<ReceivableSortDirection>(
+            groupValue: _sortDirection,
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() => _sortDirection = v);
+              setModalState(() {});
+              _loadReceivables();
+            },
+            child: const Column(
+              children: [
+                RadioListTile<ReceivableSortDirection>(
+                  title: Text('Mais recente primeiro'),
+                  value: ReceivableSortDirection.desc,
+                ),
+                RadioListTile<ReceivableSortDirection>(
+                  title: Text('Mais antigo primeiro'),
+                  value: ReceivableSortDirection.asc,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFiltersSheet(BuildContext context) {
+    _showAdaptiveSheet(
+      context,
+      title: 'Filtros',
+      dialogWidth: 280,
+      builder: (ctx, _) => CheckboxListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Exibir arquivados'),
+        value: _withDiscarded,
+        onChanged: (v) {
+          Navigator.pop(ctx);
+          setState(() => _withDiscarded = v ?? false);
+          _loadReceivables();
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,7 +332,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
           children: [
             if (summary != null) ...[
               Text(
-                '${summary.count} Recebivíveis',
+                '${summary.count} Recebíveis',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.normal,
@@ -206,12 +370,16 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
       child: PageContentConstraint(
         child: Row(
           children: [
-            _FilterButton(
+            _ToolbarButton(
+              icon: Icons.tune,
+              label: 'Filtros',
               active: _withDiscarded,
               onPressed: () => _showFiltersSheet(context),
             ),
             const SizedBox(width: 8),
-            _SortButton(
+            _ToolbarButton(
+              icon: Icons.sort,
+              label: 'Ordenar',
               active: !_isSortDefault,
               onPressed: () => _showSortSheet(context),
             ),
@@ -246,207 +414,6 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
               onPressed: () => setState(() => _compactView = !_compactView),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  void _showSortSheet(BuildContext context) {
-    final isNarrow = MediaQuery.sizeOf(context).width < 600;
-
-    Widget buildContent(BuildContext ctx, StateSetter setModalState) {
-      final tt = Theme.of(ctx).textTheme;
-      final cs = Theme.of(ctx).colorScheme;
-
-      final body = Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (isNarrow)
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: cs.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-          Text('Ordenação', style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 16),
-          Text('Ordenar por', style: tt.labelMedium),
-          RadioGroup<ReceivableSortField>(
-            groupValue: _sortBy,
-            onChanged: (v) {
-              if (v == null) return;
-              Navigator.pop(ctx);
-              setState(() => _sortBy = v);
-              _loadReceivables();
-            },
-            child: const Column(
-              children: [
-                RadioListTile<ReceivableSortField>(
-                  title: Text('Data de vencimento'),
-                  value: ReceivableSortField.dueDate,
-                ),
-                RadioListTile<ReceivableSortField>(
-                  title: Text('Valor'),
-                  value: ReceivableSortField.amount,
-                ),
-              ],
-            ),
-          ),
-          const Divider(),
-          Text('Direção', style: tt.labelMedium),
-          RadioGroup<ReceivableSortDirection>(
-            groupValue: _sortDirection,
-            onChanged: (v) {
-              if (v == null) return;
-              Navigator.pop(ctx);
-              setState(() => _sortDirection = v);
-              _loadReceivables();
-            },
-            child: const Column(
-              children: [
-                RadioListTile<ReceivableSortDirection>(
-                  title: Text('Mais recente primeiro'),
-                  value: ReceivableSortDirection.desc,
-                ),
-                RadioListTile<ReceivableSortDirection>(
-                  title: Text('Mais antigo primeiro'),
-                  value: ReceivableSortDirection.asc,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Fechar'),
-            ),
-          ),
-        ],
-      );
-
-      return isNarrow
-          ? SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-                child: body,
-              ),
-            )
-          : Padding(padding: EdgeInsets.zero, child: body);
-    }
-
-    if (isNarrow) {
-      showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        builder: (ctx) => StatefulBuilder(
-          builder: (ctx, setModalState) => buildContent(ctx, setModalState),
-        ),
-      );
-      return;
-    }
-
-    showDialog<void>(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setModalState) => AlertDialog(
-          shape: const RoundedRectangleBorder(),
-          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-          content: SizedBox(width: 320, child: buildContent(ctx, setModalState)),
-        ),
-      ),
-    );
-  }
-
-  void _showFiltersSheet(BuildContext context) {
-    final isNarrow = MediaQuery.sizeOf(context).width < 600;
-
-    Widget buildContent(BuildContext ctx, StateSetter setModalState) {
-      final tt = Theme.of(ctx).textTheme;
-      final cs = Theme.of(ctx).colorScheme;
-
-      final body = Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (isNarrow)
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: cs.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-          Text('Filtros', style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Exibir arquivados'),
-            value: _withDiscarded,
-            onChanged: (v) {
-              Navigator.pop(ctx);
-              setState(() => _withDiscarded = v ?? false);
-              _loadReceivables();
-            },
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Fechar'),
-            ),
-          ),
-        ],
-      );
-
-      return isNarrow
-          ? SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-                child: body,
-              ),
-            )
-          : Padding(padding: EdgeInsets.zero, child: body);
-    }
-
-    if (isNarrow) {
-      showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        builder: (ctx) => StatefulBuilder(
-          builder: (ctx, setModalState) => buildContent(ctx, setModalState),
-        ),
-      );
-      return;
-    }
-
-    showDialog<void>(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setModalState) => AlertDialog(
-          shape: const RoundedRectangleBorder(),
-          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-          content: SizedBox(width: 280, child: buildContent(ctx, setModalState)),
         ),
       ),
     );
@@ -564,9 +531,16 @@ class _ToolbarIconButton extends StatelessWidget {
   }
 }
 
-class _FilterButton extends StatelessWidget {
-  const _FilterButton({required this.active, required this.onPressed});
+class _ToolbarButton extends StatelessWidget {
+  const _ToolbarButton({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onPressed,
+  });
 
+  final IconData icon;
+  final String label;
   final bool active;
   final VoidCallback onPressed;
 
@@ -588,47 +562,10 @@ class _FilterButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.tune, size: 14, color: color),
+            Icon(icon, size: 14, color: color),
             const SizedBox(width: 6),
             Text(
-              'Filtros',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SortButton extends StatelessWidget {
-  const _SortButton({required this.active, required this.onPressed});
-
-  final bool active;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final color = active ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.7);
-    final borderColor = active ? colorScheme.primary : colorScheme.outlineVariant;
-    final bg = active ? colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent;
-
-    return InkWell(
-      onTap: onPressed,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: bg,
-          border: Border.all(color: borderColor),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.sort, size: 14, color: color),
-            const SizedBox(width: 6),
-            Text(
-              'Ordenar',
+              label,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),
             ),
           ],

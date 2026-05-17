@@ -3,26 +3,48 @@ import 'package:organizagrana/app/app_theme.dart';
 
 enum ReceivableStatus {
   awaiting(0, 'Aguardando'),
-  inAnalysis(1, 'Em análise'),
-  inTransaction(2, 'Em transação'),
-  paid(3, 'Pago'),
-  overdue(4, 'Vencido');
+  toDeposit(1, 'A depositar'),
+  deposited(2, 'Depositado'),
+  returned(3, 'Retornado'),
+  overdue(4, 'Vencido'),
+  paid(5, 'Pago');
 
   const ReceivableStatus(this.value, this.label);
 
   final int value;
   final String label;
 
-  Color get badgeColor => switch (this) {
-        ReceivableStatus.paid => AppColors.statusPaid,
-        ReceivableStatus.awaiting => AppColors.statusAwaiting,
-        ReceivableStatus.inAnalysis => AppColors.statusInAnalysis,
-        ReceivableStatus.inTransaction => AppColors.statusInTransaction,
-        ReceivableStatus.overdue => AppColors.statusOverdue,
+  Color colorFor(Brightness brightness) => switch (brightness) {
+        Brightness.dark => switch (this) {
+          ReceivableStatus.awaiting  => AppColors.statusAwaiting,
+          ReceivableStatus.toDeposit => AppColors.statusToDeposit,
+          ReceivableStatus.deposited => AppColors.statusDeposited,
+          ReceivableStatus.returned  => AppColors.statusReturned,
+          ReceivableStatus.overdue   => AppColors.statusOverdue,
+          ReceivableStatus.paid      => AppColors.statusPaid,
+        },
+        Brightness.light => switch (this) {
+          ReceivableStatus.awaiting  => AcalLightColors.statusAwaiting,
+          ReceivableStatus.toDeposit => AcalLightColors.statusToDeposit,
+          ReceivableStatus.deposited => AcalLightColors.statusDeposited,
+          ReceivableStatus.returned  => AcalLightColors.statusReturned,
+          ReceivableStatus.overdue   => AcalLightColors.statusOverdue,
+          ReceivableStatus.paid      => AcalLightColors.statusPaid,
+        },
       };
 
   bool get canReceive =>
-      this == awaiting || this == inAnalysis || this == inTransaction;
+      this == awaiting || this == toDeposit || this == deposited;
+
+  ReceivableStatus? get next {
+    final nextVal = value + 1;
+    return ReceivableStatus.values.where((s) => s.value == nextVal).firstOrNull;
+  }
+
+  ReceivableStatus? get previous {
+    final prevVal = value - 1;
+    return ReceivableStatus.values.where((s) => s.value == prevVal).firstOrNull;
+  }
 
   static ReceivableStatus? fromJson(dynamic raw) {
     if (raw == null) return null;
@@ -31,20 +53,22 @@ enum ReceivableStatus {
     }
     final str = raw.toString().toLowerCase();
     return switch (str) {
-      'awaiting' => ReceivableStatus.awaiting,
-      'in_analysis' => ReceivableStatus.inAnalysis,
-      'in_transaction' => ReceivableStatus.inTransaction,
-      'paid' => ReceivableStatus.paid,
-      'overdue' => ReceivableStatus.overdue,
+      'awaiting'   => ReceivableStatus.awaiting,
+      'to_deposit' => ReceivableStatus.toDeposit,
+      'deposited'  => ReceivableStatus.deposited,
+      'returned'   => ReceivableStatus.returned,
+      'overdue'    => ReceivableStatus.overdue,
+      'paid'       => ReceivableStatus.paid,
       _ => null,
     };
   }
 
   String toJson() => switch (this) {
-        ReceivableStatus.awaiting => 'awaiting',
-        ReceivableStatus.inAnalysis => 'in_analysis',
-        ReceivableStatus.inTransaction => 'in_transaction',
-        ReceivableStatus.paid => 'paid',
-        ReceivableStatus.overdue => 'overdue',
+        ReceivableStatus.awaiting  => 'awaiting',
+        ReceivableStatus.toDeposit => 'to_deposit',
+        ReceivableStatus.deposited => 'deposited',
+        ReceivableStatus.returned  => 'returned',
+        ReceivableStatus.overdue   => 'overdue',
+        ReceivableStatus.paid      => 'paid',
       };
 }

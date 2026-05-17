@@ -97,11 +97,12 @@ abstract final class AppColors {
   static const navBarBackground = Color(0xFF1A1D2B);   // top app bar
 
   // --- Status dos recebíveis (dark) ---
-  static const statusAwaiting      = AppPalette.success500;
-  static const statusInAnalysis    = AppPalette.info400;
-  static const statusInTransaction = AppPalette.primary400;
-  static const statusPaid          = Color(0xFF6B7380);
-  static const statusOverdue       = AppPalette.danger400;
+  static const statusAwaiting   = AppPalette.success500;
+  static const statusToDeposit  = AppPalette.info400;
+  static const statusDeposited  = AppPalette.primary400;
+  static const statusReturned   = AppPalette.warning500;
+  static const statusOverdue    = AppPalette.danger400;
+  static const statusPaid       = Color(0xFF6B7380);
 }
 
 /// Tokens semânticos — tema light (Docker Desktop).
@@ -143,11 +144,12 @@ abstract final class AcalLightColors {
   static const navBarBackground = Color(0xFFEEF2FF);   // top app bar
 
   // --- Status dos recebíveis (light) ---
-  static const statusAwaiting      = AppPalette.success600;
-  static const statusInAnalysis    = AppPalette.info600;
-  static const statusInTransaction = AppPalette.primary600;
-  static const statusPaid          = Color(0xFF9EA4B0);
-  static const statusOverdue       = AppPalette.danger600;
+  static const statusAwaiting   = AppPalette.success600;
+  static const statusToDeposit  = AppPalette.info600;
+  static const statusDeposited  = AppPalette.primary600;
+  static const statusReturned   = AppPalette.warning600;
+  static const statusOverdue    = AppPalette.danger600;
+  static const statusPaid       = Color(0xFF9EA4B0);
 }
 
 abstract final class AppTheme {

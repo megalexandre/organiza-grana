@@ -21,18 +21,18 @@ class LayoutTopBar extends StatelessWidget implements PreferredSizeWidget {
         theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
     final isMobile = MediaQuery.sizeOf(context).width < 800;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Color.alphaBlend(
-            theme.colorScheme.shadow.withValues(alpha: 0.2), theme.colorScheme.surface),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.2),
-            blurRadius: 0.5,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(
+              theme.colorScheme.shadow.withValues(alpha: 0.2), theme.colorScheme.surface),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.shadow.withValues(alpha: 0.2),
+              blurRadius: 0.5,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
       child: AppBar(
         elevation: 0,
         surfaceTintColor: Colors.transparent,

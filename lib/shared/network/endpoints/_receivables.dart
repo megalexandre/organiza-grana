@@ -10,4 +10,5 @@ class _Receivables {
 
   String byId(String id) => '$_path/$id';
   String update(String id) => '$_path/$id';
+  String changeStatus(String id) => '$_path/$id/change_status';
 }

@@ -329,7 +329,7 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: s.badgeColor,
+                    color: s.colorFor(Theme.of(context).brightness),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -436,7 +436,7 @@ class _ReceivableDetailSheetState extends State<_ReceivableDetailSheet> {
   }
 
   Widget _buildStatusBar(ReceivableStatus status, ThemeData theme, ColorScheme colorScheme) {
-    final color = status.badgeColor;
+    final color = status.colorFor(colorScheme.brightness);
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
