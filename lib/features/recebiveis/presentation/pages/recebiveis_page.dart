@@ -140,11 +140,20 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   }
 
   Future<void> _changeStatus(Receivable r, ReceivableStatus newStatus) async {
+    final index = _receivables.indexWhere((x) => x.id == r.id);
+    if (index == -1) return;
+
+    setState(() {
+      _receivables = List.of(_receivables)..[index] = r.copyWith(status: newStatus);
+    });
+
     try {
       await widget.service.changeStatus(r.id, newStatus);
-      if (mounted) _loadReceivables();
     } on ReceivableFailure catch (e) {
       if (mounted) {
+        setState(() {
+          _receivables = List.of(_receivables)..[index] = r;
+        });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
       }
     }
@@ -454,6 +463,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
           return ReceivableCard(
             receivable: r,
             compact: _compactView,
+            onStatusChange: (newStatus) => _changeStatus(r, newStatus),
             onDetails: () async {
               final saved = await showReceivableDetailSheet(
                 context,

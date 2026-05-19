@@ -42,6 +42,21 @@ class Receivable {
     );
   }
 
+  Receivable copyWith({ReceivableStatus? status}) {
+    return Receivable(
+      id: id,
+      amountCents: amountCents,
+      dueDate: dueDate,
+      awaitingDays: awaitingDays,
+      status: status ?? this.status,
+      changeDate: changeDate,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      deletedAt: deletedAt,
+      notes: notes,
+    );
+  }
+
   static DateTime? _parseDate(dynamic value) {
     final raw = value?.toString();
     if (raw == null || raw.isEmpty) return null;

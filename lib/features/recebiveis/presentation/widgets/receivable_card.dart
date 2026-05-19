@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
@@ -169,10 +170,16 @@ class _SwipeStatusWrapper extends StatefulWidget {
 }
 
 class _SwipeStatusWrapperState extends State<_SwipeStatusWrapper>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   double _dragX = 0;
   double _snapStartX = 0;
+  bool _triggered = false;
+  ReceivableStatus? _targetStatus;
   late final AnimationController _snapController;
+  late final AnimationController _pulseController;
+  late final AnimationController _borderDrawController;
+  late final AnimationController _borderFadeController;
+  Animation<double> _pulseAnimation = const AlwaysStoppedAnimation(1.0);
 
   static const _triggerThreshold = 40.0;
   static const _maxDrag = 80.0;
@@ -184,11 +191,32 @@ class _SwipeStatusWrapperState extends State<_SwipeStatusWrapper>
       vsync: this,
       duration: const Duration(milliseconds: 220),
     )..addListener(_onSnapTick);
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _pulseAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.28), weight: 35),
+      TweenSequenceItem(tween: Tween(begin: 1.28, end: 1.0), weight: 65),
+    ]).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
+
+    _borderDrawController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _borderFadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 480),
+    );
   }
 
   @override
   void dispose() {
     _snapController.dispose();
+    _pulseController.dispose();
+    _borderDrawController.dispose();
+    _borderFadeController.dispose();
     super.dispose();
   }
 
@@ -201,14 +229,28 @@ class _SwipeStatusWrapperState extends State<_SwipeStatusWrapper>
   void _onDragStart(DragStartDetails _) {
     _snapController.stop();
     _snapStartX = _dragX;
+    _triggered = false;
   }
 
   void _onDragUpdate(DragUpdateDetails d) {
+    final prevTriggered = _triggered;
     setState(() {
       final minDrag = widget.onAdvance != null ? -_maxDrag : 0.0;
       final maxDrag = widget.onRetrocede != null ? _maxDrag : 0.0;
       _dragX = (_dragX + d.delta.dx).clamp(minDrag, maxDrag);
+      _triggered = _dragX.abs() >= _triggerThreshold;
+      if (_dragX < -10 && widget.status.next != null) {
+        _targetStatus = widget.status.next;
+      } else if (_dragX > 10 && widget.status.previous != null) {
+        _targetStatus = widget.status.previous;
+      }
     });
+    if (!prevTriggered && _triggered) {
+      HapticFeedback.mediumImpact();
+      _pulseController.forward(from: 0);
+      _borderFadeController.value = 0;
+      _borderDrawController.forward(from: 0);
+    }
   }
 
   void _onDragEnd(DragEndDetails d) {
@@ -218,8 +260,10 @@ class _SwipeStatusWrapperState extends State<_SwipeStatusWrapper>
     } else if ((_dragX > _triggerThreshold || v > 500) && widget.onRetrocede != null) {
       widget.onRetrocede!();
     }
+    _triggered = false;
     _snapStartX = _dragX;
     _snapController.forward(from: 0);
+    _borderFadeController.forward(from: 0);
   }
 
   Widget _buildBackground(BuildContext ctx) {
@@ -231,19 +275,24 @@ class _SwipeStatusWrapperState extends State<_SwipeStatusWrapper>
       final next = widget.status.next!;
       final color = next.colorFor(Theme.of(ctx).brightness);
       final progress = (-_dragX / _maxDrag).clamp(0.0, 1.0);
-      return Container(
+      final bgAlpha = _triggered ? 0.32 : 0.18 * progress;
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
-        color: color.withValues(alpha: 0.18 * progress),
+        color: color.withValues(alpha: bgAlpha),
         child: Opacity(
           opacity: progress,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(next.label, style: tt.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w700)),
-              const SizedBox(width: 6),
-              Icon(Icons.arrow_forward, color: color, size: 16),
-            ],
+          child: ScaleTransition(
+            scale: _pulseAnimation,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(next.label, style: tt.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w700)),
+                const SizedBox(width: 6),
+                Icon(_triggered ? Icons.check_circle : Icons.arrow_forward, color: color, size: 18),
+              ],
+            ),
           ),
         ),
       );
@@ -253,19 +302,24 @@ class _SwipeStatusWrapperState extends State<_SwipeStatusWrapper>
       final prev = widget.status.previous!;
       final color = prev.colorFor(Theme.of(ctx).brightness);
       final progress = (_dragX / _maxDrag).clamp(0.0, 1.0);
-      return Container(
+      final bgAlpha = _triggered ? 0.32 : 0.18 * progress;
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.only(left: 16),
-        color: color.withValues(alpha: 0.18 * progress),
+        color: color.withValues(alpha: bgAlpha),
         child: Opacity(
           opacity: progress,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.arrow_back, color: color, size: 16),
-              const SizedBox(width: 6),
-              Text(prev.label, style: tt.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w700)),
-            ],
+          child: ScaleTransition(
+            scale: _pulseAnimation,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(_triggered ? Icons.check_circle : Icons.arrow_back, color: color, size: 18),
+                const SizedBox(width: 6),
+                Text(prev.label, style: tt.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w700)),
+              ],
+            ),
           ),
         ),
       );
@@ -276,6 +330,9 @@ class _SwipeStatusWrapperState extends State<_SwipeStatusWrapper>
 
   @override
   Widget build(BuildContext ctx) {
+    final borderColor = _targetStatus?.colorFor(Theme.of(ctx).brightness)
+        ?? Theme.of(ctx).colorScheme.primary;
+
     return GestureDetector(
       onHorizontalDragStart: _onDragStart,
       onHorizontalDragUpdate: _onDragUpdate,
@@ -285,12 +342,72 @@ class _SwipeStatusWrapperState extends State<_SwipeStatusWrapper>
           Positioned.fill(child: _buildBackground(ctx)),
           Transform.translate(
             offset: Offset(_dragX, 0),
-            child: widget.child,
+            child: Stack(
+              children: [
+                widget.child,
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedBuilder(
+                      animation: Listenable.merge([_borderDrawController, _borderFadeController]),
+                      builder: (_, _) => CustomPaint(
+                        painter: _BorderProgressPainter(
+                          progress: _borderDrawController.value,
+                          opacity: 1.0 - _borderFadeController.value,
+                          color: borderColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+class _BorderProgressPainter extends CustomPainter {
+  const _BorderProgressPainter({
+    required this.progress,
+    required this.opacity,
+    required this.color,
+  });
+
+  final double progress;
+  final double opacity;
+  final Color color;
+
+  static const _strokeWidth = 2.5;
+  static const _radius = Radius.circular(12.0);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (opacity <= 0 || progress <= 0) return;
+
+    final paint = Paint()
+      ..color = color.withValues(alpha: opacity)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    final rrect = RRect.fromLTRBR(
+      _strokeWidth / 2,
+      _strokeWidth / 2,
+      size.width - _strokeWidth / 2,
+      size.height - _strokeWidth / 2,
+      _radius,
+    );
+
+    final path = Path()..addRRect(rrect);
+    final metric = path.computeMetrics().first;
+    canvas.drawPath(metric.extractPath(0, metric.length * progress), paint);
+  }
+
+  @override
+  bool shouldRepaint(_BorderProgressPainter old) =>
+      old.progress != progress || old.opacity != opacity || old.color != color;
 }
 
 class _CompactCard extends StatefulWidget {
