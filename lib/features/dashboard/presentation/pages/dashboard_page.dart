@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:organizagrana/app/app_router.dart';
+import 'package:organizagrana/features/dashboard/data/dashboard_service.dart';
+import 'package:organizagrana/features/dashboard/presentation/widgets/receivables_by_status_panel.dart';
 import 'package:organizagrana/shared/layout/side_menu/layout_menu_config.dart';
 import 'package:organizagrana/shared/layout/side_menu/layout_menu_item.dart';
 import 'package:organizagrana/shared/layout/layout_page.dart';
 import 'package:organizagrana/shared/layout/page_section_layout.dart';
-import 'package:organizagrana/shared/layout/surface_panel.dart';
 import 'package:organizagrana/shared/layout/user_display_profile.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -71,18 +72,16 @@ class _DashboardPageState extends State<DashboardPage> {
 }
 
 class DashboardHomeContent extends StatelessWidget {
-  const DashboardHomeContent({super.key});
+  const DashboardHomeContent({super.key, required this.service});
+
+  final DashboardService service;
 
   @override
   Widget build(BuildContext context) {
-    return const PageSectionLayout(
+    return PageSectionLayout(
       title: 'Dashboard',
       subtitle: 'Visão geral dos indicadores e atalhos principais.',
-      content: SurfacePanel(
-        child: Center(
-          child: Text('Conteúdo do dashboard'),
-        ),
-      ),
+      content: ReceivablesByStatusPanel(service: service),
     );
   }
 }

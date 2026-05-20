@@ -7,6 +7,8 @@ import 'package:organizagrana/features/auth/data/auth_service.dart';
 import 'package:organizagrana/features/auth/data/auth_storage.dart';
 import 'package:organizagrana/features/bordero/data/bordero_api_client.dart';
 import 'package:organizagrana/features/bordero/data/bordero_service.dart';
+import 'package:organizagrana/features/dashboard/data/dashboard_api_client.dart';
+import 'package:organizagrana/features/dashboard/data/dashboard_service.dart';
 import 'package:organizagrana/features/holidays/data/holidays_api_client.dart';
 import 'package:organizagrana/features/holidays/data/holidays_service.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_api_client.dart';
@@ -51,11 +53,15 @@ class _MainAppState extends State<MainApp> {
     final holidaysService = HolidaysService(
       HttpHolidaysApiClient(tokenProvider, httpClient: httpClient),
     );
+    final dashboardService = DashboardService(
+      HttpDashboardApiClient(tokenProvider, httpClient: httpClient),
+    );
     _appRouter = AppRouter(
       _session,
       receivablesService: receivablesService,
       borderoService: borderoService,
       holidaysService: holidaysService,
+      dashboardService: dashboardService,
     );
     _session.initialize();
   }

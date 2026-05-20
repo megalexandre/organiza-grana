@@ -4,6 +4,7 @@ import 'package:organizagrana/app/auth_session_controller.dart';
 import 'package:organizagrana/features/auth/presentation/pages/login_page.dart';
 import 'package:organizagrana/features/bordero/data/bordero_service.dart';
 import 'package:organizagrana/features/bordero/presentation/pages/bordero_page.dart';
+import 'package:organizagrana/features/dashboard/data/dashboard_service.dart';
 import 'package:organizagrana/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:organizagrana/features/holidays/data/holidays_service.dart';
 import 'package:organizagrana/features/holidays/presentation/pages/holidays_page.dart';
@@ -16,14 +17,17 @@ class AppRouter {
     required ReceivablesService receivablesService,
     required BorderoService borderoService,
     required HolidaysService holidaysService,
+    required DashboardService dashboardService,
   })  : _receivablesService = receivablesService,
         _borderoService = borderoService,
-        _holidaysService = holidaysService;
+        _holidaysService = holidaysService,
+        _dashboardService = dashboardService;
 
   final AuthSessionController _session;
   final ReceivablesService _receivablesService;
   final BorderoService _borderoService;
   final HolidaysService _holidaysService;
+  final DashboardService _dashboardService;
   static final GlobalKey<NavigatorState> _rootNavigatorKey =
       GlobalKey<NavigatorState>();
 
@@ -96,8 +100,8 @@ class AppRouter {
         routes: [
           GoRoute(
             path: dashboardPath,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: DashboardHomeContent(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: DashboardHomeContent(service: _dashboardService),
             ),
             routes: [
               GoRoute(
