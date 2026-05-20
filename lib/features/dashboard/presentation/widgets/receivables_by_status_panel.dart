@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:organizagrana/features/dashboard/data/dashboard_service.dart';
 import 'package:organizagrana/features/dashboard/domain/dashboard_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
 class ReceivablesByStatusPanel extends StatefulWidget {
   const ReceivablesByStatusPanel({super.key, required this.service});
@@ -49,82 +50,160 @@ class _ReceivablesByStatusPanelState extends State<ReceivablesByStatusPanel> {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
+    return Align(
+      alignment: Alignment.topLeft,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Card(
+          margin: EdgeInsets.zero,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.receipt_long_outlined, size: 18, color: colorScheme.primary),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Recebíveis por status',
+                      style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const Spacer(),
+                    if (!_loading && _errorMessage == null)
+                      IconButton(
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh, size: 18),
+                        tooltip: 'Atualizar',
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (_loading)
+                  _buildSkeleton(colorScheme)
+                else if (_errorMessage != null)
+                  _buildError(colorScheme, textTheme)
+                else
+                  _buildChart(context),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChart(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final total = _counts.values.fold(0, (sum, c) => sum + c);
+
+    if (total == 0) {
+      return SizedBox(
+        height: 120,
+        child: Center(
+          child: Text(
+            'Nenhum recebível encontrado.',
+            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+        ),
+      );
+    }
+
+    final data = ReceivableStatus.values
+        .where((s) => (_counts[s] ?? 0) > 0)
+        .map((s) => _ChartPoint(s, _counts[s]!, s.colorFor(brightness)))
+        .toList();
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+        SfCircularChart(
+          margin: EdgeInsets.zero,
+          series: [
+            PieSeries<_ChartPoint, String>(
+              dataSource: data,
+              xValueMapper: (p, _) => p.status.label,
+              yValueMapper: (p, _) => p.count,
+              pointColorMapper: (p, _) => p.color,
+              strokeColor: Theme.of(context).colorScheme.surface,
+              strokeWidth: 2,
+              explode: true,
+              dataLabelSettings: DataLabelSettings(
+                isVisible: true,
+                textStyle: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+                connectorLineSettings: ConnectorLineSettings(
+                  color: colorScheme.outlineVariant,
+                  length: '8%',
+                ),
               ),
-              child: Icon(Icons.receipt_long_outlined, size: 18, color: colorScheme.primary),
+              dataLabelMapper: (p, _) => '${p.count}',
             ),
-            const SizedBox(width: 10),
-            Text(
-              'Recebíveis por status',
-              style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const Spacer(),
-            if (!_loading && _errorMessage == null)
-              IconButton(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh, size: 18),
-                tooltip: 'Atualizar',
-                visualDensity: VisualDensity.compact,
-              ),
           ],
         ),
-        const SizedBox(height: 16),
-        if (_loading)
-          _buildSkeleton(colorScheme)
-        else if (_errorMessage != null)
-          _buildError(colorScheme, textTheme)
-        else
-          _buildGrid(),
+        const SizedBox(height: 4),
+        _buildLegend(data, textTheme, colorScheme),
       ],
     );
   }
 
-  Widget _buildGrid() {
-    final statuses = ReceivableStatus.values;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cardWidth = (constraints.maxWidth - 12) / 2;
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            for (final status in statuses)
-              SizedBox(
-                width: cardWidth,
-                child: _StatusCard(
-                  status: status,
-                  count: _counts[status] ?? 0,
+  Widget _buildLegend(
+    List<_ChartPoint> data,
+    TextTheme textTheme,
+    ColorScheme colorScheme,
+  ) {
+    return Wrap(
+      spacing: 16,
+      runSpacing: 8,
+      children: [
+        for (final point in data)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: point.color,
+                  shape: BoxShape.circle,
                 ),
               ),
-          ],
-        );
-      },
+              const SizedBox(width: 5),
+              Text(
+                point.status.label,
+                style: textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+      ],
     );
   }
 
   Widget _buildSkeleton(ColorScheme colorScheme) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cardWidth = (constraints.maxWidth - 12) / 2;
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            for (var i = 0; i < 6; i++)
-              _SkeletonCard(width: cardWidth, colorScheme: colorScheme),
-          ],
-        );
-      },
+    final shimmer = colorScheme.onSurface.withValues(alpha: 0.08);
+    return Center(
+      child: Container(
+        width: 180,
+        height: 180,
+        margin: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(color: shimmer, shape: BoxShape.circle),
+      ),
     );
   }
 
@@ -153,85 +232,10 @@ class _ReceivablesByStatusPanelState extends State<ReceivablesByStatusPanel> {
   }
 }
 
-class _StatusCard extends StatelessWidget {
-  const _StatusCard({required this.status, required this.count});
+class _ChartPoint {
+  const _ChartPoint(this.status, this.count, this.color);
 
   final ReceivableStatus status;
   final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final brightness = Theme.of(context).brightness;
-    final statusColor = status.colorFor(brightness);
-
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(height: 4, color: statusColor),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  status.label,
-                  style: textTheme.labelMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '$count',
-                  style: textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: statusColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SkeletonCard extends StatelessWidget {
-  const _SkeletonCard({required this.width, required this.colorScheme});
-
-  final double width;
-  final ColorScheme colorScheme;
-
-  @override
-  Widget build(BuildContext context) {
-    final shimmer = colorScheme.onSurface.withValues(alpha: 0.08);
-    return SizedBox(
-      width: width,
-      child: Card(
-        margin: EdgeInsets.zero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(height: 4, color: shimmer),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(height: 12, width: 80, decoration: BoxDecoration(color: shimmer, borderRadius: BorderRadius.circular(4))),
-                  const SizedBox(height: 8),
-                  Container(height: 28, width: 40, decoration: BoxDecoration(color: shimmer, borderRadius: BorderRadius.circular(4))),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  final Color color;
 }
