@@ -447,14 +447,17 @@ class _CompactCardState extends State<_CompactCard> {
         scale: _hovered ? 1.02 : 1.0,
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
-        child: Card(
-          margin: EdgeInsets.zero,
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: widget.onDetails,
-            child: Stack(
-              children: [
-                IntrinsicHeight(
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Card(
+              margin: EdgeInsets.zero,
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: widget.onDetails,
+                child: Stack(
+                  children: [
+                    IntrinsicHeight(
                   child: Row(
                     children: [
                       Container(width: 4, color: statusColor),
@@ -570,26 +573,41 @@ class _CompactCardState extends State<_CompactCard> {
                     ],
                   ),
                 ),
-                if (r.notes != null && r.notes!.isNotEmpty)
-                  Positioned(
-                    top: 0,
-                    right: 8,
-                    child: Icon(
-                      Icons.bookmark,
-                      size: 18,
-                      color: colorScheme.primary,
-                    ),
-                  ),
                 if (_isCreatedToday(r.createdAt))
                   Positioned(
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    child: Container(height: 3, color: colorScheme.secondary),
+                    child: Center(
+                      child: FractionallySizedBox(
+                        widthFactor: 0.7,
+                        child: Container(
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: colorScheme.secondary.withValues(alpha: 0.55),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
               ],
             ),
           ),
+            ),
+            if (r.notes != null && r.notes!.isNotEmpty)
+              Align(
+                alignment: const FractionalOffset(0.85, 0.0),
+                child: Transform.translate(
+                  offset: const Offset(0, -5),
+                  child: Icon(
+                    Icons.bookmark,
+                    size: 26,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
