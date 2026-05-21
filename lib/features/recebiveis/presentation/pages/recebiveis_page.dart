@@ -45,7 +45,11 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   bool get _isSortDefault => _sortBy == _defaultSortBy && _sortDirection == _defaultSortDirection;
 
   String get _sortChipLabel {
-    final field = _sortBy == ReceivableSortField.dueDate ? 'Vencimento' : 'Valor';
+    final field = switch (_sortBy) {
+      ReceivableSortField.dueDate => 'Vencimento',
+      ReceivableSortField.amount => 'Valor',
+      ReceivableSortField.createdAt => 'Criação',
+    };
     final dir = _sortDirection == ReceivableSortDirection.asc ? '↑' : '↓';
     return '$field $dir';
   }
@@ -261,6 +265,10 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
                 RadioListTile<ReceivableSortField>(
                   title: Text('Valor'),
                   value: ReceivableSortField.amount,
+                ),
+                RadioListTile<ReceivableSortField>(
+                  title: Text('Data de criação'),
+                  value: ReceivableSortField.createdAt,
                 ),
               ],
             ),

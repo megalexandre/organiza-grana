@@ -1,4 +1,4 @@
-enum ReceivableSortField { dueDate, amount }
+enum ReceivableSortField { dueDate, amount, createdAt }
 
 enum ReceivableSortDirection { asc, desc }
 
@@ -6,6 +6,7 @@ extension ReceivableSortFieldApi on ReceivableSortField {
   String toApiValue() => switch (this) {
         ReceivableSortField.dueDate => 'due_date',
         ReceivableSortField.amount => 'amount',
+        ReceivableSortField.createdAt => 'created_at',
       };
 }
 

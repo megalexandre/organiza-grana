@@ -9,6 +9,14 @@ import 'package:organizagrana/shared/utils/app_formats.dart';
 final _cardDateFormat = DateFormat('dd/MMM/yyyy', 'pt_BR');
 final _monthYearFormat = DateFormat('dd/MM/yyyy', 'pt_BR');
 
+bool _isCreatedToday(DateTime? createdAt) {
+  if (createdAt == null) return false;
+  final now = DateTime.now();
+  return createdAt.year == now.year &&
+      createdAt.month == now.month &&
+      createdAt.day == now.day;
+}
+
 class ReceivableCard extends StatefulWidget {
   const ReceivableCard({
     super.key,
@@ -135,6 +143,8 @@ class _ReceivableCardState extends State<ReceivableCard> {
                       ],
                     ),
                   ),
+                  if (_isCreatedToday(r.createdAt))
+                    Container(height: 3, color: colorScheme.secondary),
                 ],
               ),
             ),
@@ -569,6 +579,13 @@ class _CompactCardState extends State<_CompactCard> {
                       size: 18,
                       color: colorScheme.primary,
                     ),
+                  ),
+                if (_isCreatedToday(r.createdAt))
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(height: 3, color: colorScheme.secondary),
                   ),
               ],
             ),
