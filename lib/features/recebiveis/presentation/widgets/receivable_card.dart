@@ -11,10 +11,11 @@ final _monthYearFormat = DateFormat('dd/MM/yyyy', 'pt_BR');
 
 bool _isCreatedToday(DateTime? createdAt) {
   if (createdAt == null) return false;
+  final local = createdAt.toLocal();
   final now = DateTime.now();
-  return createdAt.year == now.year &&
-      createdAt.month == now.month &&
-      createdAt.day == now.day;
+  return local.year == now.year &&
+      local.month == now.month &&
+      local.day == now.day;
 }
 
 class ReceivableCard extends StatefulWidget {
@@ -158,7 +159,18 @@ class _ReceivableCardState extends State<ReceivableCard> {
                     ),
                   ),
                   if (_isCreatedToday(r.createdAt))
-                    Container(height: 3, color: colorScheme.secondary),
+                    Center(
+                      child: FractionallySizedBox(
+                        widthFactor: 0.70,
+                        child: Container(
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: colorScheme.secondary.withValues(alpha: 0.55),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
