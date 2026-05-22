@@ -15,7 +15,7 @@ publish: web build push
 
 run:
 	@echo "Iniciando Flutter em modo debug..."
-	flutter run $(DART_DEFINES)
+	flutter run 
 
 chrome:
 	@echo "Iniciando Flutter no Chrome (CORS desabilitado)..."
@@ -27,7 +27,7 @@ linux:
 
 web:
 	@echo "Gerando build Flutter Web..."
-	flutter build web $(DART_DEFINES)
+	flutter build web 
 
 build:
 	@echo "Criando imagem Docker: $(IMAGE_NAME):$(TAG)"

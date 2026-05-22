@@ -38,6 +38,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   ReceivableSortField _sortBy = ReceivableSortField.dueDate;
   ReceivableSortDirection _sortDirection = ReceivableSortDirection.asc;
   bool _compactView = true;
+  String? _deletingId;
 
   static const _defaultSortBy = ReceivableSortField.dueDate;
   static const _defaultSortDirection = ReceivableSortDirection.asc;
@@ -181,8 +182,15 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     );
     if (confirmed != true || !mounted) return;
 
-    setState(() => _receivables = _receivables.where((x) => x.id != r.id).toList());
+    setState(() => _deletingId = r.id);
+  }
 
+  Future<void> _onDeleteAnimationComplete(Receivable r) async {
+    if (!mounted) return;
+    setState(() {
+      _deletingId = null;
+      _receivables = _receivables.where((x) => x.id != r.id).toList();
+    });
     try {
       await widget.service.delete(r.id);
     } on ReceivableFailure catch (e) {
@@ -499,8 +507,11 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
           }
           final r = _receivables[index];
           return ReceivableCard(
+            key: ValueKey(r.id),
             receivable: r,
             compact: _compactView,
+            isDeleting: _deletingId == r.id,
+            onDeleteAnimationComplete: () => _onDeleteAnimationComplete(r),
             onStatusChange: (newStatus) => _changeStatus(r, newStatus),
             onDelete: () => _deleteReceivable(r),
             onDetails: () async {

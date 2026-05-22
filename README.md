@@ -106,8 +106,8 @@ flutter run -d Pixel_6
 
 -- build web
 ./scripts/build_web.sh
-docker build -t alexandreqrz/organizagrana:latest . &&
-docker push alexandreqrz/organizagrana:latest
+docker build -t alexandreqrz/granaapp:latest . &&
+docker push alexandreqrz/granaapp:latest
 
 -- build android 
 flutter pub get

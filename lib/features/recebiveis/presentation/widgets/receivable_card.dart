@@ -26,6 +26,8 @@ class ReceivableCard extends StatefulWidget {
     this.onStatusChange,
     this.onDelete,
     this.compact = false,
+    this.isDeleting = false,
+    this.onDeleteAnimationComplete,
   });
 
   final Receivable receivable;
@@ -33,13 +35,54 @@ class ReceivableCard extends StatefulWidget {
   final void Function(ReceivableStatus)? onStatusChange;
   final VoidCallback? onDelete;
   final bool compact;
+  final bool isDeleting;
+  final VoidCallback? onDeleteAnimationComplete;
 
   @override
   State<ReceivableCard> createState() => _ReceivableCardState();
 }
 
-class _ReceivableCardState extends State<ReceivableCard> {
+class _ReceivableCardState extends State<ReceivableCard>
+    with SingleTickerProviderStateMixin {
   bool _hovered = false;
+  late final AnimationController _deleteController;
+  late final Animation<double> _scaleAnim;
+  late final Animation<double> _fadeAnim;
+  late final Animation<double> _sizeAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _deleteController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+    _scaleAnim = Tween(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _deleteController, curve: const Interval(0.0, 0.65, curve: Curves.easeIn)),
+    );
+    _fadeAnim = Tween(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _deleteController, curve: const Interval(0.0, 0.55, curve: Curves.easeIn)),
+    );
+    _sizeAnim = Tween(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _deleteController, curve: const Interval(0.6, 1.0, curve: Curves.easeOut)),
+    );
+  }
+
+  @override
+  void didUpdateWidget(ReceivableCard old) {
+    super.didUpdateWidget(old);
+    if (widget.isDeleting && !old.isDeleting) {
+      _deleteController.forward().then((_) {
+        widget.onDeleteAnimationComplete?.call();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _deleteController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -179,11 +222,21 @@ class _ReceivableCardState extends State<ReceivableCard> {
       );
     }
 
-    return _SwipeStatusWrapper(
-      status: r.status,
-      onAdvance: r.status.next != null ? () => widget.onStatusChange?.call(r.status.next!) : null,
-      onRetrocede: r.status.previous != null ? () => widget.onStatusChange?.call(r.status.previous!) : null,
-      child: card,
+    return SizeTransition(
+      sizeFactor: _sizeAnim,
+      axisAlignment: -1,
+      child: FadeTransition(
+        opacity: _fadeAnim,
+        child: ScaleTransition(
+          scale: _scaleAnim,
+          child: _SwipeStatusWrapper(
+            status: r.status,
+            onAdvance: r.status.next != null ? () => widget.onStatusChange?.call(r.status.next!) : null,
+            onRetrocede: r.status.previous != null ? () => widget.onStatusChange?.call(r.status.previous!) : null,
+            child: card,
+          ),
+        ),
+      ),
     );
   }
 }
