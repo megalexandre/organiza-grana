@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:organizagrana/app/app_router.dart';
 import 'package:organizagrana/features/dashboard/data/dashboard_service.dart';
 import 'package:organizagrana/features/dashboard/domain/dashboard_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
@@ -17,6 +19,34 @@ class _ReceivablesByStatusPanelState extends State<ReceivablesByStatusPanel> {
   bool _loading = true;
   String? _errorMessage;
   Map<ReceivableStatus, int> _counts = {};
+  RouteInformationProvider? _routeInfoProvider;
+  String _lastLocation = AppRouter.dashboardPath;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = GoRouter.of(context).routeInformationProvider;
+    if (_routeInfoProvider != provider) {
+      _routeInfoProvider?.removeListener(_onRouteChanged);
+      _routeInfoProvider = provider;
+      _routeInfoProvider!.addListener(_onRouteChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    _routeInfoProvider?.removeListener(_onRouteChanged);
+    super.dispose();
+  }
+
+  void _onRouteChanged() {
+    if (!mounted) return;
+    final path = _routeInfoProvider?.value.uri.path ?? '';
+    if (path == AppRouter.dashboardPath && _lastLocation != AppRouter.dashboardPath) {
+      _load();
+    }
+    _lastLocation = path;
+  }
 
   @override
   void initState() {
@@ -137,7 +167,7 @@ class _ReceivablesByStatusPanelState extends State<ReceivablesByStatusPanel> {
               yValueMapper: (p, _) => p.count,
               pointColorMapper: (p, _) => p.color,
               strokeColor: Theme.of(context).colorScheme.surface,
-              strokeWidth: 2,
+
               explode: true,
               dataLabelSettings: DataLabelSettings(
                 isVisible: true,

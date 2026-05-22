@@ -67,6 +67,14 @@ class ReceivablesService {
     }
   }
 
+  Future<void> delete(String id) async {
+    try {
+      await _apiClient.delete(id);
+    } on ReceivablesApiClientException catch (e) {
+      throw ReceivableFailure(type: e.type, message: _messageFor(e.type));
+    }
+  }
+
   String _messageFor(ReceivableFailureType type) => switch (type) {
         ReceivableFailureType.invalidInput => 'Dados inválidos para o recebível.',
         ReceivableFailureType.network => 'Falha de rede ao conectar no servidor.',

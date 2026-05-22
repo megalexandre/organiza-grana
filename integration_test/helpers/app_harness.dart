@@ -11,6 +11,8 @@ import 'package:organizagrana/features/auth/data/auth_service.dart';
 import 'package:organizagrana/features/auth/data/auth_storage.dart';
 import 'package:organizagrana/features/bordero/data/bordero_api_client.dart';
 import 'package:organizagrana/features/bordero/data/bordero_service.dart';
+import 'package:organizagrana/features/dashboard/data/dashboard_api_client.dart';
+import 'package:organizagrana/features/dashboard/data/dashboard_service.dart';
 import 'package:organizagrana/features/holidays/data/holidays_api_client.dart';
 import 'package:organizagrana/features/holidays/data/holidays_service.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_api_client.dart';
@@ -79,6 +81,9 @@ class _TestAppState extends State<TestApp> {
       ),
       holidaysService: HolidaysService(
         HttpHolidaysApiClient(tokenProvider, httpClient: featureHttpApiClient),
+      ),
+      dashboardService: DashboardService(
+        HttpDashboardApiClient(tokenProvider, httpClient: featureHttpApiClient),
       ),
     );
 

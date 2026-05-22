@@ -11,6 +11,8 @@ import 'package:organizagrana/features/holidays/presentation/pages/holidays_page
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/features/recebiveis/presentation/pages/recebiveis_page.dart';
 
+final RouteObserver<ModalRoute<void>> appRouteObserver = RouteObserver<ModalRoute<void>>();
+
 class AppRouter {
   AppRouter(
     this._session, {
@@ -82,6 +84,7 @@ class AppRouter {
         ),
       ),
       ShellRoute(
+        observers: [appRouteObserver],
         builder: (context, state, child) {
           final currentItemId = switch (state.uri.path) {
             recebiveisPath => 'recebiveis',

@@ -163,6 +163,36 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     }
   }
 
+  Future<void> _deleteReceivable(Receivable r) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Excluir recebível'),
+        content: const Text('Tem certeza que deseja excluir este recebível? Esta ação não pode ser desfeita.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(ctx).colorScheme.error),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _receivables = _receivables.where((x) => x.id != r.id).toList());
+
+    try {
+      await widget.service.delete(r.id);
+    } on ReceivableFailure catch (e) {
+      if (mounted) {
+        setState(() => _receivables = [..._receivables, r]);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
+  }
+
   void _showAdaptiveSheet(
     BuildContext context, {
     required String title,
@@ -472,6 +502,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
             receivable: r,
             compact: _compactView,
             onStatusChange: (newStatus) => _changeStatus(r, newStatus),
+            onDelete: () => _deleteReceivable(r),
             onDetails: () async {
               final saved = await showReceivableDetailSheet(
                 context,

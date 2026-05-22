@@ -108,4 +108,10 @@ const Map<String, dynamic> holidayOverrideBody = {
   'name': 'Feriado Teste',
 };
 
+Map<String, dynamic> dashboardReceivablesByStatusBody() => {
+      'data': [
+        {'status': 'awaiting', 'count': 3},
+      ],
+    };
+
 String encode(Map<String, dynamic> body) => jsonEncode(body);

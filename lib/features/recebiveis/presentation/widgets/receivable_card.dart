@@ -23,12 +23,14 @@ class ReceivableCard extends StatefulWidget {
     required this.receivable,
     this.onDetails,
     this.onStatusChange,
+    this.onDelete,
     this.compact = false,
   });
 
   final Receivable receivable;
   final VoidCallback? onDetails;
   final void Function(ReceivableStatus)? onStatusChange;
+  final VoidCallback? onDelete;
   final bool compact;
 
   @override
@@ -118,6 +120,18 @@ class _ReceivableCardState extends State<ReceivableCard> {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Divider(height: 1, thickness: 1),
+                        const SizedBox(height: 4),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            onPressed: widget.onDelete,
+                            icon: const Icon(Icons.delete_outline),
+                            color: colorScheme.error,
+                            tooltip: 'Excluir recebível',
+                          ),
                         ),
                         if (r.notes != null && r.notes!.isNotEmpty) ...[
                           const SizedBox(height: 12),
