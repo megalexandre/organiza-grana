@@ -6,7 +6,7 @@ export
 
 DART_DEFINES = $(foreach var,$(shell grep -v '^\#' .env | grep -v '^$$' | cut -d= -f1),--dart-define=$(var)=$($(var)))
 
-.PHONY: all publish run chrome web build push clean
+.PHONY: all publish run chrome linux web build push clean
 
 all: web build push
 
@@ -20,6 +20,10 @@ run:
 chrome:
 	@echo "Iniciando Flutter no Chrome (CORS desabilitado)..."
 	flutter run -d chrome --web-browser-flag="--disable-web-security"
+
+linux:
+	@echo "Iniciando Flutter no Linux..."
+	flutter run -d linux
 
 web:
 	@echo "Gerando build Flutter Web..."

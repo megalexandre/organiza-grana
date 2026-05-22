@@ -487,7 +487,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
     return PageContentConstraint(
       child: ListView.separated(
         controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 80 + MediaQuery.of(context).padding.bottom),
         itemCount: _receivables.length + (hasMore ? 1 : 0),
         separatorBuilder: (_, _) => SizedBox(height: _compactView ? 4 : 12),
         itemBuilder: (context, index) {
