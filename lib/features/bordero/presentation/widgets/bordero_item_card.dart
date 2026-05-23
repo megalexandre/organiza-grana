@@ -15,7 +15,7 @@ class BorderoItemCard extends StatelessWidget {
   final int index;
   final BorderoInputItem inputItem;
   final BorderoResultItem? resultItem;
-  final VoidCallback onRemove;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class BorderoItemCard extends StatelessWidget {
 
     return Dismissible(
       key: ObjectKey(inputItem),
-      direction: DismissDirection.endToStart,
+      direction: onRemove != null ? DismissDirection.endToStart : DismissDirection.none,
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
@@ -35,7 +35,7 @@ class BorderoItemCard extends StatelessWidget {
         ),
         child: Icon(Icons.delete_outline, color: colorScheme.error),
       ),
-      onDismissed: (_) => onRemove(),
+      onDismissed: onRemove != null ? (_) => onRemove!() : null,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: colorScheme.brightness == Brightness.dark
@@ -102,12 +102,13 @@ class BorderoItemCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                    IconButton(
-                      icon: Icon(Icons.delete_outline, size: 18, color: colorScheme.error),
-                      onPressed: onRemove,
-                      visualDensity: VisualDensity.compact,
-                      tooltip: 'Remover',
-                    ),
+                    if (onRemove != null)
+                      IconButton(
+                        icon: Icon(Icons.delete_outline, size: 18, color: colorScheme.error),
+                        onPressed: onRemove,
+                        visualDensity: VisualDensity.compact,
+                        tooltip: 'Remover',
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),

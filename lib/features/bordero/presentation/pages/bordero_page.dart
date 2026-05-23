@@ -598,7 +598,9 @@ class _BorderoPageState extends State<BorderoPage> {
                     index: index,
                     inputItem: _items[index],
                     resultItem: _result?.items[index],
-                    onRemove: () => _removeItem(index),
+                    onRemove: _preloadedReceivableIds.contains(_receivableIds[index])
+                        ? null
+                        : () => _removeItem(index),
                   ),
                 ),
         ),
