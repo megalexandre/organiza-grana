@@ -2,12 +2,32 @@ import 'package:organizagrana/features/bordero/data/bordero_api_client.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_failure.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_result.dart';
+import 'package:organizagrana/features/bordero/domain/bordero_sort.dart';
+import 'package:organizagrana/features/bordero/domain/borderos_page_result.dart';
 import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
 
 class BorderoService {
   BorderoService(this._apiClient);
 
   final BorderoApiClient _apiClient;
+
+  Future<BorderosPageResult> listPage({
+    required int page,
+    required int perPage,
+    BorderoSortField sortBy = BorderoSortField.changeDate,
+    BorderoSortDirection sortDirection = BorderoSortDirection.desc,
+  }) async {
+    try {
+      return await _apiClient.listPage(
+        page: page,
+        perPage: perPage,
+        sortBy: sortBy,
+        sortDirection: sortDirection,
+      );
+    } on BorderoApiClientException catch (e) {
+      throw BorderoFailure(type: e.type, message: _messageFor(e.type));
+    }
+  }
 
   Future<BorderoResult> calculate(BorderoInput input) async {
     try {

@@ -4,6 +4,7 @@ import 'package:organizagrana/app/auth_session_controller.dart';
 import 'package:organizagrana/features/auth/presentation/pages/login_page.dart';
 import 'package:organizagrana/features/bordero/data/bordero_service.dart';
 import 'package:organizagrana/features/bordero/presentation/pages/bordero_page.dart';
+import 'package:organizagrana/features/bordero/presentation/pages/borderos_list_page.dart';
 import 'package:organizagrana/features/dashboard/data/dashboard_service.dart';
 import 'package:organizagrana/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:organizagrana/features/holidays/data/holidays_service.dart';
@@ -38,6 +39,7 @@ class AppRouter {
   static const String dashboardPath = '/dashboard';
   static const String recebiveisPath = '/dashboard/recebiveis';
   static const String borderoPath = '/dashboard/bordero';
+  static const String borderoNovoPath = '/dashboard/bordero/novo';
   static const String holidaysPath = '/dashboard/holidays';
 
   static String pathForItem(String itemId) => switch (itemId) {
@@ -116,8 +118,16 @@ class AppRouter {
               GoRoute(
                 path: 'bordero',
                 pageBuilder: (context, state) => NoTransitionPage(
-                  child: BorderoPage(service: _borderoService),
+                  child: BorderosListPage(service: _borderoService),
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'novo',
+                    pageBuilder: (context, state) => NoTransitionPage(
+                      child: BorderoPage(service: _borderoService),
+                    ),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'holidays',

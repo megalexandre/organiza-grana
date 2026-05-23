@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:organizagrana/features/bordero/data/bordero_export_service.dart' show exportBorderoToCsv;
 import 'package:organizagrana/features/bordero/data/bordero_service.dart';
@@ -90,15 +91,7 @@ class _BorderoPageState extends State<BorderoPage> {
     try {
       await widget.service.save(_buildInput());
       if (mounted) {
-        setState(() {
-          _items.clear();
-          _result = null;
-          _paramsConfirmed = false;
-          _errorMessage = null;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Borderô salvo com sucesso!')),
-        );
+        context.pop(true);
       }
     } on BorderoFailure catch (e) {
       if (mounted) setState(() => _errorMessage = e.message);

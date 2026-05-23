@@ -1,6 +1,8 @@
 import 'package:organizagrana/features/bordero/domain/bordero_failure.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_result.dart';
+import 'package:organizagrana/features/bordero/domain/bordero_sort.dart';
+import 'package:organizagrana/features/bordero/domain/borderos_page_result.dart';
 import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
 import 'package:organizagrana/shared/network/access_token_provider.dart';
 import 'package:organizagrana/shared/network/api_endpoints.dart';
@@ -8,6 +10,12 @@ import 'package:organizagrana/shared/network/authenticated_api_client.dart';
 import 'package:organizagrana/shared/network/http_api_client.dart';
 
 abstract class BorderoApiClient {
+  Future<BorderosPageResult> listPage({
+    required int page,
+    required int perPage,
+    BorderoSortField sortBy,
+    BorderoSortDirection sortDirection,
+  });
   Future<BorderoResult> calculate(BorderoInput input);
   Future<SavedBordero> save(BorderoInput input);
 }
@@ -24,6 +32,25 @@ class HttpBorderoApiClient with AuthenticatedApiClient implements BorderoApiClie
 
   @override
   final HttpApiClient httpClient;
+
+  @override
+  Future<BorderosPageResult> listPage({
+    required int page,
+    required int perPage,
+    BorderoSortField sortBy = BorderoSortField.changeDate,
+    BorderoSortDirection sortDirection = BorderoSortDirection.desc,
+  }) {
+    final uri = Uri.parse(ApiEndpoints.bordero.list).replace(queryParameters: {
+      'page': '$page',
+      'per_page': '$perPage',
+      'sort_by': sortBy.toApiValue(),
+      'sort_direction': sortDirection.toApiValue(),
+    });
+    return guarded(
+      () => httpClient.getJson(uri).then(BorderosPageResult.fromJson),
+      (type) => BorderoApiClientException(_toFailureType(type)),
+    );
+  }
 
   @override
   Future<BorderoResult> calculate(BorderoInput input) => guarded(
