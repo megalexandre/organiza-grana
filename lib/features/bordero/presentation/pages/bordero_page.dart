@@ -12,6 +12,10 @@ import 'package:organizagrana/features/bordero/presentation/widgets/bordero_add_
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_export_table.dart';
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_item_card.dart';
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_summary_panel.dart';
+import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 import 'package:organizagrana/shared/utils/date_input_formatter.dart';
 import 'package:organizagrana/shared/layout/page_content_constraint.dart';
@@ -19,9 +23,16 @@ import 'package:organizagrana/shared/utils/web_download.dart';
 import 'package:organizagrana/shared/utils/widget_capture.dart';
 
 class BorderoPage extends StatefulWidget {
-  const BorderoPage({super.key, required this.service});
+  const BorderoPage({
+    super.key,
+    required this.service,
+    required this.receivablesService,
+    this.initialBorderoId,
+  });
 
   final BorderoService service;
+  final ReceivablesService receivablesService;
+  final String? initialBorderoId;
 
   @override
   State<BorderoPage> createState() => _BorderoPageState();
@@ -34,9 +45,12 @@ class _BorderoPageState extends State<BorderoPage> {
 
   DateTime _changeDate = DateTime.now();
   final List<BorderoInputItem> _items = [];
+  final List<String> _receivableIds = [];
   BorderoResult? _result;
+  String? _savedBorderoId;
   bool _loading = false;
   bool _saving = false;
+  bool _loadingInitial = false;
   String? _errorMessage;
   bool _paramsConfirmed = false;
 
@@ -44,6 +58,51 @@ class _BorderoPageState extends State<BorderoPage> {
   void initState() {
     super.initState();
     _changeDateController.text = dateFormat.format(_changeDate);
+    if (widget.initialBorderoId != null) {
+      _loadingInitial = true;
+      _loadExisting(widget.initialBorderoId!);
+    }
+  }
+
+  Future<void> _loadExisting(String borderoId) async {
+    setState(() {
+      _loadingInitial = true;
+      _errorMessage = null;
+    });
+    try {
+      final bordero = await widget.service.getById(borderoId);
+      if (!mounted) return;
+      final receivablesResult = await widget.receivablesService.listPage(
+        page: 1,
+        perPage: 500,
+        borderoId: borderoId,
+      );
+      if (!mounted) return;
+      final receivables = receivablesResult.items;
+      setState(() {
+        _savedBorderoId = bordero.id;
+        _changeDate = bordero.changeDate;
+        _changeDateController.text = dateFormat.format(bordero.changeDate);
+        _rateController.text =
+            bordero.monthlyRatePercent.toStringAsFixed(2).replaceAll('.', ',');
+        _items.addAll(receivables.map((r) => BorderoInputItem(
+              amountCents: r.amountCents,
+              dueDate: r.dueDate,
+              awaitingDays: r.awaitingDays,
+            )));
+        _receivableIds.addAll(receivables.map((r) => r.id));
+        _paramsConfirmed = true;
+      });
+      if (_items.isNotEmpty) await _calculate();
+    } on BorderoFailure catch (e) {
+      if (mounted) setState(() => _errorMessage = e.message);
+    } on ReceivableFailure catch (e) {
+      if (mounted) setState(() => _errorMessage = e.message);
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = 'Erro ao carregar borderô: $e');
+    } finally {
+      if (mounted) setState(() => _loadingInitial = false);
+    }
   }
 
   @override
@@ -74,26 +133,33 @@ class _BorderoPageState extends State<BorderoPage> {
     setState(() => _paramsConfirmed = true);
   }
 
-  void _editParams() {
+  Future<void> _editParams() async {
+    // Deletar todos os recebíveis draft criados
+    final ids = List<String>.from(_receivableIds);
+    await Future.wait(ids.map((id) => widget.receivablesService.delete(id).catchError((_) {})));
     setState(() {
       _paramsConfirmed = false;
       _result = null;
       _errorMessage = null;
+      _items.clear();
+      _receivableIds.clear();
     });
   }
 
   Future<void> _save() async {
-    if (_result == null) return;
+    if (_savedBorderoId == null || _receivableIds.isEmpty) return;
     setState(() {
       _saving = true;
       _errorMessage = null;
     });
     try {
-      await widget.service.save(_buildInput());
-      if (mounted) {
-        context.pop(true);
-      }
-    } on BorderoFailure catch (e) {
+      await Future.wait(
+        _receivableIds.map(
+          (id) => widget.receivablesService.changeStatus(id, ReceivableStatus.awaiting),
+        ),
+      );
+      if (mounted) context.pop(true);
+    } on ReceivableFailure catch (e) {
       if (mounted) setState(() => _errorMessage = e.message);
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -103,24 +169,74 @@ class _BorderoPageState extends State<BorderoPage> {
   Future<void> _openAddItemDialog() async {
     final item = await showBorderoAddItem(context);
     if (mounted) FocusManager.instance.primaryFocus?.unfocus();
-    if (item != null) {
-      setState(() {
-        _items.add(item);
-        _errorMessage = null;
-      });
-      _calculate();
+    if (item == null) return;
+
+    setState(() => _errorMessage = null);
+
+    // Criar o recebível como draft no servidor
+    String receivableId;
+    try {
+      final receivable = await widget.receivablesService.create(
+        ReceivableDraft(
+          amountCents: item.amountCents,
+          dueDate: item.dueDate,
+          changeDate: _changeDate,
+          status: ReceivableStatus.draft,
+        ),
+      );
+      receivableId = receivable.id;
+    } on ReceivableFailure catch (e) {
+      if (mounted) setState(() => _errorMessage = e.message);
+      return;
+    }
+
+    setState(() {
+      _items.add(item);
+      _receivableIds.add(receivableId);
+    });
+
+    await _calculate();
+
+    if (!mounted) return;
+
+    // Auto-salvar ou atualizar o borderô
+    try {
+      if (_savedBorderoId == null) {
+        final saved = await widget.service.save(_buildInput());
+        if (mounted) setState(() => _savedBorderoId = saved.id);
+      } else {
+        await widget.service.update(_savedBorderoId!, _buildInput());
+      }
+    } on BorderoFailure catch (e) {
+      if (mounted) setState(() => _errorMessage = e.message);
     }
   }
 
-  void _removeItem(int index) {
+  Future<void> _removeItem(int index) async {
+    final receivableId = _receivableIds[index];
+
     setState(() {
       _items.removeAt(index);
+      _receivableIds.removeAt(index);
       _errorMessage = null;
     });
+
+    // Deletar o recebível draft (fire and forget, sem bloquear UI)
+    widget.receivablesService.delete(receivableId).catchError((_) {});
+
     if (_items.isEmpty) {
       setState(() => _result = null);
-    } else {
-      _calculate();
+      return;
+    }
+
+    await _calculate();
+
+    if (_savedBorderoId != null && mounted) {
+      () async {
+        try {
+          await widget.service.update(_savedBorderoId!, _buildInput());
+        } catch (_) {}
+      }();
     }
   }
 
@@ -131,6 +247,7 @@ class _BorderoPageState extends State<BorderoPage> {
       changeDate: _changeDate,
       monthlyRatePercent: rate,
       items: List.unmodifiable(_items),
+      receivableIds: _receivableIds.isEmpty ? null : List.unmodifiable(_receivableIds),
     );
   }
 
@@ -187,11 +304,43 @@ class _BorderoPageState extends State<BorderoPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loadingInitial) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null && !_paramsConfirmed && widget.initialBorderoId != null) {
+      final cs = Theme.of(context).colorScheme;
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline, size: 48, color: cs.error),
+                const SizedBox(height: 12),
+                Text(_errorMessage!, textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => _loadExisting(widget.initialBorderoId!),
+                  child: const Text('Tentar novamente'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: Column(
         children: [
           if (_paramsConfirmed) _buildCompactParams(context),
+          if (_paramsConfirmed && _result != null)
+            BorderoSummaryPanel(result: _result!, itemCount: _items.length),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -290,10 +439,11 @@ class _BorderoPageState extends State<BorderoPage> {
               style: textTheme.bodySmall,
             ),
           ),
-          TextButton(
-            onPressed: _editParams,
-            child: const Text('Editar'),
-          ),
+          if (widget.initialBorderoId == null)
+            TextButton(
+              onPressed: _editParams,
+              child: const Text('Editar'),
+            ),
         ],
       ),
     );
@@ -427,39 +577,9 @@ class _BorderoPageState extends State<BorderoPage> {
   }
 
   Widget _buildItemsSection(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(
-              'Recebíveis',
-              style:
-                  textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            if (_items.isNotEmpty) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${_items.length}',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 12),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
           child: _items.isEmpty
@@ -550,23 +670,21 @@ class _BorderoPageState extends State<BorderoPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        BorderoSummaryPanel(result: result),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+        Wrap(
+          alignment: WrapAlignment.end,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             OutlinedButton.icon(
               onPressed: _exportToImage,
               icon: const Icon(Icons.image_outlined),
               label: const Text('Exportar Imagem'),
             ),
-            const SizedBox(width: 12),
             OutlinedButton.icon(
               onPressed: _exportToCsv,
               icon: const Icon(Icons.table_chart_outlined),
               label: const Text('Exportar CSV'),
             ),
-            const SizedBox(width: 12),
             FilledButton.icon(
               onPressed: _saving ? null : _save,
               icon: _saving

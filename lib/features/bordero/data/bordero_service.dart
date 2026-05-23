@@ -29,6 +29,14 @@ class BorderoService {
     }
   }
 
+  Future<SavedBordero> getById(String id) async {
+    try {
+      return await _apiClient.getById(id);
+    } on BorderoApiClientException catch (e) {
+      throw BorderoFailure(type: e.type, message: _messageFor(e.type));
+    }
+  }
+
   Future<BorderoResult> calculate(BorderoInput input) async {
     try {
       return await _apiClient.calculate(input);
@@ -40,6 +48,14 @@ class BorderoService {
   Future<SavedBordero> save(BorderoInput input) async {
     try {
       return await _apiClient.save(input);
+    } on BorderoApiClientException catch (e) {
+      throw BorderoFailure(type: e.type, message: _messageFor(e.type));
+    }
+  }
+
+  Future<SavedBordero> update(String id, BorderoInput input) async {
+    try {
+      return await _apiClient.update(id, input);
     } on BorderoApiClientException catch (e) {
       throw BorderoFailure(type: e.type, message: _messageFor(e.type));
     }

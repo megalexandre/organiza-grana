@@ -17,7 +17,9 @@ abstract class BorderoApiClient {
     BorderoSortDirection sortDirection,
   });
   Future<BorderoResult> calculate(BorderoInput input);
+  Future<SavedBordero> getById(String id);
   Future<SavedBordero> save(BorderoInput input);
+  Future<SavedBordero> update(String id, BorderoInput input);
 }
 
 class BorderoApiClientException implements Exception {
@@ -53,6 +55,21 @@ class HttpBorderoApiClient with AuthenticatedApiClient implements BorderoApiClie
   }
 
   @override
+  Future<SavedBordero> getById(String id) => guarded(
+        () async {
+          final response = await httpClient.getJson(
+            Uri.parse(ApiEndpoints.bordero.byId(id)),
+          );
+          final raw = response['bordero'] ?? response;
+          if (raw is! Map<String, dynamic>) {
+            throw const BorderoApiClientException(BorderoFailureType.invalidResponse);
+          }
+          return SavedBordero.fromJson(raw);
+        },
+        (type) => BorderoApiClientException(_toFailureType(type)),
+      );
+
+  @override
   Future<BorderoResult> calculate(BorderoInput input) => guarded(
         () => httpClient
             .postJson(Uri.parse(ApiEndpoints.bordero.calculate), input.toJson())
@@ -64,6 +81,14 @@ class HttpBorderoApiClient with AuthenticatedApiClient implements BorderoApiClie
   Future<SavedBordero> save(BorderoInput input) => guarded(
         () => httpClient
             .postJson(Uri.parse(ApiEndpoints.bordero.save), input.toJson())
+            .then(SavedBordero.fromJson),
+        (type) => BorderoApiClientException(_toFailureType(type)),
+      );
+
+  @override
+  Future<SavedBordero> update(String id, BorderoInput input) => guarded(
+        () => httpClient
+            .putJson(Uri.parse(ApiEndpoints.bordero.update(id)), input.toJson())
             .then(SavedBordero.fromJson),
         (type) => BorderoApiClientException(_toFailureType(type)),
       );

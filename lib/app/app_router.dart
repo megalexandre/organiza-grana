@@ -124,7 +124,11 @@ class AppRouter {
                   GoRoute(
                     path: 'novo',
                     pageBuilder: (context, state) => NoTransitionPage(
-                      child: BorderoPage(service: _borderoService),
+                      child: BorderoPage(
+                        service: _borderoService,
+                        receivablesService: _receivablesService,
+                        initialBorderoId: state.extra as String?,
+                      ),
                     ),
                   ),
                 ],

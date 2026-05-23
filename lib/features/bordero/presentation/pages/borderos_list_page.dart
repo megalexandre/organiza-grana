@@ -5,7 +5,7 @@ import 'package:organizagrana/features/bordero/data/bordero_service.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_failure.dart';
 import 'package:organizagrana/features/bordero/domain/borderos_pagination.dart';
 import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
-import 'package:organizagrana/features/bordero/presentation/widgets/saved_bordero_card.dart';
+import 'package:organizagrana/features/bordero/presentation/widgets/bordero_card.dart';
 import 'package:organizagrana/shared/layout/page_content_constraint.dart';
 
 class BorderosListPage extends StatefulWidget {
@@ -97,6 +97,11 @@ class _BorderosListPageState extends State<BorderosListPage> {
     if (created == true) _loadBorderos();
   }
 
+  Future<void> _openBordero(String borderoId) async {
+    final updated = await context.push<bool>(AppRouter.borderoNovoPath, extra: borderoId);
+    if (updated == true) _loadBorderos();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,7 +137,11 @@ class _BorderosListPageState extends State<BorderosListPage> {
             );
           }
           final b = _borderos[index];
-          return SavedBorderoCard(key: ValueKey(b.id), bordero: b);
+          return BorderoCard(
+            key: ValueKey(b.id),
+            bordero: b,
+            onTap: () => _openBordero(b.id),
+          );
         },
       ),
     );

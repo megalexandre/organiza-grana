@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
-class SavedBorderoCard extends StatelessWidget {
-  const SavedBorderoCard({
+class BorderoCard extends StatelessWidget {
+  const BorderoCard({
     super.key,
     required this.bordero,
     this.compact = true,
@@ -164,7 +164,7 @@ class _CardShell extends StatelessWidget {
       decoration: BoxDecoration(
         color: surfaceColor,
         border: Border(
-          left: BorderSide(color: accentColor, width: 3),
+          left: BorderSide(color: outlineColor),
           top: BorderSide(color: outlineColor),
           right: BorderSide(color: outlineColor),
           bottom: BorderSide(color: outlineColor),

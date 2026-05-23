@@ -64,10 +64,36 @@ const Map<String, dynamic> receivableDetailBody = {
 const Map<String, dynamic> savedBorderoBody = {
   'id': 'bdro-saved-1',
   'change_date': '2026-08-01',
+  'monthly_rate_percent': 2.5,
   'total_amount_cents': 300000,
   'total_proceeds_cents': 291500,
   'total_interest_amount_cents': 8500,
+  'average_days': 25.0,
+  'created_at': '2026-05-23T10:00:00.000Z',
 };
+
+// Lista paginada de borderos — usa chave 'items' (formato de BorderosPageResult)
+Map<String, dynamic> borderoListBody({int count = 1}) => {
+      'items': List.generate(
+        count,
+        (i) => {
+          'id': 'bdro-${i + 1}',
+          'change_date': '2026-08-0${i + 1}',
+          'monthly_rate_percent': 2.5,
+          'total_amount_cents': 300000,
+          'total_proceeds_cents': 291500,
+          'total_interest_amount_cents': 8500,
+          'average_days': 25.0,
+          'created_at': '2026-05-23T10:00:00.000Z',
+        },
+      ),
+      'pagination': {
+        'current_page': 1,
+        'per_page': 20,
+        'total_pages': 1,
+        'total_count': count,
+      },
+    };
 
 const Map<String, dynamic> borderoResultBody = {
   'items': [

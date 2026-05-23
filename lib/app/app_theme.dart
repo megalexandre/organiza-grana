@@ -97,6 +97,7 @@ abstract final class AppColors {
   static const navBarBackground = Color(0xFF1A1D2B);   // top app bar
 
   // --- Status dos recebíveis (dark) ---
+  static const statusDraft      = Color(0xFF4A5568);
   static const statusAwaiting   = AppPalette.success500;
   static const statusToDeposit  = AppPalette.info400;
   static const statusDeposited  = AppPalette.primary400;
@@ -144,6 +145,7 @@ abstract final class AcalLightColors {
   static const navBarBackground = Color(0xFFEEF2FF);   // top app bar
 
   // --- Status dos recebíveis (light) ---
+  static const statusDraft      = Color(0xFF718096);
   static const statusAwaiting   = AppPalette.success600;
   static const statusToDeposit  = AppPalette.info600;
   static const statusDeposited  = AppPalette.primary600;

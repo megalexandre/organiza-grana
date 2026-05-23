@@ -7,4 +7,6 @@ class _Bordero {
   final String calculate = '$_path/calculate';
   final String save = _path;
   final String list = _path;
+  String byId(String id) => '$_path/$id';
+  String update(String id) => '$_path/$id';
 }

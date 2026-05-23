@@ -1,3 +1,5 @@
+import 'package:organizagrana/features/bordero/domain/saved_bordero_item.dart';
+
 class SavedBordero {
   const SavedBordero({
     required this.id,
@@ -8,6 +10,7 @@ class SavedBordero {
     required this.totalInterestAmountCents,
     required this.averageDays,
     required this.createdAt,
+    this.items,
   });
 
   final String id;
@@ -18,6 +21,7 @@ class SavedBordero {
   final int totalInterestAmountCents;
   final double averageDays;
   final DateTime createdAt;
+  final List<SavedBorderoItem>? items;
 
   double get totalAmount => totalAmountCents / 100;
   double get totalProceeds => totalProceedsCents / 100;
@@ -26,6 +30,7 @@ class SavedBordero {
       totalAmountCents > 0 ? (totalInterestAmountCents / totalAmountCents) * 100 : 0;
 
   factory SavedBordero.fromJson(Map<String, dynamic> json) {
+    final rawItems = json['receivables'] as List?;
     return SavedBordero(
       id: json['id'] as String,
       changeDate: DateTime.parse(json['change_date'] as String),
@@ -35,6 +40,10 @@ class SavedBordero {
       totalInterestAmountCents: json['total_interest_amount_cents'] as int,
       averageDays: _readDouble(json['average_days']) ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
+      items: rawItems
+          ?.whereType<Map<String, dynamic>>()
+          .map(SavedBorderoItem.fromJson)
+          .toList(),
     );
   }
 

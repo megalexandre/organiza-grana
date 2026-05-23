@@ -18,6 +18,7 @@ class ReceivablesService {
     bool withDiscarded = false,
     ReceivableSortField sortBy = ReceivableSortField.dueDate,
     ReceivableSortDirection sortDirection = ReceivableSortDirection.desc,
+    String? borderoId,
   }) async {
     try {
       return await _apiClient.listPage(
@@ -26,6 +27,7 @@ class ReceivablesService {
         withDiscarded: withDiscarded,
         sortBy: sortBy,
         sortDirection: sortDirection,
+        borderoId: borderoId,
       );
     } on ReceivablesApiClientException catch (e) {
       throw ReceivableFailure(
@@ -43,9 +45,9 @@ class ReceivablesService {
     }
   }
 
-  Future<void> create(ReceivableDraft draft) async {
+  Future<Receivable> create(ReceivableDraft draft) async {
     try {
-      await _apiClient.create(draft);
+      return await _apiClient.create(draft);
     } on ReceivablesApiClientException catch (e) {
       throw ReceivableFailure(type: e.type, message: _messageFor(e.type));
     }

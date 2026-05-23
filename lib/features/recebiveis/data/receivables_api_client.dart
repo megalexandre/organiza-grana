@@ -17,9 +17,10 @@ abstract class ReceivablesApiClient {
     bool withDiscarded = false,
     ReceivableSortField sortBy = ReceivableSortField.dueDate,
     ReceivableSortDirection sortDirection = ReceivableSortDirection.desc,
+    String? borderoId,
   });
   Future<Receivable> getById(String id);
-  Future<void> create(ReceivableDraft draft);
+  Future<Receivable> create(ReceivableDraft draft);
   Future<void> update(String id, ReceivableUpdate update);
   Future<void> changeStatus(String id, ReceivableStatus status);
   Future<void> delete(String id);
@@ -45,14 +46,17 @@ class HttpReceivablesApiClient with AuthenticatedApiClient implements Receivable
     bool withDiscarded = false,
     ReceivableSortField sortBy = ReceivableSortField.dueDate,
     ReceivableSortDirection sortDirection = ReceivableSortDirection.desc,
+    String? borderoId,
   }) {
-    final uri = Uri.parse(ApiEndpoints.receivables.list).replace(queryParameters: {
+    final params = <String, String>{
       'page': '$page',
       'per_page': '$perPage',
       'with_discarded': '$withDiscarded',
       'sort_by': sortBy.toApiValue(),
       'sort_direction': sortDirection.toApiValue(),
-    });
+      'bordero_id': ?borderoId,
+    };
+    final uri = Uri.parse(ApiEndpoints.receivables.list).replace(queryParameters: params);
     return guarded(
       () => httpClient.getJson(uri).then(ReceivablesPageResult.fromJson),
       (type) => ReceivablesApiClientException(_toFailureType(type)),
@@ -75,8 +79,18 @@ class HttpReceivablesApiClient with AuthenticatedApiClient implements Receivable
       );
 
   @override
-  Future<void> create(ReceivableDraft draft) => guarded(
-        () => httpClient.postJson(Uri.parse(ApiEndpoints.receivables.create), draft.toJson()),
+  Future<Receivable> create(ReceivableDraft draft) => guarded(
+        () async {
+          final response = await httpClient.postJson(
+            Uri.parse(ApiEndpoints.receivables.create),
+            draft.toJson(),
+          );
+          final raw = response['receivable'] ?? response;
+          if (raw is! Map<String, dynamic>) {
+            throw const ReceivablesApiClientException(ReceivableFailureType.invalidResponse);
+          }
+          return Receivable.fromJson(raw);
+        },
         (type) => ReceivablesApiClientException(_toFailureType(type)),
       );
 

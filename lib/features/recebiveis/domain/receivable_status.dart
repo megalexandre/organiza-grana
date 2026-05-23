@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:organizagrana/app/app_theme.dart';
 
 enum ReceivableStatus {
+  draft(-1, 'Rascunho'),
   awaiting(0, 'Aguardando'),
   toDeposit(1, 'A depositar'),
   deposited(2, 'Depositado'),
@@ -16,6 +17,7 @@ enum ReceivableStatus {
 
   Color colorFor(Brightness brightness) => switch (brightness) {
         Brightness.dark => switch (this) {
+          ReceivableStatus.draft     => AppColors.statusDraft,
           ReceivableStatus.awaiting  => AppColors.statusAwaiting,
           ReceivableStatus.toDeposit => AppColors.statusToDeposit,
           ReceivableStatus.deposited => AppColors.statusDeposited,
@@ -24,6 +26,7 @@ enum ReceivableStatus {
           ReceivableStatus.paid      => AppColors.statusPaid,
         },
         Brightness.light => switch (this) {
+          ReceivableStatus.draft     => AcalLightColors.statusDraft,
           ReceivableStatus.awaiting  => AcalLightColors.statusAwaiting,
           ReceivableStatus.toDeposit => AcalLightColors.statusToDeposit,
           ReceivableStatus.deposited => AcalLightColors.statusDeposited,
@@ -42,6 +45,7 @@ enum ReceivableStatus {
   }
 
   ReceivableStatus? get previous {
+    if (this == draft) return null;
     final prevVal = value - 1;
     return ReceivableStatus.values.where((s) => s.value == prevVal).firstOrNull;
   }
@@ -53,6 +57,7 @@ enum ReceivableStatus {
     }
     final str = raw.toString().toLowerCase();
     return switch (str) {
+      'draft'      => ReceivableStatus.draft,
       'awaiting'   => ReceivableStatus.awaiting,
       'to_deposit' => ReceivableStatus.toDeposit,
       'deposited'  => ReceivableStatus.deposited,
@@ -64,6 +69,7 @@ enum ReceivableStatus {
   }
 
   String toJson() => switch (this) {
+        ReceivableStatus.draft     => 'draft',
         ReceivableStatus.awaiting  => 'awaiting',
         ReceivableStatus.toDeposit => 'to_deposit',
         ReceivableStatus.deposited => 'deposited',
