@@ -25,39 +25,75 @@ class BorderoSummaryPanel extends StatelessWidget {
           bottom: BorderSide(color: colorScheme.outlineVariant),
         ),
       ),
-      child: Row(
-        children: [
-          _Stat(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < 480;
+
+          final itens = _Stat(
             label: 'ITENS',
             value: '$itemCount',
             textTheme: textTheme,
             colorScheme: colorScheme,
-          ),
-          _Divider(colorScheme: colorScheme),
-          _Stat(
+          );
+          final totalBruto = _Stat(
             label: 'TOTAL BRUTO',
             value: currencyFormat.format(result.totalAmount),
             textTheme: textTheme,
             colorScheme: colorScheme,
-          ),
-          _Divider(colorScheme: colorScheme),
-          _Stat(
+          );
+          final descontos = _Stat(
             label: 'DESCONTOS',
             value: '- ${currencyFormat.format(result.totalInterestAmount)}',
             valueColor: colorScheme.error,
             textTheme: textTheme,
             colorScheme: colorScheme,
-          ),
-          _Divider(colorScheme: colorScheme),
-          _Stat(
+          );
+          final aReceber = _Stat(
             label: 'A RECEBER',
             value: currencyFormat.format(result.totalProceeds),
             valueColor: colorScheme.primary,
             bold: true,
             textTheme: textTheme,
             colorScheme: colorScheme,
-          ),
-        ],
+          );
+
+          if (narrow) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    itens,
+                    _Divider(colorScheme: colorScheme),
+                    totalBruto,
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    descontos,
+                    _Divider(colorScheme: colorScheme),
+                    aReceber,
+                  ],
+                ),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              itens,
+              _Divider(colorScheme: colorScheme),
+              totalBruto,
+              _Divider(colorScheme: colorScheme),
+              descontos,
+              _Divider(colorScheme: colorScheme),
+              aReceber,
+            ],
+          );
+        },
       ),
     );
   }

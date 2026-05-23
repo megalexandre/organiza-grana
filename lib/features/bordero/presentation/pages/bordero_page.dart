@@ -46,6 +46,7 @@ class _BorderoPageState extends State<BorderoPage> {
   DateTime _changeDate = DateTime.now();
   final List<BorderoInputItem> _items = [];
   final List<String> _receivableIds = [];
+  final Set<String> _preloadedReceivableIds = {};
   BorderoResult? _result;
   String? _savedBorderoId;
   bool _loading = false;
@@ -91,6 +92,7 @@ class _BorderoPageState extends State<BorderoPage> {
               awaitingDays: r.awaitingDays,
             )));
         _receivableIds.addAll(receivables.map((r) => r.id));
+        _preloadedReceivableIds.addAll(receivables.map((r) => r.id));
         _paramsConfirmed = true;
       });
       if (_items.isNotEmpty) await _calculate();
@@ -143,6 +145,7 @@ class _BorderoPageState extends State<BorderoPage> {
       _errorMessage = null;
       _items.clear();
       _receivableIds.clear();
+      _preloadedReceivableIds.clear();
     });
   }
 
@@ -154,9 +157,9 @@ class _BorderoPageState extends State<BorderoPage> {
     });
     try {
       await Future.wait(
-        _receivableIds.map(
-          (id) => widget.receivablesService.changeStatus(id, ReceivableStatus.awaiting),
-        ),
+        _receivableIds
+            .where((id) => !_preloadedReceivableIds.contains(id))
+            .map((id) => widget.receivablesService.changeStatus(id, ReceivableStatus.awaiting)),
       );
       if (mounted) context.pop(true);
     } on ReceivableFailure catch (e) {
@@ -670,33 +673,52 @@ class _BorderoPageState extends State<BorderoPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          alignment: WrapAlignment.end,
-          spacing: 8,
-          runSpacing: 8,
+        const SizedBox(height: 8),
+        Row(
           children: [
-            OutlinedButton.icon(
-              onPressed: _exportToImage,
-              icon: const Icon(Icons.image_outlined),
-              label: const Text('Exportar Imagem'),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _exportToImage,
+                icon: const Icon(Icons.image_outlined, size: 16),
+                label: const Text('Exportar Imagem'),
+                style: OutlinedButton.styleFrom(
+                  shape: const RoundedRectangleBorder(),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
             ),
-            OutlinedButton.icon(
-              onPressed: _exportToCsv,
-              icon: const Icon(Icons.table_chart_outlined),
-              label: const Text('Exportar CSV'),
-            ),
-            FilledButton.icon(
-              onPressed: _saving ? null : _save,
-              icon: _saving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save_outlined),
-              label: const Text('Salvar'),
+            const SizedBox(width: 6),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _exportToCsv,
+                icon: const Icon(Icons.table_chart_outlined, size: 16),
+                label: const Text('Exportar CSV'),
+                style: OutlinedButton.styleFrom(
+                  shape: const RoundedRectangleBorder(),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
             ),
           ],
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: _saving ? null : _save,
+            icon: _saving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.save_outlined, size: 16),
+            label: const Text('Salvar'),
+            style: FilledButton.styleFrom(
+              shape: const RoundedRectangleBorder(),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
         ),
       ],
     );

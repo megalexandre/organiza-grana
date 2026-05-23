@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input_item.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
+import 'package:organizagrana/shared/utils/currency_input_formatter.dart';
 import 'package:organizagrana/shared/utils/date_input_formatter.dart';
 
 Future<BorderoInputItem?> showBorderoAddItem(BuildContext context) {
@@ -74,9 +75,7 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final rawValue = _valueController.text.trim().replaceAll(',', '.');
-    final value = double.tryParse(rawValue) ?? 0;
-    final amountCents = (value * 100).round();
+    final amountCents = CurrencyInputFormatter.toCents(_valueController.text.trim());
     final awaitingDays =
         int.tryParse(_awaitingDaysController.text.trim()) ?? 1;
 
@@ -152,15 +151,11 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
                 hintText: '0,00',
                 prefixText: 'R\$ ',
               ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-              ],
+              keyboardType: TextInputType.number,
+              inputFormatters: [CurrencyInputFormatter()],
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return 'Informe o valor.';
-                final parsed = double.tryParse(v.trim().replaceAll(',', '.'));
-                if (parsed == null || parsed <= 0) return 'Valor inválido.';
+                if (CurrencyInputFormatter.toCents(v.trim()) <= 0) return 'Valor inválido.';
                 return null;
               },
             ),
