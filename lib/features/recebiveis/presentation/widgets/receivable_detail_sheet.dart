@@ -21,8 +21,10 @@ Future<bool?> showReceivableDetailSheet(
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) => SizedBox(
-        height: MediaQuery.sizeOf(ctx).height * 0.88,
+      builder: (ctx) => ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(ctx).height * 0.9,
+        ),
         child: _ReceivableDetailSheet(id: id, service: service, isSheet: true),
       ),
     );
