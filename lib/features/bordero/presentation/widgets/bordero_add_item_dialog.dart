@@ -6,6 +6,20 @@ import 'package:organizagrana/shared/utils/currency_input_formatter.dart';
 import 'package:organizagrana/shared/utils/date_input_formatter.dart';
 
 Future<BorderoInputItem?> showBorderoAddItem(BuildContext context) {
+  return _showItemForm(context, editTarget: null);
+}
+
+Future<BorderoInputItem?> showBorderoEditItem(
+  BuildContext context,
+  BorderoInputItem item,
+) {
+  return _showItemForm(context, editTarget: item);
+}
+
+Future<BorderoInputItem?> _showItemForm(
+  BuildContext context, {
+  required BorderoInputItem? editTarget,
+}) {
   final isNarrow = MediaQuery.sizeOf(context).width < 600;
 
   if (isNarrow) {
@@ -16,25 +30,26 @@ Future<BorderoInputItem?> showBorderoAddItem(BuildContext context) {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => const _BorderoAddItemForm(isSheet: true),
+      builder: (_) => _BorderoAddItemForm(isSheet: true, editTarget: editTarget),
     );
   }
 
   return showDialog<BorderoInputItem>(
     context: context,
-    builder: (_) => const Dialog(
+    builder: (_) => Dialog(
       child: SizedBox(
         width: 400,
-        child: _BorderoAddItemForm(isSheet: false),
+        child: _BorderoAddItemForm(isSheet: false, editTarget: editTarget),
       ),
     ),
   );
 }
 
 class _BorderoAddItemForm extends StatefulWidget {
-  const _BorderoAddItemForm({required this.isSheet});
+  const _BorderoAddItemForm({required this.isSheet, this.editTarget});
 
   final bool isSheet;
+  final BorderoInputItem? editTarget;
 
   @override
   State<_BorderoAddItemForm> createState() => _BorderoAddItemFormState();
@@ -44,9 +59,25 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
   final _formKey = GlobalKey<FormState>();
   final _valueController = TextEditingController();
   final _dueDateController = TextEditingController();
-  final _awaitingDaysController = TextEditingController(text: '2');
+  final _awaitingDaysController = TextEditingController();
 
   DateTime? _selectedDueDate;
+
+  bool get _isEditing => widget.editTarget != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final target = widget.editTarget;
+    if (target != null) {
+      _valueController.text = (target.amountCents / 100).toStringAsFixed(2).replaceAll('.', ',');
+      _selectedDueDate = target.dueDate;
+      _dueDateController.text = dateFormat.format(target.dueDate);
+      _awaitingDaysController.text = target.awaitingDays.toString();
+    } else {
+      _awaitingDaysController.text = '2';
+    }
+  }
 
   @override
   void dispose() {
@@ -129,14 +160,14 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    Icons.add_card_outlined,
+                    _isEditing ? Icons.edit_outlined : Icons.add_card_outlined,
                     size: 18,
                     color: colorScheme.primary,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Adicionar recebível',
+                  _isEditing ? 'Editar recebível' : 'Adicionar recebível',
                   style: textTheme.titleSmall
                       ?.copyWith(fontWeight: FontWeight.w700),
                 ),
@@ -226,8 +257,8 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: _submit,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Adicionar'),
+                    icon: Icon(_isEditing ? Icons.check : Icons.add, size: 18),
+                    label: Text(_isEditing ? 'Salvar' : 'Adicionar'),
                   ),
                 ),
               ],

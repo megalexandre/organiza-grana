@@ -360,6 +360,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddDialog,
         tooltip: 'Novo recebível',
@@ -515,11 +516,20 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
             onStatusChange: (newStatus) => _changeStatus(r, newStatus),
             onDelete: () => _deleteReceivable(r),
             onDetails: () async {
-              final saved = await showReceivableDetailSheet(
-                context,
-                id: r.id,
-                service: widget.service,
-              );
+              final bool? saved;
+              if (r.status == ReceivableStatus.draft) {
+                saved = await showEditReceivableDraftSheet(
+                  context,
+                  service: widget.service,
+                  receivable: r,
+                );
+              } else {
+                saved = await showReceivableDetailSheet(
+                  context,
+                  id: r.id,
+                  service: widget.service,
+                );
+              }
               if (saved == true) _loadReceivables();
             },
           );

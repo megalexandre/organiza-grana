@@ -22,6 +22,7 @@ abstract class ReceivablesApiClient {
   Future<Receivable> getById(String id);
   Future<Receivable> create(ReceivableDraft draft);
   Future<void> update(String id, ReceivableUpdate update);
+  Future<void> updateDraft(String id, ReceivableDraft draft);
   Future<void> changeStatus(String id, ReceivableStatus status);
   Future<void> delete(String id);
 }
@@ -97,6 +98,12 @@ class HttpReceivablesApiClient with AuthenticatedApiClient implements Receivable
   @override
   Future<void> update(String id, ReceivableUpdate update) => guarded(
         () => httpClient.putJson(Uri.parse(ApiEndpoints.receivables.update(id)), update.toJson()),
+        (type) => ReceivablesApiClientException(_toFailureType(type)),
+      );
+
+  @override
+  Future<void> updateDraft(String id, ReceivableDraft draft) => guarded(
+        () => httpClient.putJson(Uri.parse(ApiEndpoints.receivables.update(id)), draft.toJson()),
         (type) => ReceivablesApiClientException(_toFailureType(type)),
       );
 

@@ -10,12 +10,14 @@ class BorderoItemCard extends StatelessWidget {
     required this.inputItem,
     required this.onRemove,
     this.resultItem,
+    this.onTap,
   });
 
   final int index;
   final BorderoInputItem inputItem;
   final BorderoResultItem? resultItem;
   final VoidCallback? onRemove;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +38,10 @@ class BorderoItemCard extends StatelessWidget {
         child: Icon(Icons.delete_outline, color: colorScheme.error),
       ),
       onDismissed: onRemove != null ? (_) => onRemove!() : null,
-      child: DecoratedBox(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: DecoratedBox(
         decoration: BoxDecoration(
           color: colorScheme.brightness == Brightness.dark
               ? Color.alphaBlend(Colors.white.withValues(alpha: 0.07), colorScheme.surface)
@@ -165,6 +170,7 @@ class BorderoItemCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

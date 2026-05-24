@@ -1,13 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
+import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
 Future<bool?> showAddReceivableSheet(
   BuildContext context, {
   required ReceivablesService service,
+}) {
+  return _showSheet(context, service: service, editTarget: null);
+}
+
+Future<bool?> showEditReceivableDraftSheet(
+  BuildContext context, {
+  required ReceivablesService service,
+  required Receivable receivable,
+}) {
+  return _showSheet(context, service: service, editTarget: receivable);
+}
+
+Future<bool?> _showSheet(
+  BuildContext context, {
+  required ReceivablesService service,
+  required Receivable? editTarget,
 }) {
   final isNarrow = MediaQuery.sizeOf(context).width < 600;
 
@@ -19,7 +37,7 @@ Future<bool?> showAddReceivableSheet(
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => _AddReceivableForm(service: service, isSheet: true),
+      builder: (_) => _AddReceivableForm(service: service, isSheet: true, editTarget: editTarget),
     );
   }
 
@@ -28,17 +46,18 @@ Future<bool?> showAddReceivableSheet(
     builder: (_) => Dialog(
       child: SizedBox(
         width: 400,
-        child: _AddReceivableForm(service: service, isSheet: false),
+        child: _AddReceivableForm(service: service, isSheet: false, editTarget: editTarget),
       ),
     ),
   );
 }
 
 class _AddReceivableForm extends StatefulWidget {
-  const _AddReceivableForm({required this.service, required this.isSheet});
+  const _AddReceivableForm({required this.service, required this.isSheet, this.editTarget});
 
   final ReceivablesService service;
   final bool isSheet;
+  final Receivable? editTarget;
 
   @override
   State<_AddReceivableForm> createState() => _AddReceivableFormState();
@@ -54,11 +73,24 @@ class _AddReceivableFormState extends State<_AddReceivableForm> {
   DateTime? _selectedDueDate;
   bool _loading = false;
 
+  bool get _isEditing => widget.editTarget != null;
+
   @override
   void initState() {
     super.initState();
-    _selectedChangeDate = DateTime.now();
-    _changeDateController.text = dateFormat.format(_selectedChangeDate!);
+    final target = widget.editTarget;
+    if (target != null) {
+      _valueController.text = (target.amountCents / 100).toStringAsFixed(2).replaceAll('.', ',');
+      _selectedDueDate = target.dueDate;
+      _dueDateController.text = dateFormat.format(target.dueDate);
+      _selectedChangeDate = target.changeDate;
+      if (target.changeDate != null) {
+        _changeDateController.text = dateFormat.format(target.changeDate!);
+      }
+    } else {
+      _selectedChangeDate = DateTime.now();
+      _changeDateController.text = dateFormat.format(_selectedChangeDate!);
+    }
   }
 
   @override
@@ -116,9 +148,14 @@ class _AddReceivableFormState extends State<_AddReceivableForm> {
       amountCents: amountCents,
       dueDate: _selectedDueDate!,
       changeDate: _selectedChangeDate,
+      status: ReceivableStatus.draft,
     );
     try {
-      await widget.service.create(draft);
+      if (_isEditing) {
+        await widget.service.updateDraft(widget.editTarget!.id, draft);
+      } else {
+        await widget.service.create(draft);
+      }
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } on ReceivableFailure catch (e) {
@@ -170,11 +207,15 @@ class _AddReceivableFormState extends State<_AddReceivableForm> {
                     color: cs.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.add_circle_outline, size: 18, color: cs.primary),
+                  child: Icon(
+                    _isEditing ? Icons.edit_outlined : Icons.add_circle_outline,
+                    size: 18,
+                    color: cs.primary,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Novo recebível',
+                  _isEditing ? 'Editar rascunho' : 'Novo recebível',
                   style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ],

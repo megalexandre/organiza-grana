@@ -61,6 +61,14 @@ class ReceivablesService {
     }
   }
 
+  Future<void> updateDraft(String id, ReceivableDraft draft) async {
+    try {
+      await _apiClient.updateDraft(id, draft);
+    } on ReceivablesApiClientException catch (e) {
+      throw ReceivableFailure(type: e.type, message: _messageFor(e.type));
+    }
+  }
+
   Future<void> changeStatus(String id, ReceivableStatus status) async {
     try {
       await _apiClient.changeStatus(id, status);

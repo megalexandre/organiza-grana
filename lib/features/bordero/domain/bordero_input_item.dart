@@ -6,11 +6,13 @@ class BorderoInputItem {
     required this.amountCents,
     required this.dueDate,
     required this.awaitingDays,
+    this.status = ReceivableStatus.draft,
   });
 
   final int amountCents;
   final DateTime dueDate;
   final int awaitingDays;
+  final ReceivableStatus status;
 
   double get value => amountCents / 100;
 

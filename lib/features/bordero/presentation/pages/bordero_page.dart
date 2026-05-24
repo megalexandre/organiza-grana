@@ -9,7 +9,7 @@ import 'package:organizagrana/features/bordero/domain/bordero_input.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input_item.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_result.dart';
 import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
-import 'package:organizagrana/features/bordero/presentation/widgets/bordero_add_item_dialog.dart';
+import 'package:organizagrana/features/bordero/presentation/widgets/bordero_add_item_dialog.dart' show showBorderoAddItem, showBorderoEditItem;
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_export_table.dart';
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_item_card.dart';
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_summary_panel.dart';
@@ -90,6 +90,7 @@ class _BorderoPageState extends State<BorderoPage> {
               amountCents: r.amountCents,
               dueDate: r.dueDate,
               awaitingDays: r.awaitingDays,
+              status: r.status,
             )));
         _receivableIds.addAll(receivables.map((r) => r.id));
         _preloadedReceivableIds.addAll(receivables.map((r) => r.id));
@@ -229,6 +230,26 @@ class _BorderoPageState extends State<BorderoPage> {
       setState(() => _result = null);
       return;
     }
+
+    await _calculate();
+
+    if (_savedBorderoId != null && mounted) {
+      () async {
+        try {
+          await widget.service.update(_savedBorderoId!, _buildInput());
+        } catch (_) {}
+      }();
+    }
+  }
+
+  Future<void> _editItem(int index) async {
+    final updated = await showBorderoEditItem(context, _items[index]);
+    if (updated == null || !mounted) return;
+
+    setState(() {
+      _items[index] = updated;
+      _errorMessage = null;
+    });
 
     await _calculate();
 
@@ -607,9 +628,12 @@ class _BorderoPageState extends State<BorderoPage> {
                     index: index,
                     inputItem: _items[index],
                     resultItem: _result?.items[index],
-                    onRemove: _preloadedReceivableIds.contains(_receivableIds[index])
-                        ? null
-                        : () => _removeItem(index),
+                    onRemove: _items[index].status == ReceivableStatus.draft
+                        ? () => _removeItem(index)
+                        : null,
+                    onTap: _items[index].status == ReceivableStatus.draft
+                        ? () => _editItem(index)
+                        : null,
                   ),
                 ),
         ),
