@@ -1,3 +1,4 @@
+import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
 class BorderoInputItem {
@@ -17,5 +18,6 @@ class BorderoInputItem {
         'amount_cents': amountCents,
         'due_date': formatDateIso(dueDate),
         'awaiting_days': awaitingDays,
+        'status': ReceivableStatus.draft.toJson(),
       };
 }

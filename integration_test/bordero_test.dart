@@ -45,6 +45,10 @@ void main() {
           201,
           headers: {'content-type': 'application/json'},
         ),
+        // ao salvar o borderô, recebíveis novos são atualizados para awaiting
+        'PATCH /api/receivables/rcv-new-1': http.Response('{}', 200,
+          headers: {'content-type': 'application/json'},
+        ),
       });
       await pumpAuthenticated(tester, client, token);
     }

@@ -5,25 +5,28 @@ class BorderoInput {
   const BorderoInput({
     required this.changeDate,
     required this.monthlyRatePercent,
-    required this.items,
-    this.receivableIds,
+    required this.allItems,
+    this.newItems,
+    this.existingReceivableIds,
   });
 
   final DateTime changeDate;
   final double monthlyRatePercent;
-  final List<BorderoInputItem> items;
-  final List<String>? receivableIds;
+  final List<BorderoInputItem> allItems;
+  final List<BorderoInputItem>? newItems;
+  final List<String>? existingReceivableIds;
 
   Map<String, dynamic> toCalculateJson() => {
         'change_date': formatDateIso(changeDate),
         'monthly_rate_percent': monthlyRatePercent,
-        'receivables': items.map((e) => e.toJson()).toList(),
-        if (receivableIds != null) 'receivable_ids': receivableIds,
+        'receivables': allItems.map((e) => e.toJson()).toList(),
+        if (existingReceivableIds != null) 'receivable_ids': existingReceivableIds,
       };
 
   Map<String, dynamic> toSaveJson() => {
         'change_date': formatDateIso(changeDate),
         'monthly_rate_percent': monthlyRatePercent,
-        if (receivableIds != null) 'receivable_ids': receivableIds,
+        if (newItems != null) 'receivables': newItems!.map((e) => e.toJson()).toList(),
+        if (existingReceivableIds != null) 'receivable_ids': existingReceivableIds,
       };
 }

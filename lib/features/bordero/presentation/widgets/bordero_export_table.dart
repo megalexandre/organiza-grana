@@ -106,7 +106,7 @@ class BorderoExportTable extends StatelessWidget {
         _headerRow(headers),
         ...List.generate(result.items.length, (i) {
           final item = result.items[i];
-          final inputItem = input.items[i];
+          final inputItem = input.allItems[i];
           final isAlt = i.isOdd;
           return _dataRow([
             '${i + 1}',

@@ -70,6 +70,9 @@ const Map<String, dynamic> savedBorderoBody = {
   'total_interest_amount_cents': 8500,
   'average_days': 25.0,
   'created_at': '2026-05-23T10:00:00.000Z',
+  'receivables': [
+    {'id': 'rcv-new-1', 'amount_cents': 100000, 'due_date': '2026-08-27', 'awaiting_days': 2},
+  ],
 };
 
 // Lista paginada de borderos — usa chave 'items' (formato de BorderosPageResult)

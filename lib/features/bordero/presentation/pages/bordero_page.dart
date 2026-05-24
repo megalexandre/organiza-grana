@@ -8,12 +8,12 @@ import 'package:organizagrana/features/bordero/domain/bordero_failure.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input_item.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_result.dart';
+import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_add_item_dialog.dart';
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_export_table.dart';
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_item_card.dart';
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_summary_panel.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
-import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
@@ -45,7 +45,7 @@ class _BorderoPageState extends State<BorderoPage> {
 
   DateTime _changeDate = DateTime.now();
   final List<BorderoInputItem> _items = [];
-  final List<String> _receivableIds = [];
+  final List<String?> _receivableIds = [];
   final Set<String> _preloadedReceivableIds = {};
   BorderoResult? _result;
   String? _savedBorderoId;
@@ -136,8 +136,10 @@ class _BorderoPageState extends State<BorderoPage> {
   }
 
   Future<void> _editParams() async {
-    // Deletar todos os recebíveis draft criados
-    final ids = List<String>.from(_receivableIds);
+    final ids = _receivableIds
+        .whereType<String>()
+        .where((id) => !_preloadedReceivableIds.contains(id))
+        .toList();
     await Future.wait(ids.map((id) => widget.receivablesService.delete(id).catchError((_) {})));
     setState(() {
       _paramsConfirmed = false;
@@ -158,7 +160,7 @@ class _BorderoPageState extends State<BorderoPage> {
     try {
       await Future.wait(
         _receivableIds
-            .where((id) => !_preloadedReceivableIds.contains(id))
+            .whereType<String>()
             .map((id) => widget.receivablesService.changeStatus(id, ReceivableStatus.awaiting)),
       );
       if (mounted) context.pop(true);
@@ -174,58 +176,54 @@ class _BorderoPageState extends State<BorderoPage> {
     if (mounted) FocusManager.instance.primaryFocus?.unfocus();
     if (item == null) return;
 
-    setState(() => _errorMessage = null);
-
-    // Criar o recebível como draft no servidor
-    String receivableId;
-    try {
-      final receivable = await widget.receivablesService.create(
-        ReceivableDraft(
-          amountCents: item.amountCents,
-          dueDate: item.dueDate,
-          changeDate: _changeDate,
-          status: ReceivableStatus.draft,
-        ),
-      );
-      receivableId = receivable.id;
-    } on ReceivableFailure catch (e) {
-      if (mounted) setState(() => _errorMessage = e.message);
-      return;
-    }
-
     setState(() {
+      _errorMessage = null;
       _items.add(item);
-      _receivableIds.add(receivableId);
+      _receivableIds.add(null);
     });
 
     await _calculate();
 
     if (!mounted) return;
 
-    // Auto-salvar ou atualizar o borderô
+    // Auto-salvar ou atualizar o borderô — recebíveis são criados inline pelo servidor
     try {
       if (_savedBorderoId == null) {
         final saved = await widget.service.save(_buildInput());
-        if (mounted) setState(() => _savedBorderoId = saved.id);
+        if (mounted) {
+          setState(() {
+            _savedBorderoId = saved.id;
+            _syncReceivableIds(saved);
+          });
+        }
       } else {
-        await widget.service.update(_savedBorderoId!, _buildInput());
+        final saved = await widget.service.update(_savedBorderoId!, _buildInput());
+        if (mounted) setState(() => _syncReceivableIds(saved));
       }
     } on BorderoFailure catch (e) {
       if (mounted) setState(() => _errorMessage = e.message);
     }
   }
 
+  void _syncReceivableIds(SavedBordero saved) {
+    final serverItems = saved.items ?? [];
+    for (int i = 0; i < serverItems.length && i < _receivableIds.length; i++) {
+      _receivableIds[i] = serverItems[i].id;
+    }
+  }
+
   Future<void> _removeItem(int index) async {
-    final receivableId = _receivableIds[index];
+    final receivableId = index < _receivableIds.length ? _receivableIds[index] : null;
 
     setState(() {
       _items.removeAt(index);
-      _receivableIds.removeAt(index);
+      if (index < _receivableIds.length) _receivableIds.removeAt(index);
       _errorMessage = null;
     });
 
-    // Deletar o recebível draft (fire and forget, sem bloquear UI)
-    widget.receivablesService.delete(receivableId).catchError((_) {});
+    if (receivableId != null && !_preloadedReceivableIds.contains(receivableId)) {
+      widget.receivablesService.delete(receivableId).catchError((_) {});
+    }
 
     if (_items.isEmpty) {
       setState(() => _result = null);
@@ -246,11 +244,22 @@ class _BorderoPageState extends State<BorderoPage> {
   BorderoInput _buildInput() {
     final rate =
         double.tryParse(_rateController.text.trim().replaceAll(',', '.')) ?? 0;
+    final existingIds = <String>[];
+    final newItems = <BorderoInputItem>[];
+    for (int i = 0; i < _items.length; i++) {
+      final id = i < _receivableIds.length ? _receivableIds[i] : null;
+      if (id != null) {
+        existingIds.add(id);
+      } else {
+        newItems.add(_items[i]);
+      }
+    }
     return BorderoInput(
       changeDate: _changeDate,
       monthlyRatePercent: rate,
-      items: List.unmodifiable(_items),
-      receivableIds: _receivableIds.isEmpty ? null : List.unmodifiable(_receivableIds),
+      allItems: List.unmodifiable(_items),
+      newItems: newItems.isEmpty ? null : List.unmodifiable(newItems),
+      existingReceivableIds: existingIds.isEmpty ? null : List.unmodifiable(existingIds),
     );
   }
 

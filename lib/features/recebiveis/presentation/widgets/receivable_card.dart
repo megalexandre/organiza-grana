@@ -224,7 +224,7 @@ class _ReceivableCardState extends State<ReceivableCard>
 
     return SizeTransition(
       sizeFactor: _sizeAnim,
-      axisAlignment: -1,
+      alignment: Alignment.topCenter,
       child: FadeTransition(
         opacity: _fadeAnim,
         child: ScaleTransition(

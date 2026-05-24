@@ -23,7 +23,7 @@ Uint8List exportBorderoToCsv(BorderoInput input, BorderoResult result) {
     ],
     ...List.generate(result.items.length, (i) {
       final item = result.items[i];
-      final inputItem = input.items[i];
+      final inputItem = input.allItems[i];
       return [
         '${i + 1}',
         dateFormat.format(inputItem.dueDate),
@@ -104,7 +104,7 @@ Uint8List exportBorderoToExcel(BorderoInput input, BorderoResult result) {
   for (var i = 0; i < result.items.length; i++) {
     final r = i + 3;
     final item = result.items[i];
-    final inputItem = input.items[i];
+    final inputItem = input.allItems[i];
     final bg = i.isOdd ? _altRowBg : null;
 
     _setCell(sheet, r, 0, i + 1, align: HorizontalAlign.Right, bg: bg);

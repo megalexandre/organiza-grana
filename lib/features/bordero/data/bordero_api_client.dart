@@ -39,7 +39,7 @@ class HttpBorderoApiClient with AuthenticatedApiClient implements BorderoApiClie
   Future<BorderosPageResult> listPage({
     required int page,
     required int perPage,
-    BorderoSortField sortBy = BorderoSortField.changeDate,
+    BorderoSortField sortBy = BorderoSortField.createdAt,
     BorderoSortDirection sortDirection = BorderoSortDirection.desc,
   }) {
     final uri = Uri.parse(ApiEndpoints.bordero.list).replace(queryParameters: {
