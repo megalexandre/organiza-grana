@@ -167,7 +167,7 @@ class _ReceivablesByStatusPanelState extends State<ReceivablesByStatusPanel> {
               yValueMapper: (p, _) => p.count,
               pointColorMapper: (p, _) => p.color,
               strokeColor: Theme.of(context).colorScheme.surface,
-
+              animationDuration: 0,
               explode: true,
               dataLabelSettings: DataLabelSettings(
                 isVisible: true,

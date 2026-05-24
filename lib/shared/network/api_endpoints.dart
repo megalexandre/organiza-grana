@@ -8,7 +8,7 @@ part 'endpoints/_user.dart';
 class ApiEndpoints {
   static const _base = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://sandbox.calculajuros.online/api',
+    defaultValue: 'http://localhost:3000',
   );
 
   static const auth = _Auth();

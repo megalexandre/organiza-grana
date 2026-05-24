@@ -72,7 +72,7 @@ class HttpBorderoApiClient with AuthenticatedApiClient implements BorderoApiClie
   @override
   Future<BorderoResult> calculate(BorderoInput input) => guarded(
         () => httpClient
-            .postJson(Uri.parse(ApiEndpoints.bordero.calculate), input.toJson())
+            .postJson(Uri.parse(ApiEndpoints.bordero.calculate), input.toCalculateJson())
             .then(BorderoResult.fromJson),
         (type) => BorderoApiClientException(_toFailureType(type)),
       );
@@ -80,7 +80,7 @@ class HttpBorderoApiClient with AuthenticatedApiClient implements BorderoApiClie
   @override
   Future<SavedBordero> save(BorderoInput input) => guarded(
         () => httpClient
-            .postJson(Uri.parse(ApiEndpoints.bordero.save), input.toJson())
+            .postJson(Uri.parse(ApiEndpoints.bordero.save), input.toSaveJson())
             .then(SavedBordero.fromJson),
         (type) => BorderoApiClientException(_toFailureType(type)),
       );
@@ -88,7 +88,7 @@ class HttpBorderoApiClient with AuthenticatedApiClient implements BorderoApiClie
   @override
   Future<SavedBordero> update(String id, BorderoInput input) => guarded(
         () => httpClient
-            .putJson(Uri.parse(ApiEndpoints.bordero.update(id)), input.toJson())
+            .putJson(Uri.parse(ApiEndpoints.bordero.update(id)), input.toSaveJson())
             .then(SavedBordero.fromJson),
         (type) => BorderoApiClientException(_toFailureType(type)),
       );

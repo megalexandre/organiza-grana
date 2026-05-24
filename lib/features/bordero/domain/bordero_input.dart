@@ -14,10 +14,16 @@ class BorderoInput {
   final List<BorderoInputItem> items;
   final List<String>? receivableIds;
 
-  Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toCalculateJson() => {
         'change_date': formatDateIso(changeDate),
         'monthly_rate_percent': monthlyRatePercent,
         'receivables': items.map((e) => e.toJson()).toList(),
+        if (receivableIds != null) 'receivable_ids': receivableIds,
+      };
+
+  Map<String, dynamic> toSaveJson() => {
+        'change_date': formatDateIso(changeDate),
+        'monthly_rate_percent': monthlyRatePercent,
         if (receivableIds != null) 'receivable_ids': receivableIds,
       };
 }
