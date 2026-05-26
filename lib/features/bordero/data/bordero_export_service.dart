@@ -8,6 +8,7 @@ import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
 final _numFormat = NumberFormat('#,##0.00', 'pt_BR');
+final _pctFormat = NumberFormat('#,##0.0000', 'pt_BR');
 
 Uint8List exportBorderoToCsv(BorderoInput input, SavedBordero savedBordero) {
   final rows = <List<String>>[
@@ -21,14 +22,22 @@ Uint8List exportBorderoToCsv(BorderoInput input, SavedBordero savedBordero) {
       'Valor Pago pela troca', 'Valor à Receber',
     ],
     ...List.generate(input.allItems.length, (i) {
-      final inputItem = input.allItems[i];
+      final item = input.allItems[i];
+      final interest = item.interestAmountCents;
+      final rate = (interest != null && item.amountCents > 0)
+          ? '${_pctFormat.format((interest / item.amountCents) * 100)}%'
+          : '';
       return [
         '${i + 1}',
-        dateFormat.format(inputItem.dueDate),
-        _numFormat.format(inputItem.value),
+        dateFormat.format(item.dueDate),
+        _numFormat.format(item.value),
         '', '', '', '',
         '${input.awaitingDays}',
-        '', '', '', '', '',
+        item.totalDays != null ? '${item.totalDays}' : '',
+        rate,
+        '',
+        interest != null ? _numFormat.format(interest / 100) : '',
+        item.proceedsCents != null ? _numFormat.format(item.proceedsCents! / 100) : '',
       ];
     }),
     [
@@ -110,15 +119,16 @@ Uint8List exportBorderoToExcel(BorderoInput input, SavedBordero savedBordero) {
     _setCell(sheet, r, 4, '', bg: bg);
     _setCell(sheet, r, 5, '', bg: bg);
     _setCell(sheet, r, 6, '', bg: bg);
-    _setCell(
-      sheet, r, 7, input.awaitingDays,
-      align: HorizontalAlign.Right, bg: bg,
-    );
-    _setCell(sheet, r, 8, '', bg: bg);
-    _setCell(sheet, r, 9, '', bg: bg);
+    _setCell(sheet, r, 7, input.awaitingDays, align: HorizontalAlign.Right, bg: bg);
+    final interest = inputItem.interestAmountCents;
+    final rate = (interest != null && inputItem.amountCents > 0)
+        ? '${_pctFormat.format((interest / inputItem.amountCents) * 100)}%'
+        : '';
+    _setCell(sheet, r, 8, inputItem.totalDays ?? '', align: HorizontalAlign.Right, bg: bg);
+    _setCell(sheet, r, 9, rate, align: HorizontalAlign.Right, bg: bg);
     _setCell(sheet, r, 10, '', bg: bg);
-    _setCell(sheet, r, 11, '', bg: bg);
-    _setCell(sheet, r, 12, '', bg: bg);
+    _setCell(sheet, r, 11, interest != null ? _numFormat.format(interest / 100) : '', align: HorizontalAlign.Right, bg: bg);
+    _setCell(sheet, r, 12, inputItem.proceedsCents != null ? _numFormat.format(inputItem.proceedsCents! / 100) : '', align: HorizontalAlign.Right, bg: bg);
   }
 
   // ── Linha de totais ──────────────────────────────────────────────────────
