@@ -97,8 +97,16 @@ class BorderoItemCard extends StatelessWidget {
                         ),
                     ],
                   ),
+                  if (inputItem.totalDays != null) ...[
+                    const SizedBox(height: 6),
+                    _InfoRow(
+                      icon: Icons.hourglass_bottom_outlined,
+                      label: 'Dias em espera',
+                      value: '${inputItem.totalDays} dia${inputItem.totalDays != 1 ? 's' : ''}',
+                    ),
+                  ],
                   const SizedBox(height: 12),
-                  _DashedDivider(color: colorScheme.outline),
+                  Divider(height: 1, color: colorScheme.outline),
                   const SizedBox(height: 12),
                   _InfoRow(
                     icon: Icons.attach_money,
@@ -124,36 +132,6 @@ class BorderoItemCard extends StatelessWidget {
                       valueBold: true,
                     ),
                   ],
-                  if (inputItem.totalDays != null) ...[
-                    const SizedBox(height: 4),
-                    _InfoRow(
-                      icon: Icons.hourglass_bottom_outlined,
-                      label: 'Dias em espera',
-                      value: '${inputItem.totalDays} dia${inputItem.totalDays != 1 ? 's' : ''}',
-                    ),
-                  ],
-                  if (inputItem.depositDate != null || inputItem.settlementDate != null) ...[
-                    const SizedBox(height: 8),
-                    _DashedDivider(color: colorScheme.outlineVariant),
-                    const SizedBox(height: 8),
-                  ],
-                  if (inputItem.depositDate != null) ...[
-                    _InfoRow(
-                      icon: Icons.account_balance_outlined,
-                      label: 'Depósito',
-                      value: dateFormat.format(inputItem.depositDate!),
-                      valueColor: colorScheme.onSurfaceVariant,
-                    ),
-                  ],
-                  if (inputItem.settlementDate != null) ...[
-                    const SizedBox(height: 4),
-                    _InfoRow(
-                      icon: Icons.event_available_outlined,
-                      label: 'Liquidação',
-                      value: dateFormat.format(inputItem.settlementDate!),
-                      valueColor: colorScheme.onSurfaceVariant,
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -162,41 +140,6 @@ class BorderoItemCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _DashedDivider extends StatelessWidget {
-  const _DashedDivider({required this.color});
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 1,
-      child: CustomPaint(painter: _DashedLinePainter(color: color)),
-    );
-  }
-}
-
-class _DashedLinePainter extends CustomPainter {
-  const _DashedLinePainter({required this.color});
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1;
-    const dashWidth = 5.0;
-    const gapWidth = 4.0;
-    double x = 0;
-    while (x < size.width) {
-      canvas.drawLine(Offset(x, 0), Offset((x + dashWidth).clamp(0, size.width), 0), paint);
-      x += dashWidth + gapWidth;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedLinePainter old) => old.color != color;
 }
 
 class _WaitChip extends StatelessWidget {
