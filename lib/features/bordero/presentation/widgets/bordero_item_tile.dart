@@ -6,10 +6,12 @@ class BorderoItemTile extends StatelessWidget {
   const BorderoItemTile({
     super.key,
     required this.item,
+    required this.awaitingDays,
     required this.onRemove,
   });
 
   final BorderoInputItem item;
+  final int awaitingDays;
   final VoidCallback onRemove;
 
   @override
@@ -83,7 +85,7 @@ class BorderoItemTile extends StatelessWidget {
                             ),
                           ],
                         ),
-                        _WaitChip(days: item.awaitingDays),
+                        _WaitChip(days: awaitingDays),
                       ],
                     ),
                   ],

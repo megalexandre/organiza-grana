@@ -5,6 +5,7 @@ class SavedBordero {
     required this.id,
     required this.changeDate,
     required this.monthlyRatePercent,
+    required this.awaitingDays,
     required this.totalAmountCents,
     required this.totalProceedsCents,
     required this.totalInterestAmountCents,
@@ -16,6 +17,7 @@ class SavedBordero {
   final String id;
   final DateTime changeDate;
   final double monthlyRatePercent;
+  final int awaitingDays;
   final int totalAmountCents;
   final int totalProceedsCents;
   final int totalInterestAmountCents;
@@ -35,6 +37,7 @@ class SavedBordero {
       id: json['id'] as String,
       changeDate: DateTime.parse(json['change_date'] as String),
       monthlyRatePercent: _readDouble(json['monthly_rate_percent']) ?? 0,
+      awaitingDays: (json['awaiting_days'] as int?) ?? 2,
       totalAmountCents: json['total_amount_cents'] as int,
       totalProceedsCents: json['total_proceeds_cents'] as int,
       totalInterestAmountCents: json['total_interest_amount_cents'] as int,

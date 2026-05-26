@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input.dart';
-import 'package:organizagrana/features/bordero/domain/bordero_result.dart';
+import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
 const _headerBg = Color(0xFF4472C4);
@@ -10,18 +10,17 @@ const _rowAltBg = Color(0xFFDCE6F1);
 const _borderColor = Color(0xFFBFBFBF);
 const _totalBg = Color(0xFFBDD7EE);
 
-final _pctFormat = NumberFormat("0.0000'%'", 'pt_BR');
 final _numFormat = NumberFormat('#,##0.00', 'pt_BR');
 
 class BorderoExportTable extends StatelessWidget {
   const BorderoExportTable({
     super.key,
     required this.input,
-    required this.result,
+    required this.savedBordero,
   });
 
   final BorderoInput input;
-  final BorderoResult result;
+  final SavedBordero savedBordero;
 
   @override
   Widget build(BuildContext context) {
@@ -104,24 +103,23 @@ class BorderoExportTable extends StatelessWidget {
       },
       children: [
         _headerRow(headers),
-        ...List.generate(result.items.length, (i) {
-          final item = result.items[i];
+        ...List.generate(input.allItems.length, (i) {
           final inputItem = input.allItems[i];
           final isAlt = i.isOdd;
           return _dataRow([
             '${i + 1}',
             dateFormat.format(inputItem.dueDate),
-            _numFormat.format(item.value),
+            _numFormat.format(inputItem.value),
             '',
             '',
             '',
             '',
-            '${inputItem.awaitingDays}',
-            '${item.totalDays}',
-            _pctFormat.format(item.interestRatePercent),
+            '${input.awaitingDays}',
             '',
-            _numFormat.format(item.interestAmount),
-            _numFormat.format(item.proceeds),
+            '',
+            '',
+            '',
+            '',
           ], isAlt: isAlt);
         }),
         _totalRow(),
@@ -172,9 +170,9 @@ class BorderoExportTable extends StatelessWidget {
       decoration: const BoxDecoration(color: _totalBg),
       children: List.generate(13, (i) {
         String text = '';
-        if (i == 2) text = _numFormat.format(result.totalAmount);
-        if (i == 11) text = _numFormat.format(result.totalInterestAmount);
-        if (i == 12) text = _numFormat.format(result.totalProceeds);
+        if (i == 2) text = _numFormat.format(savedBordero.totalAmount);
+        if (i == 11) text = _numFormat.format(savedBordero.totalInterestAmount);
+        if (i == 12) text = _numFormat.format(savedBordero.totalProceeds);
         final isNumeric = i == 0 || i >= 7;
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
@@ -190,7 +188,7 @@ class BorderoExportTable extends StatelessWidget {
 
   Widget _buildFooter() {
     return Text(
-      'Prazo médio: ${_numFormat.format(result.averageDays)} dias',
+      'Prazo médio: ${_numFormat.format(savedBordero.averageDays)} dias',
       style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
     );
   }

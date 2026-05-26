@@ -4,13 +4,12 @@ import 'dart:typed_data';
 import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input.dart';
-import 'package:organizagrana/features/bordero/domain/bordero_result.dart';
+import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
 final _numFormat = NumberFormat('#,##0.00', 'pt_BR');
-final _pctFormat = NumberFormat('0.0000', 'pt_BR');
 
-Uint8List exportBorderoToCsv(BorderoInput input, BorderoResult result) {
+Uint8List exportBorderoToCsv(BorderoInput input, SavedBordero savedBordero) {
   final rows = <List<String>>[
     ['Data da Troca', dateFormat.format(input.changeDate)],
     ['Juros ao Mês', '${_numFormat.format(input.monthlyRatePercent)}%'],
@@ -21,30 +20,25 @@ Uint8List exportBorderoToCsv(BorderoInput input, BorderoResult result) {
       'Qtde dias', 'Total dos Juros', 'Valor do IOF',
       'Valor Pago pela troca', 'Valor à Receber',
     ],
-    ...List.generate(result.items.length, (i) {
-      final item = result.items[i];
+    ...List.generate(input.allItems.length, (i) {
       final inputItem = input.allItems[i];
       return [
         '${i + 1}',
         dateFormat.format(inputItem.dueDate),
-        _numFormat.format(item.value),
+        _numFormat.format(inputItem.value),
         '', '', '', '',
-        '${inputItem.awaitingDays}',
-        '${item.totalDays}',
-        '${_pctFormat.format(item.interestRatePercent)}%',
-        '',
-        _numFormat.format(item.interestAmount),
-        _numFormat.format(item.proceeds),
+        '${input.awaitingDays}',
+        '', '', '', '', '',
       ];
     }),
     [
-      '', '', _numFormat.format(result.totalAmount),
+      '', '', _numFormat.format(savedBordero.totalAmount),
       '', '', '', '', '', '', '', '',
-      _numFormat.format(result.totalInterestAmount),
-      _numFormat.format(result.totalProceeds),
+      _numFormat.format(savedBordero.totalInterestAmount),
+      _numFormat.format(savedBordero.totalProceeds),
     ],
     [],
-    ['', '', '', '', '', '', '', 'Prazo médio:', '${_numFormat.format(result.averageDays)} dias'],
+    ['', '', '', '', '', '', '', 'Prazo médio:', '${_numFormat.format(savedBordero.averageDays)} dias'],
   ];
 
   final buffer = StringBuffer();
@@ -68,7 +62,7 @@ final _headerBg = ExcelColor.fromHexString('#BDD7EE');
 final _altRowBg = ExcelColor.fromHexString('#DCE6F1');
 final _totalBg = ExcelColor.fromHexString('#BDD7EE');
 
-Uint8List exportBorderoToExcel(BorderoInput input, BorderoResult result) {
+Uint8List exportBorderoToExcel(BorderoInput input, SavedBordero savedBordero) {
   final excel = Excel.createExcel();
   excel.rename('Sheet1', 'Borderô');
   final sheet = excel['Borderô'];
@@ -101,16 +95,15 @@ Uint8List exportBorderoToExcel(BorderoInput input, BorderoResult result) {
   }
 
   // ── Linhas de dados ──────────────────────────────────────────────────────
-  for (var i = 0; i < result.items.length; i++) {
+  for (var i = 0; i < input.allItems.length; i++) {
     final r = i + 3;
-    final item = result.items[i];
     final inputItem = input.allItems[i];
     final bg = i.isOdd ? _altRowBg : null;
 
     _setCell(sheet, r, 0, i + 1, align: HorizontalAlign.Right, bg: bg);
     _setCell(sheet, r, 1, dateFormat.format(inputItem.dueDate), bg: bg);
     _setCell(
-      sheet, r, 2, _numFormat.format(item.value),
+      sheet, r, 2, _numFormat.format(inputItem.value),
       align: HorizontalAlign.Right, bg: bg,
     );
     _setCell(sheet, r, 3, '', bg: bg);
@@ -118,36 +111,23 @@ Uint8List exportBorderoToExcel(BorderoInput input, BorderoResult result) {
     _setCell(sheet, r, 5, '', bg: bg);
     _setCell(sheet, r, 6, '', bg: bg);
     _setCell(
-      sheet, r, 7, inputItem.awaitingDays,
+      sheet, r, 7, input.awaitingDays,
       align: HorizontalAlign.Right, bg: bg,
     );
-    _setCell(
-      sheet, r, 8, item.totalDays,
-      align: HorizontalAlign.Right, bg: bg,
-    );
-    _setCell(
-      sheet, r, 9,
-      '${_pctFormat.format(item.interestRatePercent)}%',
-      align: HorizontalAlign.Right, bg: bg,
-    );
+    _setCell(sheet, r, 8, '', bg: bg);
+    _setCell(sheet, r, 9, '', bg: bg);
     _setCell(sheet, r, 10, '', bg: bg);
-    _setCell(
-      sheet, r, 11, _numFormat.format(item.interestAmount),
-      align: HorizontalAlign.Right, bg: bg,
-    );
-    _setCell(
-      sheet, r, 12, _numFormat.format(item.proceeds),
-      align: HorizontalAlign.Right, bg: bg,
-    );
+    _setCell(sheet, r, 11, '', bg: bg);
+    _setCell(sheet, r, 12, '', bg: bg);
   }
 
   // ── Linha de totais ──────────────────────────────────────────────────────
-  final totalRow = result.items.length + 3;
+  final totalRow = input.allItems.length + 3;
   for (var c = 0; c < 13; c++) {
     String text = '';
-    if (c == 2) text = _numFormat.format(result.totalAmount);
-    if (c == 11) text = _numFormat.format(result.totalInterestAmount);
-    if (c == 12) text = _numFormat.format(result.totalProceeds);
+    if (c == 2) text = _numFormat.format(savedBordero.totalAmount);
+    if (c == 11) text = _numFormat.format(savedBordero.totalInterestAmount);
+    if (c == 12) text = _numFormat.format(savedBordero.totalProceeds);
     _setCell(
       sheet, totalRow, c, text,
       bold: true,
@@ -161,7 +141,7 @@ Uint8List exportBorderoToExcel(BorderoInput input, BorderoResult result) {
   _setCell(sheet, avgRow, 7, 'Prazo médio:', bold: true);
   _setCell(
     sheet, avgRow, 8,
-    '${_numFormat.format(result.averageDays)} dias',
+    '${_numFormat.format(savedBordero.averageDays)} dias',
     align: HorizontalAlign.Right,
   );
 

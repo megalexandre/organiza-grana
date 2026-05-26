@@ -5,21 +5,27 @@ class BorderoInputItem {
   const BorderoInputItem({
     required this.amountCents,
     required this.dueDate,
-    required this.awaitingDays,
     this.status = ReceivableStatus.draft,
+    this.interestAmountCents,
+    this.proceedsCents,
+    this.depositDate,
+    this.settlementDate,
+    this.totalDays,
   });
 
   final int amountCents;
   final DateTime dueDate;
-  final int awaitingDays;
   final ReceivableStatus status;
+  final int? interestAmountCents;
+  final int? proceedsCents;
+  final DateTime? depositDate;
+  final DateTime? settlementDate;
+  final int? totalDays;
 
   double get value => amountCents / 100;
 
   Map<String, dynamic> toJson() => {
         'amount_cents': amountCents,
         'due_date': formatDateIso(dueDate),
-        'awaiting_days': awaitingDays,
-        'status': ReceivableStatus.draft.toJson(),
       };
 }

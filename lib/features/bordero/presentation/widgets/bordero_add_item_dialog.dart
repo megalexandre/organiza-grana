@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input_item.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 import 'package:organizagrana/shared/utils/currency_input_formatter.dart';
@@ -59,7 +58,6 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
   final _formKey = GlobalKey<FormState>();
   final _valueController = TextEditingController();
   final _dueDateController = TextEditingController();
-  final _awaitingDaysController = TextEditingController();
 
   DateTime? _selectedDueDate;
 
@@ -73,9 +71,6 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
       _valueController.text = (target.amountCents / 100).toStringAsFixed(2).replaceAll('.', ',');
       _selectedDueDate = target.dueDate;
       _dueDateController.text = dateFormat.format(target.dueDate);
-      _awaitingDaysController.text = target.awaitingDays.toString();
-    } else {
-      _awaitingDaysController.text = '2';
     }
   }
 
@@ -83,7 +78,6 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
   void dispose() {
     _valueController.dispose();
     _dueDateController.dispose();
-    _awaitingDaysController.dispose();
     super.dispose();
   }
 
@@ -107,15 +101,12 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final amountCents = CurrencyInputFormatter.toCents(_valueController.text.trim());
-    final awaitingDays =
-        int.tryParse(_awaitingDaysController.text.trim()) ?? 1;
 
     FocusScope.of(context).unfocus();
     Navigator.of(context).pop(
       BorderoInputItem(
         amountCents: amountCents,
         dueDate: _selectedDueDate!,
-        awaitingDays: awaitingDays,
       ),
     );
   }
@@ -168,8 +159,7 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
                 const SizedBox(width: 12),
                 Text(
                   _isEditing ? 'Editar recebível' : 'Adicionar recebível',
-                  style: textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -223,22 +213,6 @@ class _BorderoAddItemFormState extends State<_BorderoAddItemForm> {
                 } catch (_) {
                   return 'Data inválida.';
                 }
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _awaitingDaysController,
-              decoration: const InputDecoration(
-                labelText: 'Dias em espera',
-                hintText: '2',
-                suffixText: 'dias',
-              ),
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              validator: (v) {
-                final n = int.tryParse(v ?? '');
-                if (n == null || n < 0) return 'Informe um número válido.';
-                return null;
               },
             ),
             const SizedBox(height: 28),

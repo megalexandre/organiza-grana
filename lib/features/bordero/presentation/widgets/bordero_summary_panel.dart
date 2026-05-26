@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:organizagrana/features/bordero/domain/bordero_result.dart';
+import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
 class BorderoSummaryPanel extends StatelessWidget {
   const BorderoSummaryPanel({
     super.key,
-    required this.result,
+    required this.savedBordero,
     required this.itemCount,
   });
 
-  final BorderoResult result;
+  final SavedBordero savedBordero;
   final int itemCount;
 
   @override
@@ -37,20 +37,20 @@ class BorderoSummaryPanel extends StatelessWidget {
           );
           final totalBruto = _Stat(
             label: 'TOTAL BRUTO',
-            value: currencyFormat.format(result.totalAmount),
+            value: currencyFormat.format(savedBordero.totalAmount),
             textTheme: textTheme,
             colorScheme: colorScheme,
           );
           final descontos = _Stat(
             label: 'DESCONTOS',
-            value: '- ${currencyFormat.format(result.totalInterestAmount)}',
+            value: '- ${currencyFormat.format(savedBordero.totalInterestAmount)}',
             valueColor: colorScheme.error,
             textTheme: textTheme,
             colorScheme: colorScheme,
           );
           final aReceber = _Stat(
             label: 'A RECEBER',
-            value: currencyFormat.format(result.totalProceeds),
+            value: currencyFormat.format(savedBordero.totalProceeds),
             valueColor: colorScheme.primary,
             bold: true,
             textTheme: textTheme,

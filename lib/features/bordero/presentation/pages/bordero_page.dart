@@ -7,7 +7,6 @@ import 'package:organizagrana/features/bordero/data/bordero_service.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_failure.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input_item.dart';
-import 'package:organizagrana/features/bordero/domain/bordero_result.dart';
 import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_add_item_dialog.dart' show showBorderoAddItem, showBorderoEditItem;
 import 'package:organizagrana/features/bordero/presentation/widgets/bordero_export_table.dart';
@@ -42,12 +41,14 @@ class _BorderoPageState extends State<BorderoPage> {
   final _formKey = GlobalKey<FormState>();
   final _changeDateController = TextEditingController();
   final _rateController = TextEditingController();
+  final _awaitingDaysController = TextEditingController(text: '2');
 
   DateTime _changeDate = DateTime.now();
+  int _awaitingDays = 2;
   final List<BorderoInputItem> _items = [];
   final List<String?> _receivableIds = [];
   final Set<String> _preloadedReceivableIds = {};
-  BorderoResult? _result;
+  SavedBordero? _savedBordero;
   String? _savedBorderoId;
   bool _loading = false;
   bool _saving = false;
@@ -82,21 +83,23 @@ class _BorderoPageState extends State<BorderoPage> {
       final receivables = receivablesResult.items;
       setState(() {
         _savedBorderoId = bordero.id;
+        _savedBordero = bordero;
         _changeDate = bordero.changeDate;
         _changeDateController.text = dateFormat.format(bordero.changeDate);
         _rateController.text =
             bordero.monthlyRatePercent.toStringAsFixed(2).replaceAll('.', ',');
+        _awaitingDays = bordero.awaitingDays;
+        _awaitingDaysController.text = bordero.awaitingDays.toString();
         _items.addAll(receivables.map((r) => BorderoInputItem(
               amountCents: r.amountCents,
               dueDate: r.dueDate,
-              awaitingDays: r.awaitingDays,
               status: r.status,
             )));
         _receivableIds.addAll(receivables.map((r) => r.id));
         _preloadedReceivableIds.addAll(receivables.map((r) => r.id));
         _paramsConfirmed = true;
+        _syncFromSaved(bordero);
       });
-      if (_items.isNotEmpty) await _calculate();
     } on BorderoFailure catch (e) {
       if (mounted) setState(() => _errorMessage = e.message);
     } on ReceivableFailure catch (e) {
@@ -112,6 +115,7 @@ class _BorderoPageState extends State<BorderoPage> {
   void dispose() {
     _changeDateController.dispose();
     _rateController.dispose();
+    _awaitingDaysController.dispose();
     super.dispose();
   }
 
@@ -144,7 +148,7 @@ class _BorderoPageState extends State<BorderoPage> {
     await Future.wait(ids.map((id) => widget.receivablesService.delete(id).catchError((_) {})));
     setState(() {
       _paramsConfirmed = false;
-      _result = null;
+      _savedBordero = null;
       _errorMessage = null;
       _items.clear();
       _receivableIds.clear();
@@ -159,10 +163,15 @@ class _BorderoPageState extends State<BorderoPage> {
       _errorMessage = null;
     });
     try {
+      final draftIds = [
+        for (int i = 0; i < _items.length; i++)
+          if (_items[i].status == ReceivableStatus.draft &&
+              i < _receivableIds.length &&
+              _receivableIds[i] != null)
+            _receivableIds[i]!,
+      ];
       await Future.wait(
-        _receivableIds
-            .whereType<String>()
-            .map((id) => widget.receivablesService.changeStatus(id, ReceivableStatus.awaiting)),
+        draftIds.map((id) => widget.receivablesService.changeStatus(id, ReceivableStatus.awaiting)),
       );
       if (mounted) context.pop(true);
     } on ReceivableFailure catch (e) {
@@ -181,35 +190,58 @@ class _BorderoPageState extends State<BorderoPage> {
       _errorMessage = null;
       _items.add(item);
       _receivableIds.add(null);
+      _loading = true;
     });
 
-    await _calculate();
-
-    if (!mounted) return;
-
-    // Auto-salvar ou atualizar o borderô — recebíveis são criados inline pelo servidor
     try {
       if (_savedBorderoId == null) {
         final saved = await widget.service.save(_buildInput());
         if (mounted) {
           setState(() {
             _savedBorderoId = saved.id;
-            _syncReceivableIds(saved);
+            _savedBordero = saved;
+            _syncFromSaved(saved);
           });
         }
       } else {
         final saved = await widget.service.update(_savedBorderoId!, _buildInput());
-        if (mounted) setState(() => _syncReceivableIds(saved));
+        if (mounted) {
+          setState(() {
+            _savedBordero = saved;
+            _syncFromSaved(saved);
+          });
+        }
       }
     } on BorderoFailure catch (e) {
       if (mounted) setState(() => _errorMessage = e.message);
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  void _syncReceivableIds(SavedBordero saved) {
-    final serverItems = saved.items ?? [];
-    for (int i = 0; i < serverItems.length && i < _receivableIds.length; i++) {
-      _receivableIds[i] = serverItems[i].id;
+  void _syncFromSaved(SavedBordero saved) {
+    if (saved.items == null) return;
+
+    final statusById = <String, ReceivableStatus>{
+      for (var i = 0; i < _receivableIds.length && i < _items.length; i++)
+        if (_receivableIds[i] != null) _receivableIds[i]!: _items[i].status,
+    };
+
+    _items.clear();
+    _receivableIds.clear();
+
+    for (final serverItem in saved.items!) {
+      _items.add(BorderoInputItem(
+        amountCents: serverItem.amountCents,
+        dueDate: serverItem.dueDate,
+        status: statusById[serverItem.id] ?? ReceivableStatus.draft,
+        interestAmountCents: serverItem.interestAmountCents,
+        proceedsCents: serverItem.proceedsCents,
+        depositDate: serverItem.depositDate,
+        settlementDate: serverItem.settlementDate,
+        totalDays: serverItem.totalDays,
+      ));
+      _receivableIds.add(serverItem.id);
     }
   }
 
@@ -227,18 +259,19 @@ class _BorderoPageState extends State<BorderoPage> {
     }
 
     if (_items.isEmpty) {
-      setState(() => _result = null);
+      setState(() => _savedBordero = null);
       return;
     }
 
-    await _calculate();
+    if (_savedBorderoId == null || !mounted) return;
 
-    if (_savedBorderoId != null && mounted) {
-      () async {
-        try {
-          await widget.service.update(_savedBorderoId!, _buildInput());
-        } catch (_) {}
-      }();
+    setState(() => _loading = true);
+    try {
+      final saved = await widget.service.update(_savedBorderoId!, _buildInput());
+      if (mounted) setState(() { _savedBordero = saved; _syncFromSaved(saved); });
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -249,16 +282,19 @@ class _BorderoPageState extends State<BorderoPage> {
     setState(() {
       _items[index] = updated;
       _errorMessage = null;
+      _loading = true;
     });
 
-    await _calculate();
-
-    if (_savedBorderoId != null && mounted) {
-      () async {
-        try {
-          await widget.service.update(_savedBorderoId!, _buildInput());
-        } catch (_) {}
-      }();
+    if (_savedBorderoId != null) {
+      try {
+        final saved = await widget.service.update(_savedBorderoId!, _buildInput());
+        if (mounted) setState(() { _savedBordero = saved; _syncFromSaved(saved); });
+      } catch (_) {
+      } finally {
+        if (mounted) setState(() => _loading = false);
+      }
+    } else {
+      setState(() => _loading = false);
     }
   }
 
@@ -278,6 +314,7 @@ class _BorderoPageState extends State<BorderoPage> {
     return BorderoInput(
       changeDate: _changeDate,
       monthlyRatePercent: rate,
+      awaitingDays: _awaitingDays,
       allItems: List.unmodifiable(_items),
       newItems: newItems.isEmpty ? null : List.unmodifiable(newItems),
       existingReceivableIds: existingIds.isEmpty ? null : List.unmodifiable(existingIds),
@@ -285,9 +322,9 @@ class _BorderoPageState extends State<BorderoPage> {
   }
 
   void _exportToCsv() {
-    if (_result == null) return;
+    if (_savedBordero == null) return;
     try {
-      final bytes = exportBorderoToCsv(_buildInput(), _result!);
+      final bytes = exportBorderoToCsv(_buildInput(), _savedBordero!);
       final filename =
           'bordero_${DateFormat('yyyy-MM-dd').format(_changeDate)}.csv';
       downloadFile(bytes, filename, 'text/csv;charset=utf-8');
@@ -301,11 +338,11 @@ class _BorderoPageState extends State<BorderoPage> {
   }
 
   Future<void> _exportToImage() async {
-    if (_result == null) return;
+    if (_savedBordero == null) return;
     try {
       final input = _buildInput();
       final bytes = await captureWidgetAsPng(
-        BorderoExportTable(input: input, result: _result!),
+        BorderoExportTable(input: input, savedBordero: _savedBordero!),
       );
       final filename =
           'bordero_${DateFormat('yyyy-MM-dd').format(_changeDate)}.png';
@@ -316,22 +353,6 @@ class _BorderoPageState extends State<BorderoPage> {
           SnackBar(content: Text('Erro ao exportar imagem: $e')),
         );
       }
-    }
-  }
-
-  Future<void> _calculate() async {
-    if (_items.isEmpty) return;
-    setState(() {
-      _loading = true;
-      _errorMessage = null;
-    });
-    try {
-      final result = await widget.service.calculate(_buildInput());
-      if (mounted) setState(() => _result = result);
-    } on BorderoFailure catch (e) {
-      if (mounted) setState(() => _errorMessage = e.message);
-    } finally {
-      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -372,8 +393,8 @@ class _BorderoPageState extends State<BorderoPage> {
       body: Column(
         children: [
           if (_paramsConfirmed) _buildCompactParams(context),
-          if (_paramsConfirmed && _result != null)
-            BorderoSummaryPanel(result: _result!, itemCount: _items.length),
+          if (_paramsConfirmed && _savedBordero != null && _items.isNotEmpty)
+            BorderoSummaryPanel(savedBordero: _savedBordero!, itemCount: _items.length),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -416,14 +437,11 @@ class _BorderoPageState extends State<BorderoPage> {
                               AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 300),
                                 switchInCurve: Curves.easeOut,
-                                child: _result != null
+                                child: _savedBordero != null
                                     ? Padding(
-                                        key: ValueKey(_result),
+                                        key: ValueKey(_savedBordero),
                                         padding: const EdgeInsets.only(top: 16),
-                                        child: _buildResultSection(
-                                          context,
-                                          _result!,
-                                        ),
+                                        child: _buildResultSection(context),
                                       )
                                     : const SizedBox.shrink(
                                         key: ValueKey('no-result'),
@@ -468,7 +486,7 @@ class _BorderoPageState extends State<BorderoPage> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Troca: ${dateFormat.format(_changeDate)}  |  Juros: ${_rateController.text}% a.m.',
+              'Troca: ${dateFormat.format(_changeDate)}  |  Juros: ${_rateController.text}% a.m.  |  Compensação: $_awaitingDays dias',
               style: textTheme.bodySmall,
             ),
           ),
@@ -523,6 +541,8 @@ class _BorderoPageState extends State<BorderoPage> {
                   _buildDateField(context),
                   const SizedBox(height: 16),
                   _buildRateField(),
+                  const SizedBox(height: 16),
+                  _buildAwaitingDaysField(),
                 ],
               )
             else
@@ -531,6 +551,8 @@ class _BorderoPageState extends State<BorderoPage> {
                   Expanded(child: _buildDateField(context)),
                   const SizedBox(width: 16),
                   Expanded(child: _buildRateField()),
+                  const SizedBox(width: 16),
+                  SizedBox(width: 130, child: _buildAwaitingDaysField()),
                 ],
               ),
           ],
@@ -609,6 +631,28 @@ class _BorderoPageState extends State<BorderoPage> {
     );
   }
 
+  Widget _buildAwaitingDaysField() {
+    return TextFormField(
+      controller: _awaitingDaysController,
+      decoration: const InputDecoration(
+        labelText: 'Compensação',
+        hintText: '2',
+        suffixText: 'dias',
+      ),
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      onChanged: (v) {
+        final n = int.tryParse(v);
+        if (n != null && n >= 0) setState(() => _awaitingDays = n);
+      },
+      validator: (v) {
+        final n = int.tryParse(v ?? '');
+        if (n == null || n < 0) return 'Informe os dias.';
+        return null;
+      },
+    );
+  }
+
   Widget _buildItemsSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -627,7 +671,7 @@ class _BorderoPageState extends State<BorderoPage> {
                     key: ObjectKey(_items[index]),
                     index: index,
                     inputItem: _items[index],
-                    resultItem: _result?.items[index],
+                    awaitingDays: _awaitingDays,
                     onRemove: _items[index].status == ReceivableStatus.draft
                         ? () => _removeItem(index)
                         : null,
@@ -704,7 +748,7 @@ class _BorderoPageState extends State<BorderoPage> {
     );
   }
 
-  Widget _buildResultSection(BuildContext context, BorderoResult result) {
+  Widget _buildResultSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -740,7 +784,7 @@ class _BorderoPageState extends State<BorderoPage> {
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
-            onPressed: _saving ? null : _save,
+            onPressed: _saving || !_items.any((i) => i.status == ReceivableStatus.draft) ? null : _save,
             icon: _saving
                 ? const SizedBox(
                     width: 16,

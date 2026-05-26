@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input_item.dart';
-import 'package:organizagrana/features/bordero/domain/bordero_result_item.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
 class BorderoItemCard extends StatelessWidget {
@@ -8,14 +7,14 @@ class BorderoItemCard extends StatelessWidget {
     super.key,
     required this.index,
     required this.inputItem,
+    required this.awaitingDays,
     required this.onRemove,
-    this.resultItem,
     this.onTap,
   });
 
   final int index;
   final BorderoInputItem inputItem;
-  final BorderoResultItem? resultItem;
+  final int awaitingDays;
   final VoidCallback? onRemove;
   final VoidCallback? onTap;
 
@@ -23,7 +22,6 @@ class BorderoItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final result = resultItem;
 
     return Dismissible(
       key: ObjectKey(inputItem),
@@ -42,135 +40,125 @@ class BorderoItemCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colorScheme.brightness == Brightness.dark
-              ? Color.alphaBlend(Colors.white.withValues(alpha: 0.07), colorScheme.surface)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colorScheme.outline),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.06),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header — número, data, chips
-                Row(
-                  children: [
-                    Text(
-                      'Nº ${(index + 1).toString().padLeft(3, '0')}',
-                      style: textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.2,
-                        color: colorScheme.onSurface.withValues(alpha: 0.45),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Icon(
-                      Icons.calendar_today_outlined,
-                      size: 11,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      dateFormat.format(inputItem.dueDate),
-                      style: textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _WaitChip(days: inputItem.awaitingDays),
-                    const Spacer(),
-                    if (result != null) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: colorScheme.error.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '-${result.interestRatePercent.toStringAsFixed(2)}%',
-                          style: textTheme.labelSmall?.copyWith(
-                            color: colorScheme.error,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                    if (onRemove != null)
-                      IconButton(
-                        icon: Icon(Icons.delete_outline, size: 18, color: colorScheme.error),
-                        onPressed: onRemove,
-                        visualDensity: VisualDensity.compact,
-                        tooltip: 'Remover',
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _DashedDivider(color: colorScheme.outline),
-                const SizedBox(height: 12),
-                // Corpo
-                _InfoRow(
-                  icon: Icons.attach_money,
-                  label: 'Valor bruto',
-                  value: currencyFormat.format(inputItem.value),
-                ),
-                if (result != null) ...[
-                  const SizedBox(height: 8),
-                  _InfoRow(
-                    icon: Icons.schedule_outlined,
-                    label: 'Dias',
-                    value: '${result.totalDays} dias',
-                  ),
-                  const SizedBox(height: 8),
-                  _InfoRow(
-                    icon: Icons.trending_down,
-                    label: 'Desconto',
-                    value:
-                        '${result.interestRatePercent.toStringAsFixed(4)}%  •  ${currencyFormat.format(result.interestAmount)}',
-                    iconColor: colorScheme.error,
-                    valueColor: colorScheme.error,
-                  ),
-                  const SizedBox(height: 14),
-                  _DashedDivider(color: colorScheme.outline),
-                  const SizedBox(height: 12),
-                  // Rodapé — A receber
+          decoration: BoxDecoration(
+            color: colorScheme.brightness == Brightness.dark
+                ? Color.alphaBlend(Colors.white.withValues(alpha: 0.07), colorScheme.surface)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: colorScheme.outline),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.06),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'A RECEBER',
+                        'Nº ${(index + 1).toString().padLeft(3, '0')}',
                         style: textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.2,
-                          color: colorScheme.onSurface.withValues(alpha: 0.55),
+                          color: colorScheme.onSurface.withValues(alpha: 0.45),
                         ),
                       ),
+                      const SizedBox(width: 10),
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 11,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
                       Text(
-                        currencyFormat.format(result.proceeds),
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: colorScheme.primary,
+                        dateFormat.format(inputItem.dueDate),
+                        style: textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      _WaitChip(days: awaitingDays),
+                      const Spacer(),
+                      if (onRemove != null)
+                        IconButton(
+                          icon: Icon(Icons.delete_outline, size: 18, color: colorScheme.error),
+                          onPressed: onRemove,
+                          visualDensity: VisualDensity.compact,
+                          tooltip: 'Remover',
+                        ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  _DashedDivider(color: colorScheme.outline),
+                  const SizedBox(height: 12),
+                  _InfoRow(
+                    icon: Icons.attach_money,
+                    label: 'Valor bruto',
+                    value: currencyFormat.format(inputItem.value),
+                  ),
+                  if (inputItem.interestAmountCents != null) ...[
+                    const SizedBox(height: 4),
+                    _InfoRow(
+                      icon: Icons.trending_down,
+                      label: 'Juros',
+                      value: '− ${currencyFormat.format(inputItem.interestAmountCents! / 100)}',
+                      valueColor: colorScheme.error,
+                    ),
+                  ],
+                  if (inputItem.proceedsCents != null) ...[
+                    const SizedBox(height: 4),
+                    _InfoRow(
+                      icon: Icons.check_circle_outline,
+                      label: 'A receber',
+                      value: currencyFormat.format(inputItem.proceedsCents! / 100),
+                      valueColor: colorScheme.primary,
+                      valueBold: true,
+                    ),
+                  ],
+                  if (inputItem.totalDays != null) ...[
+                    const SizedBox(height: 4),
+                    _InfoRow(
+                      icon: Icons.hourglass_bottom_outlined,
+                      label: 'Dias em espera',
+                      value: '${inputItem.totalDays} dia${inputItem.totalDays != 1 ? 's' : ''}',
+                    ),
+                  ],
+                  if (inputItem.depositDate != null || inputItem.settlementDate != null) ...[
+                    const SizedBox(height: 8),
+                    _DashedDivider(color: colorScheme.outlineVariant),
+                    const SizedBox(height: 8),
+                  ],
+                  if (inputItem.depositDate != null) ...[
+                    _InfoRow(
+                      icon: Icons.account_balance_outlined,
+                      label: 'Depósito',
+                      value: dateFormat.format(inputItem.depositDate!),
+                      valueColor: colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                  if (inputItem.settlementDate != null) ...[
+                    const SizedBox(height: 4),
+                    _InfoRow(
+                      icon: Icons.event_available_outlined,
+                      label: 'Liquidação',
+                      value: dateFormat.format(inputItem.settlementDate!),
+                      valueColor: colorScheme.onSurfaceVariant,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -239,15 +227,15 @@ class _InfoRow extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
-    this.iconColor,
     this.valueColor,
+    this.valueBold = false,
   });
 
   final IconData icon;
   final String label;
   final String value;
-  final Color? iconColor;
   final Color? valueColor;
+  final bool valueBold;
 
   @override
   Widget build(BuildContext context) {
@@ -256,13 +244,16 @@ class _InfoRow extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(icon, size: 14, color: iconColor ?? colorScheme.onSurfaceVariant),
+        Icon(icon, size: 14, color: colorScheme.onSurfaceVariant),
         const SizedBox(width: 8),
         Text(label, style: textTheme.bodySmall),
         const Spacer(),
         Text(
           value,
-          style: textTheme.bodySmall?.copyWith(color: valueColor),
+          style: textTheme.bodySmall?.copyWith(
+            color: valueColor,
+            fontWeight: valueBold ? FontWeight.w700 : null,
+          ),
         ),
       ],
     );

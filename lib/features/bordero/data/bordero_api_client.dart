@@ -1,6 +1,5 @@
 import 'package:organizagrana/features/bordero/domain/bordero_failure.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_input.dart';
-import 'package:organizagrana/features/bordero/domain/bordero_result.dart';
 import 'package:organizagrana/features/bordero/domain/bordero_sort.dart';
 import 'package:organizagrana/features/bordero/domain/borderos_page_result.dart';
 import 'package:organizagrana/features/bordero/domain/saved_bordero.dart';
@@ -16,7 +15,6 @@ abstract class BorderoApiClient {
     BorderoSortField sortBy,
     BorderoSortDirection sortDirection,
   });
-  Future<BorderoResult> calculate(BorderoInput input);
   Future<SavedBordero> getById(String id);
   Future<SavedBordero> save(BorderoInput input);
   Future<SavedBordero> update(String id, BorderoInput input);
@@ -66,14 +64,6 @@ class HttpBorderoApiClient with AuthenticatedApiClient implements BorderoApiClie
           }
           return SavedBordero.fromJson(raw);
         },
-        (type) => BorderoApiClientException(_toFailureType(type)),
-      );
-
-  @override
-  Future<BorderoResult> calculate(BorderoInput input) => guarded(
-        () => httpClient
-            .postJson(Uri.parse(ApiEndpoints.bordero.calculate), input.toCalculateJson())
-            .then(BorderoResult.fromJson),
         (type) => BorderoApiClientException(_toFailureType(type)),
       );
 

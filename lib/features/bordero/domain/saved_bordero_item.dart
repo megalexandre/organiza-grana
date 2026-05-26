@@ -5,18 +5,25 @@ class SavedBorderoItem {
     required this.id,
     required this.amountCents,
     required this.dueDate,
-    required this.awaitingDays,
+    this.interestAmountCents,
+    this.proceedsCents,
+    this.depositDate,
+    this.settlementDate,
+    this.totalDays,
   });
 
   final String id;
   final int amountCents;
   final DateTime dueDate;
-  final int awaitingDays;
+  final int? interestAmountCents;
+  final int? proceedsCents;
+  final DateTime? depositDate;
+  final DateTime? settlementDate;
+  final int? totalDays;
 
   BorderoInputItem toInputItem() => BorderoInputItem(
         amountCents: amountCents,
         dueDate: dueDate,
-        awaitingDays: awaitingDays,
       );
 
   factory SavedBorderoItem.fromJson(Map<String, dynamic> json) {
@@ -24,7 +31,15 @@ class SavedBorderoItem {
       id: json['id'].toString(),
       amountCents: json['amount_cents'] as int,
       dueDate: DateTime.parse(json['due_date'] as String),
-      awaitingDays: (json['awaiting_days'] as int?) ?? 2,
+      interestAmountCents: json['interest_amount_cents'] as int?,
+      proceedsCents: json['proceeds_cents'] as int?,
+      depositDate: json['deposit_date'] != null
+          ? DateTime.parse(json['deposit_date'] as String)
+          : null,
+      settlementDate: json['settlement_date'] != null
+          ? DateTime.parse(json['settlement_date'] as String)
+          : null,
+      totalDays: json['total_days'] as int?,
     );
   }
 }
