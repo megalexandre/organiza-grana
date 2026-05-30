@@ -4,6 +4,7 @@ import 'package:organizagrana/features/auth/data/auth_storage.dart';
 import 'package:organizagrana/features/auth/domain/login_attempt.dart';
 import 'package:organizagrana/features/auth/domain/user_profile.dart';
 import 'package:organizagrana/shared/layout/user_display_profile.dart';
+import 'package:organizagrana/shared/utils/app_logger.dart';
 
 class AuthSessionController extends ChangeNotifier {
   AuthSessionController({AuthService? authService})
@@ -66,6 +67,9 @@ class AuthSessionController extends ChangeNotifier {
       final profile = await _authService.getMe();
       _userProfile = profile;
       notifyListeners();
-    } catch (_) {}
+    } catch (error, stackTrace) {
+      // Falha ao buscar o perfil não bloqueia a sessão — mas deve ser registrada.
+      AppLogger.warning('Falha ao carregar perfil do usuário', error, stackTrace);
+    }
   }
 }

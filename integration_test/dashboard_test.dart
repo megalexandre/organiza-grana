@@ -27,6 +27,11 @@ void main() {
             200,
             headers: {'content-type': 'application/json'},
           ),
+          'GET /api/dashboard/summary': http.Response(
+            encode(dashboardSummaryBody()),
+            200,
+            headers: {'content-type': 'application/json'},
+          ),
           'GET /api/receivables': http.Response(
             encode(receivablesPageBody()),
             200,

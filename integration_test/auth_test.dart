@@ -26,8 +26,9 @@ void main() {
       await tester.tap(find.text('Login'));
       await tester.pump();
 
-      // Os campos de validação do Flutter aparecem abaixo dos TextFormFields
-      expect(find.textContaining('E-mail'), findsWidgets);
+      // Mensagens de validação aparecem abaixo dos campos
+      expect(find.text('Informe seu e-mail'), findsOneWidget);
+      expect(find.text('Informe sua senha'), findsOneWidget);
     });
 
     testWidgets('login com sucesso redireciona para o dashboard', (tester) async {
@@ -46,12 +47,10 @@ void main() {
 
       await pumpUnauthenticated(tester, client);
 
-      // Preenche e-mail
       await tester.enterText(
         find.widgetWithText(TextFormField, 'E-mail'),
         'test@example.com',
       );
-      // Preenche senha
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Senha'),
         'senha123',

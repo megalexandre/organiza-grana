@@ -6,6 +6,17 @@ import 'package:organizagrana/shared/validators/app_validators.dart';
 
 const double _kTabletBreakpoint = 600;
 const double _kDesktopBreakpoint = 1024;
+const String _kLoginDomain = '@mail.com';
+
+/// Normaliza o identificador de login: se o usuário já informou o domínio
+/// `@mail.com`, mantém como está; caso contrário, concatena. Strings vazias
+/// permanecem vazias (para a validação de "campo obrigatório" funcionar).
+String _normalizeLoginEmail(String raw) {
+  final value = raw.trim();
+  if (value.isEmpty) return value;
+  if (value.toLowerCase().endsWith(_kLoginDomain)) return value;
+  return '$value$_kLoginDomain';
+}
 
 class LoginPage extends StatefulWidget {
   const LoginPage({
@@ -46,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await widget.onLogin(
-        email: _emailController.text.trim(),
+        email: _normalizeLoginEmail(_emailController.text),
         password: _passwordController.text,
       );
     } catch (error) {
@@ -331,7 +342,10 @@ class _LoginForm extends StatelessWidget {
                 FocusScope.of(context).requestFocus(passwordFocusNode);
               },
               decoration: const InputDecoration(hintText: 'E-mail'),
-              validator: (value) => AppValidators.email(value, l10n),
+              // Valida o e-mail já normalizado, para aceitar tanto "usuario"
+              // quanto "usuario@mail.com" sem alterar o que aparece em tela.
+              validator: (value) =>
+                  AppValidators.email(_normalizeLoginEmail(value ?? ''), l10n),
             ),
             const SizedBox(height: 12),
             TextFormField(

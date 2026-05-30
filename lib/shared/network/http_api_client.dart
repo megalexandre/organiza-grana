@@ -33,23 +33,34 @@ class HttpApiClient {
     return token;
   }
 
-  Future<Map<String, dynamic>> getJson(Uri uri, {String? bearerToken}) async {
+  /// Resolve o token, executa [send] e, em caso de 401 com refresher disponível,
+  /// renova o token e repete a requisição uma vez.
+  Future<http.Response> _sendWithRefresh(
+    String? bearerToken,
+    Future<http.Response> Function(String? token) send,
+  ) async {
     final token = await _resolveToken(bearerToken);
-    var response = await _get(uri, bearerToken: token);
+    var response = await send(token);
     if (response.statusCode == 401 && _tokenRefresher != null) {
       final newToken = await _tokenRefresher();
-      if (newToken != null) response = await _get(uri, bearerToken: newToken);
+      if (newToken != null) response = await send(newToken);
     }
+    return response;
+  }
+
+  Future<Map<String, dynamic>> getJson(Uri uri, {String? bearerToken}) async {
+    final response = await _sendWithRefresh(
+      bearerToken,
+      (token) => _get(uri, bearerToken: token),
+    );
     return _parseMapResponse(response);
   }
 
   Future<List<Map<String, dynamic>>> getJsonList(Uri uri, {String? bearerToken}) async {
-    final token = await _resolveToken(bearerToken);
-    var response = await _get(uri, bearerToken: token);
-    if (response.statusCode == 401 && _tokenRefresher != null) {
-      final newToken = await _tokenRefresher();
-      if (newToken != null) response = await _get(uri, bearerToken: newToken);
-    }
+    final response = await _sendWithRefresh(
+      bearerToken,
+      (token) => _get(uri, bearerToken: token),
+    );
     return _parseListResponse(response);
   }
 
@@ -58,12 +69,10 @@ class HttpApiClient {
     Map<String, dynamic> body, {
     String? bearerToken,
   }) async {
-    final token = await _resolveToken(bearerToken);
-    var response = await _post(uri, body, bearerToken: token);
-    if (response.statusCode == 401 && _tokenRefresher != null) {
-      final newToken = await _tokenRefresher();
-      if (newToken != null) response = await _post(uri, body, bearerToken: newToken);
-    }
+    final response = await _sendWithRefresh(
+      bearerToken,
+      (token) => _post(uri, body, bearerToken: token),
+    );
     return _parseMapResponse(response);
   }
 
@@ -72,12 +81,10 @@ class HttpApiClient {
     Map<String, dynamic> body, {
     String? bearerToken,
   }) async {
-    final token = await _resolveToken(bearerToken);
-    var response = await _put(uri, body, bearerToken: token);
-    if (response.statusCode == 401 && _tokenRefresher != null) {
-      final newToken = await _tokenRefresher();
-      if (newToken != null) response = await _put(uri, body, bearerToken: newToken);
-    }
+    final response = await _sendWithRefresh(
+      bearerToken,
+      (token) => _put(uri, body, bearerToken: token),
+    );
     return _parseMapResponse(response);
   }
 
@@ -86,22 +93,18 @@ class HttpApiClient {
     Map<String, dynamic> body, {
     String? bearerToken,
   }) async {
-    final token = await _resolveToken(bearerToken);
-    var response = await _patch(uri, body, bearerToken: token);
-    if (response.statusCode == 401 && _tokenRefresher != null) {
-      final newToken = await _tokenRefresher();
-      if (newToken != null) response = await _patch(uri, body, bearerToken: newToken);
-    }
+    final response = await _sendWithRefresh(
+      bearerToken,
+      (token) => _patch(uri, body, bearerToken: token),
+    );
     return _parseMapResponse(response);
   }
 
   Future<void> deleteVoid(Uri uri, {String? bearerToken}) async {
-    final token = await _resolveToken(bearerToken);
-    var response = await _delete(uri, bearerToken: token);
-    if (response.statusCode == 401 && _tokenRefresher != null) {
-      final newToken = await _tokenRefresher();
-      if (newToken != null) response = await _delete(uri, bearerToken: newToken);
-    }
+    final response = await _sendWithRefresh(
+      bearerToken,
+      (token) => _delete(uri, bearerToken: token),
+    );
     _validateStatus(response);
   }
 

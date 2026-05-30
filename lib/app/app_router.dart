@@ -31,8 +31,10 @@ class AppRouter {
   final BorderoService _borderoService;
   final HolidaysService _holidaysService;
   final DashboardService _dashboardService;
-  static final GlobalKey<NavigatorState> _rootNavigatorKey =
-      GlobalKey<NavigatorState>();
+  // Instância, não estático: um GlobalKey de navigator estático sobrevive a hot
+  // reloads e é o gatilho clássico de "Duplicate GlobalKey" no go_router.
+  // Defensivo — o app cria um único AppRouter em produção.
+  final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
   static const String rootPath = '/';
   static const String loginPath = '/login';

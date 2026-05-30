@@ -1,24 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:organizagrana/app/app_dependencies.dart';
 import 'package:organizagrana/app/app_router.dart';
 import 'package:organizagrana/app/app_theme.dart';
 import 'package:organizagrana/app/auth_session_controller.dart';
-import 'package:organizagrana/features/auth/data/auth_access_token_provider.dart';
-import 'package:organizagrana/features/auth/data/auth_api_client.dart';
-import 'package:organizagrana/features/auth/data/auth_service.dart';
-import 'package:organizagrana/features/auth/data/auth_storage.dart';
-import 'package:organizagrana/features/bordero/data/bordero_api_client.dart';
-import 'package:organizagrana/features/bordero/data/bordero_service.dart';
-import 'package:organizagrana/features/dashboard/data/dashboard_api_client.dart';
-import 'package:organizagrana/features/dashboard/data/dashboard_service.dart';
-import 'package:organizagrana/features/holidays/data/holidays_api_client.dart';
-import 'package:organizagrana/features/holidays/data/holidays_service.dart';
-import 'package:organizagrana/features/recebiveis/data/receivables_api_client.dart';
-import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/l10n/app_localizations.dart';
-import 'package:organizagrana/shared/network/http_api_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Tabela de rotas mock: chave = "METHOD /path", valor = Response
@@ -52,40 +41,10 @@ class _TestAppState extends State<TestApp> {
   void initState() {
     super.initState();
 
-    final authStorage = AuthStorage();
-    final tokenProvider = AuthStorageAccessTokenProvider(authStorage);
-
-    // Auth usa HttpApiClient próprio (sem tokenRefresher — ele mesmo autentica)
-    final authHttpApiClient = HttpApiClient(httpClient: widget.httpClient);
-    final authApiClient = HttpAuthApiClient(
-      tokenProvider,
-      httpClient: authHttpApiClient,
-    );
-    final authService = AuthService(authStorage, apiClient: authApiClient);
-    _session = AuthSessionController(authService: authService);
-
-    // Features compartilham um HttpApiClient com refresh automático
-    final featureHttpApiClient = HttpApiClient(
-      httpClient: widget.httpClient,
-      bearerTokenProvider: tokenProvider.readAccessToken,
-      tokenRefresher: authService.refreshAccessToken,
-    );
-
-    _appRouter = AppRouter(
-      _session,
-      receivablesService: ReceivablesService(
-        HttpReceivablesApiClient(tokenProvider, httpClient: featureHttpApiClient),
-      ),
-      borderoService: BorderoService(
-        HttpBorderoApiClient(tokenProvider, httpClient: featureHttpApiClient),
-      ),
-      holidaysService: HolidaysService(
-        HttpHolidaysApiClient(tokenProvider, httpClient: featureHttpApiClient),
-      ),
-      dashboardService: DashboardService(
-        HttpDashboardApiClient(tokenProvider, httpClient: featureHttpApiClient),
-      ),
-    );
+    // Mesmo composition root do app real, com o http.Client mockado injetado.
+    final deps = AppDependencies.create(httpClient: widget.httpClient);
+    _session = deps.session;
+    _appRouter = deps.router;
 
     _session.initialize();
   }
@@ -108,6 +67,7 @@ Future<void> pumpUnauthenticated(
   http.Client httpClient,
 ) async {
   SharedPreferences.setMockInitialValues({});
+  FlutterSecureStorage.setMockInitialValues({});
   await tester.pumpWidget(TestApp(httpClient: httpClient));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 500));
@@ -120,7 +80,8 @@ Future<void> pumpAuthenticated(
   String accessToken, {
   String refreshToken = 'fake-refresh',
 }) async {
-  SharedPreferences.setMockInitialValues({
+  SharedPreferences.setMockInitialValues({});
+  FlutterSecureStorage.setMockInitialValues({
     'access_token': accessToken,
     'refresh_token': refreshToken,
   });

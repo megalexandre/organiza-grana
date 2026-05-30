@@ -143,4 +143,11 @@ Map<String, dynamic> dashboardReceivablesByStatusBody() => {
       ],
     };
 
+Map<String, dynamic> dashboardSummaryBody() => {
+      'total_amount_cents': 300000,
+      'total_proceeds_cents': 291500,
+      'receivables_count': 3,
+      'average_awaiting_days': 30.0,
+    };
+
 String encode(Map<String, dynamic> body) => jsonEncode(body);

@@ -1,4 +1,5 @@
 import 'package:organizagrana/features/dashboard/domain/dashboard_failure.dart';
+import 'package:organizagrana/features/dashboard/domain/dashboard_summary.dart';
 import 'package:organizagrana/features/dashboard/domain/receivable_status_count.dart';
 import 'package:organizagrana/shared/network/access_token_provider.dart';
 import 'package:organizagrana/shared/network/api_endpoints.dart';
@@ -7,6 +8,7 @@ import 'package:organizagrana/shared/network/http_api_client.dart';
 
 abstract class DashboardApiClient {
   Future<List<ReceivableStatusCount>> fetchReceivablesByStatus();
+  Future<DashboardSummary> fetchSummary();
 }
 
 class DashboardApiClientException implements Exception {
@@ -33,6 +35,17 @@ class HttpDashboardApiClient with AuthenticatedApiClient implements DashboardApi
               .cast<Map<String, dynamic>>()
               .map(ReceivableStatusCount.fromJson)
               .toList();
+        },
+        (type) => DashboardApiClientException(_toFailureType(type)),
+      );
+
+  @override
+  Future<DashboardSummary> fetchSummary() => guarded(
+        () async {
+          final response = await httpClient.getJson(
+            Uri.parse(ApiEndpoints.dashboard.summary),
+          );
+          return DashboardSummary.fromJson(response);
         },
         (type) => DashboardApiClientException(_toFailureType(type)),
       );

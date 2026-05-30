@@ -1,5 +1,6 @@
 import 'package:organizagrana/features/dashboard/data/dashboard_api_client.dart';
 import 'package:organizagrana/features/dashboard/domain/dashboard_failure.dart';
+import 'package:organizagrana/features/dashboard/domain/dashboard_summary.dart';
 import 'package:organizagrana/features/dashboard/domain/receivable_status_count.dart';
 
 class DashboardService {
@@ -10,6 +11,14 @@ class DashboardService {
   Future<List<ReceivableStatusCount>> fetchReceivablesByStatus() async {
     try {
       return await _apiClient.fetchReceivablesByStatus();
+    } on DashboardApiClientException catch (e) {
+      throw DashboardFailure(type: e.type, message: _messageFor(e.type));
+    }
+  }
+
+  Future<DashboardSummary> fetchSummary() async {
+    try {
+      return await _apiClient.fetchSummary();
     } on DashboardApiClientException catch (e) {
       throw DashboardFailure(type: e.type, message: _messageFor(e.type));
     }

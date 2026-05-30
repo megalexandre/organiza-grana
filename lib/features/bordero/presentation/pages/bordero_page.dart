@@ -16,6 +16,7 @@ import 'package:organizagrana/features/recebiveis/data/receivables_service.dart'
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
+import 'package:organizagrana/shared/utils/app_logger.dart';
 import 'package:organizagrana/shared/utils/date_input_formatter.dart';
 import 'package:organizagrana/shared/layout/page_content_constraint.dart';
 import 'package:organizagrana/shared/utils/web_download.dart';
@@ -145,7 +146,9 @@ class _BorderoPageState extends State<BorderoPage> {
         .whereType<String>()
         .where((id) => !_preloadedReceivableIds.contains(id))
         .toList();
-    await Future.wait(ids.map((id) => widget.receivablesService.delete(id).catchError((_) {})));
+    await Future.wait(ids.map((id) => widget.receivablesService.delete(id).catchError(
+          (Object error) => AppLogger.warning('Falha ao remover recebível do borderô', error),
+        )));
     setState(() {
       _paramsConfirmed = false;
       _savedBordero = null;
@@ -255,7 +258,9 @@ class _BorderoPageState extends State<BorderoPage> {
     });
 
     if (receivableId != null && !_preloadedReceivableIds.contains(receivableId)) {
-      widget.receivablesService.delete(receivableId).catchError((_) {});
+      widget.receivablesService.delete(receivableId).catchError(
+        (Object error) => AppLogger.warning('Falha ao remover recebível do borderô', error),
+      );
     }
 
     if (_items.isEmpty) {
@@ -269,7 +274,8 @@ class _BorderoPageState extends State<BorderoPage> {
     try {
       final saved = await widget.service.update(_savedBorderoId!, _buildInput());
       if (mounted) setState(() { _savedBordero = saved; _syncFromSaved(saved); });
-    } catch (_) {
+    } catch (error, stackTrace) {
+      AppLogger.warning('Falha ao atualizar borderô', error, stackTrace);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -289,7 +295,8 @@ class _BorderoPageState extends State<BorderoPage> {
       try {
         final saved = await widget.service.update(_savedBorderoId!, _buildInput());
         if (mounted) setState(() { _savedBordero = saved; _syncFromSaved(saved); });
-      } catch (_) {
+      } catch (error, stackTrace) {
+        AppLogger.warning('Falha ao atualizar borderô', error, stackTrace);
       } finally {
         if (mounted) setState(() => _loading = false);
       }
@@ -594,7 +601,10 @@ class _BorderoPageState extends State<BorderoPage> {
         if (value.length == 10) {
           try {
             setState(() => _changeDate = dateFormat.parseStrict(value));
-          } catch (_) {}
+          } catch (_) {
+            // Data incompleta/inválida durante a digitação — o validator do
+            // campo dá o feedback ao usuário; ignorar aqui é intencional.
+          }
         }
       },
       validator: (v) {

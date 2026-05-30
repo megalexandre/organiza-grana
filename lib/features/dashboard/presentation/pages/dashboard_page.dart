@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:organizagrana/app/app_router.dart';
 import 'package:organizagrana/features/dashboard/data/dashboard_service.dart';
+import 'package:organizagrana/features/dashboard/presentation/widgets/dashboard_summary_cards.dart';
 import 'package:organizagrana/features/dashboard/presentation/widgets/receivables_by_status_panel.dart';
 import 'package:organizagrana/shared/layout/side_menu/layout_menu_config.dart';
 import 'package:organizagrana/shared/layout/side_menu/layout_menu_item.dart';
@@ -82,6 +83,7 @@ class DashboardHomeContent extends StatelessWidget {
       title: 'Dashboard',
       subtitle: 'Visão geral dos indicadores e atalhos principais.',
       content: ReceivablesByStatusPanel(service: service),
+      children: [DashboardSummaryCards(service: service)],
     );
   }
 }

@@ -15,6 +15,11 @@ class AuthService {
     : _apiClient = apiClient
       ?? HttpAuthApiClient(AuthStorageAccessTokenProvider(_storage));
 
+  // Refresh em andamento — evita "stampede" quando várias requisições recebem
+  // 401 ao mesmo tempo e disparam refresh em paralelo (o que invalidaria o
+  // refresh token rotacionado). Chamadas concorrentes reusam o mesmo Future.
+  Future<String?>? _inFlightRefresh;
+
   Future<bool> isAuthenticated() async {
     final accessToken = await _storage.readAccessToken();
     if (accessToken == null || accessToken.isEmpty) {
@@ -103,7 +108,12 @@ class AuthService {
     );
   }
 
-  Future<String?> refreshAccessToken() async {
+  Future<String?> refreshAccessToken() {
+    return _inFlightRefresh ??=
+        _doRefreshAccessToken().whenComplete(() => _inFlightRefresh = null);
+  }
+
+  Future<String?> _doRefreshAccessToken() async {
     final refreshToken = await _storage.readRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) return null;
     final result = await _refreshSession(refreshToken);
