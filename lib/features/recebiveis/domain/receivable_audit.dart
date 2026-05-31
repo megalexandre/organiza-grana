@@ -6,6 +6,8 @@ class ReceivableAudit {
     required this.changes,
     required this.createdAt,
     this.whodunnit,
+    this.receivableAmountCents,
+    this.receivableDueDate,
   });
 
   final String id;
@@ -14,6 +16,8 @@ class ReceivableAudit {
   final Map<String, dynamic> changes;
   final DateTime createdAt;
   final String? whodunnit;
+  final int? receivableAmountCents;
+  final DateTime? receivableDueDate;
 
   bool get isCreate => event == 'create';
   bool get isUpdate => event == 'update';
@@ -37,6 +41,10 @@ class ReceivableAudit {
       changes: changes,
       createdAt: DateTime.parse(json['created_at'] as String),
       whodunnit: json['whodunnit']?.toString(),
+      receivableAmountCents: json['receivable_amount_cents'] as int?,
+      receivableDueDate: json['receivable_due_date'] != null
+          ? DateTime.tryParse(json['receivable_due_date'].toString())
+          : null,
     );
   }
 }

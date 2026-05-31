@@ -90,6 +90,25 @@ class _RecebiveisAuditPageState extends State<RecebiveisAuditPage> {
     }
   }
 
+  // Groups audits by receivable_id preserving the order of first appearance
+  // (API returns newest-first, so groups are ordered by most-recent event desc).
+  // Events within each group are reversed to show oldest→newest.
+  List<_ReceivableGroup> _buildGroups(List<ReceivableAudit> audits) {
+    final order = <String>[];
+    final map = <String, List<ReceivableAudit>>{};
+    for (final a in audits) {
+      if (!map.containsKey(a.receivableId)) {
+        order.add(a.receivableId);
+        map[a.receivableId] = [];
+      }
+      map[a.receivableId]!.add(a);
+    }
+    return order.map((id) {
+      final events = map[id]!.reversed.toList(); // oldest first
+      return _ReceivableGroup(receivableId: id, events: events);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -131,75 +150,33 @@ class _RecebiveisAuditPageState extends State<RecebiveisAuditPage> {
     if (_loading) return _buildSkeleton();
     if (_errorMessage != null) return _buildError();
     if (_audits.isEmpty) return _buildEmpty(context);
-    return _buildTimeline(context);
-  }
 
-  Widget _buildTimeline(BuildContext context) {
-    final grouped = _groupByDate(_audits);
-    final dateKeys = grouped.keys.toList();
-
+    final groups = _buildGroups(_audits);
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView.builder(
         controller: _scrollController,
-        itemCount: dateKeys.length + (_loadingMore ? 1 : 0),
+        itemCount: groups.length + (_loadingMore ? 1 : 0),
         itemBuilder: (context, index) {
-          if (index >= dateKeys.length) {
+          if (index >= groups.length) {
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
             );
           }
-          final dateKey = dateKeys[index];
-          final items = grouped[dateKey]!;
-          return _buildDateGroup(context, dateKey, items);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _ReceivableAuditCard(group: groups[index]),
+          );
         },
       ),
     );
   }
 
-  Widget _buildDateGroup(BuildContext context, String dateLabel, List<ReceivableAudit> items) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12, top: 4),
-          child: Row(
-            children: [
-              Text(
-                dateLabel,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withAlpha(120),
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Divider(
-                  color: theme.colorScheme.outlineVariant,
-                  height: 1,
-                ),
-              ),
-            ],
-          ),
-        ),
-        ...items.asMap().entries.map((entry) {
-          final i = entry.key;
-          final audit = entry.value;
-          final isLast = i == items.length - 1;
-          return _AuditEventTile(audit: audit, isLast: isLast);
-        }),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
   Widget _buildSkeleton() {
     return ListView.builder(
-      itemCount: 5,
-      itemBuilder: (_, _) => const _SkeletonTile(),
+      itemCount: 3,
+      itemBuilder: (_, _) => const _SkeletonCard(),
     );
   }
 
@@ -235,28 +212,79 @@ class _RecebiveisAuditPageState extends State<RecebiveisAuditPage> {
       ),
     );
   }
+}
 
-  Map<String, List<ReceivableAudit>> _groupByDate(List<ReceivableAudit> audits) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final result = <String, List<ReceivableAudit>>{};
+class _ReceivableGroup {
+  const _ReceivableGroup({required this.receivableId, required this.events});
+  final String receivableId;
+  final List<ReceivableAudit> events;
+  ReceivableAudit get latest => events.last;
+}
 
-    for (final audit in audits) {
-      final d = audit.createdAt.toLocal();
-      final day = DateTime(d.year, d.month, d.day);
-      final String label;
-      if (day == today) {
-        label = 'HOJE';
-      } else if (day == yesterday) {
-        label = 'ONTEM';
-      } else {
-        label = DateFormat('dd/MM/yyyy').format(day).toUpperCase();
-      }
-      (result[label] ??= []).add(audit);
-    }
+class _ReceivableAuditCard extends StatelessWidget {
+  const _ReceivableAuditCard({required this.group});
 
-    return result;
+  final _ReceivableGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final sample = group.latest;
+    final amountCents = sample.receivableAmountCents;
+    final dueDate = sample.receivableDueDate;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+            child: Row(
+              children: [
+                if (amountCents != null)
+                  Text(
+                    currencyFormat.format(amountCents / 100),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                if (amountCents != null && dueDate != null)
+                  Text(
+                    '  ·  Venc ${dateFormat.format(dueDate)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withAlpha(140),
+                    ),
+                  ),
+                const Spacer(),
+                Text(
+                  '#${group.receivableId.substring(0, 8)}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withAlpha(80),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: theme.colorScheme.outlineVariant),
+          // Events timeline
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Column(
+              children: group.events.asMap().entries.map((entry) {
+                final isLast = entry.key == group.events.length - 1;
+                return _AuditEventTile(audit: entry.value, isLast: isLast);
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -278,17 +306,14 @@ class _AuditEventTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 24,
+            width: 20,
             child: Column(
               children: [
                 Container(
-                  width: 12,
-                  height: 12,
-                  margin: const EdgeInsets.only(top: 4),
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                  ),
+                  width: 10,
+                  height: 10,
+                  margin: const EdgeInsets.only(top: 3),
+                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
                 ),
                 if (!isLast)
                   Expanded(
@@ -300,10 +325,10 @@ class _AuditEventTile extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -312,21 +337,14 @@ class _AuditEventTile extends StatelessWidget {
                       Text(
                         timeStr,
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withAlpha(120),
+                          color: theme.colorScheme.onSurface.withAlpha(100),
                         ),
                       ),
                       const SizedBox(width: 8),
                       _EventChip(audit: audit, color: color),
                     ],
                   ),
-                  const SizedBox(height: 4),
                   ..._buildChangeRows(theme, brightness),
-                  Text(
-                    '#${audit.receivableId.substring(0, 8)}',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withAlpha(80),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -349,58 +367,35 @@ class _AuditEventTile extends StatelessWidget {
   }
 
   List<Widget> _buildChangeRows(ThemeData theme, Brightness brightness) {
-    if (audit.isCreate) {
-      final amountRaw = audit.changes['amount_cents'];
-      final amount = amountRaw is List ? amountRaw.last : amountRaw;
-      if (amount != null) {
-        final value = (amount as num).toInt() / 100;
-        return [
-          Text(
-            currencyFormat.format(value),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withAlpha(160),
-            ),
-          ),
-        ];
-      }
-    }
+    if (audit.isCreate) return [];
 
     final rows = <Widget>[];
     for (final entry in audit.changes.entries) {
       final key = entry.key;
       final val = entry.value;
       if (val is! List || val.length < 2) continue;
-      final oldVal = val[0];
-      final newVal = val[1];
-      final label = _fieldLabel(key);
-      final oldStr = _formatValue(key, oldVal);
-      final newStr = _formatValue(key, newVal);
+      final oldStr = _formatValue(key, val[0]);
+      final newStr = _formatValue(key, val[1]);
       rows.add(
         Text.rich(
           TextSpan(children: [
             TextSpan(
-              text: '$label: ',
+              text: '${_fieldLabel(key)}: ',
               style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withAlpha(120),
+                color: theme.colorScheme.onSurface.withAlpha(100),
               ),
             ),
             TextSpan(
               text: oldStr,
               style: theme.textTheme.labelSmall?.copyWith(
                 decoration: TextDecoration.lineThrough,
-                color: theme.colorScheme.error.withAlpha(180),
+                color: theme.colorScheme.error.withAlpha(160),
               ),
             ),
             TextSpan(
-              text: ' → ',
+              text: ' → $newStr',
               style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withAlpha(80),
-              ),
-            ),
-            TextSpan(
-              text: newStr,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withAlpha(200),
+                color: theme.colorScheme.onSurface.withAlpha(180),
               ),
             ),
           ]),
@@ -414,21 +409,16 @@ class _AuditEventTile extends StatelessWidget {
         'status' => 'Status',
         'amount_cents' => 'Valor',
         'due_date' => 'Vencimento',
-        'notes' => 'Observação',
-        'change_date' => 'Data do status',
+        'notes' => 'Obs.',
+        'change_date' => 'Data status',
         'deleted_at' => 'Exclusão',
         _ => key,
       };
 
   String _formatValue(String key, dynamic value) {
     if (value == null) return '—';
-    if (key == 'amount_cents') {
-      final cents = (value as num).toInt();
-      return currencyFormat.format(cents / 100);
-    }
-    if (key == 'status') {
-      return ReceivableStatus.fromJson(value.toString())?.label ?? value.toString();
-    }
+    if (key == 'amount_cents') return currencyFormat.format((value as num).toInt() / 100);
+    if (key == 'status') return ReceivableStatus.fromJson(value.toString())?.label ?? value.toString();
     if (key == 'due_date' || key == 'change_date') {
       final d = DateTime.tryParse(value.toString());
       if (d != null) return dateFormat.format(d);
@@ -450,15 +440,9 @@ class _EventChip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: color),
+        Icon(icon, size: 12, color: color),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: color,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(label, style: theme.textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w600)),
       ],
     );
   }
@@ -471,29 +455,29 @@ class _EventChip extends StatelessWidget {
   }
 }
 
-class _SkeletonTile extends StatelessWidget {
-  const _SkeletonTile();
+class _SkeletonCard extends StatelessWidget {
+  const _SkeletonCard();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final base = theme.colorScheme.surfaceContainerHighest;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(width: 12, height: 12, decoration: BoxDecoration(color: base, shape: BoxShape.circle)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(height: 10, width: 80, color: base),
-                const SizedBox(height: 6),
-                Container(height: 10, width: 200, color: base),
-              ],
-            ),
-          ),
+          Container(height: 12, width: 160, color: base),
+          const SizedBox(height: 12),
+          Container(height: 10, width: 240, color: base),
+          const SizedBox(height: 8),
+          Container(height: 10, width: 200, color: base),
         ],
       ),
     );
