@@ -137,39 +137,49 @@ class _HolidaysPageState extends State<HolidaysPage> {
   Widget build(BuildContext context) {
     final monthLabel = DateFormat('MMMM yyyy', 'pt_BR').format(_currentMonth);
 
+    final cs = Theme.of(context).colorScheme;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       child: PageContentConstraint(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _MonthHeader(
-              label: monthLabel,
-              onPrev: _prevMonth,
-              onNext: _nextMonth,
-            ),
-            const SizedBox(height: 16),
-            _WeekdayHeader(),
-            const SizedBox(height: 4),
-            if (_isLoading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 48),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (_error != null)
-              _ErrorPanel(
-                message: _error!.message,
-                onRetry: _loadCalendar,
-              )
-            else if (_calendarMonth != null)
-              _CalendarGrid(
-                calendarMonth: _calendarMonth!,
-                startOffset: _startOffset,
-                onDayTap: _onDayTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _MonthHeader(
+                label: monthLabel,
+                onPrev: _prevMonth,
+                onNext: _nextMonth,
               ),
-            const SizedBox(height: 24),
-            const _Legend(),
-          ],
+              const SizedBox(height: 16),
+              _WeekdayHeader(),
+              const SizedBox(height: 4),
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 48),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_error != null)
+                _ErrorPanel(
+                  message: _error!.message,
+                  onRetry: _loadCalendar,
+                )
+              else if (_calendarMonth != null)
+                _CalendarGrid(
+                  calendarMonth: _calendarMonth!,
+                  startOffset: _startOffset,
+                  onDayTap: _onDayTap,
+                ),
+              const SizedBox(height: 24),
+              const _Legend(),
+            ],
+          ),
         ),
       ),
     );
@@ -282,14 +292,21 @@ class _DayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final Color bg;
-    final Color fg = cs.onSurface;
+    final Color fg;
+    final Color borderColor;
 
     if (day.holiday) {
-      bg = cs.error.withValues(alpha: 0.12);
+      bg = cs.error.withValues(alpha: 0.18);
+      fg = cs.error;
+      borderColor = cs.error.withValues(alpha: 0.40);
     } else if (day.weekend) {
-      bg = cs.primary.withValues(alpha: 0.10);
+      bg = cs.primary.withValues(alpha: 0.14);
+      fg = cs.primary;
+      borderColor = cs.primary.withValues(alpha: 0.35);
     } else {
       bg = cs.surface;
+      fg = cs.onSurface;
+      borderColor = cs.outlineVariant;
     }
 
     Widget cell = Material(
@@ -303,6 +320,7 @@ class _DayCell extends StatelessWidget {
           margin: const EdgeInsets.all(2),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderColor),
           ),
           child: Center(
             child: Text(
@@ -310,6 +328,7 @@ class _DayCell extends StatelessWidget {
               style: TextStyle(
                 color: fg,
                 fontSize: 14,
+                fontWeight: (day.holiday || day.weekend) ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ),
