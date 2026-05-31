@@ -27,11 +27,21 @@ class AuthSessionController extends ChangeNotifier {
   }
 
   Future<void> initialize() async {
-    final isAuthenticated = await _authService.isAuthenticated();
+    bool isAuthenticated;
+    try {
+      isAuthenticated = await _authService.isAuthenticated();
+    } catch (error, stackTrace) {
+      AppLogger.warning('Falha ao verificar autenticação no storage', error, stackTrace);
+      isAuthenticated = false;
+    }
 
     _initialized = true;
     _authenticated = isAuthenticated;
-    _userEmail = isAuthenticated ? await _authService.currentUserEmail() : null;
+    try {
+      _userEmail = isAuthenticated ? await _authService.currentUserEmail() : null;
+    } catch (error, stackTrace) {
+      AppLogger.warning('Falha ao ler email do storage', error, stackTrace);
+    }
     notifyListeners();
 
     if (_authenticated) _fetchProfile();
