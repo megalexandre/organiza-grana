@@ -233,11 +233,20 @@ class _ReceivableAuditCard extends StatelessWidget {
     final amountCents = sample.receivableAmountCents;
     final dueDate = sample.receivableDueDate;
 
+    final sequenceNumber = group.latest.receivableSequenceNumber;
+
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: theme.colorScheme.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.shadow.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,6 +256,22 @@ class _ReceivableAuditCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
             child: Row(
               children: [
+                if (sequenceNumber != null) ...[
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$sequenceNumber',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                          height: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                ],
                 if (amountCents != null)
                   Text(
                     currencyFormat.format(amountCents / 100),

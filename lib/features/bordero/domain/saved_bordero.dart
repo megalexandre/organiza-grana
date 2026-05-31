@@ -12,6 +12,7 @@ class SavedBordero {
     required this.averageDays,
     required this.createdAt,
     this.items,
+    this.sequenceNumber,
   });
 
   final String id;
@@ -24,6 +25,7 @@ class SavedBordero {
   final double averageDays;
   final DateTime createdAt;
   final List<SavedBorderoItem>? items;
+  final int? sequenceNumber;
 
   double get totalAmount => totalAmountCents / 100;
   double get totalProceeds => totalProceedsCents / 100;
@@ -43,6 +45,7 @@ class SavedBordero {
       totalInterestAmountCents: json['total_interest_amount_cents'] as int,
       averageDays: _readDouble(json['average_days']) ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
+      sequenceNumber: json['sequence_number'] as int?,
       items: rawItems
           ?.whereType<Map<String, dynamic>>()
           .map(SavedBorderoItem.fromJson)

@@ -545,6 +545,33 @@ class _CompactCardState extends State<_CompactCard> {
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           child: Row(
                             children: [
+                              // Sequencial
+                              if (r.sequenceNumber != null) ...[
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      '#',
+                                      style: theme.textTheme.labelSmall?.copyWith(
+                                        color: colorScheme.onSurface.withValues(alpha: 0.45),
+                                        letterSpacing: 0.8,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 9,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${r.sequenceNumber}',
+                                      style: theme.textTheme.headlineSmall?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onSurface,
+                                        height: 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+
                               // Valor + status
                               SizedBox(
                                 width: 110,

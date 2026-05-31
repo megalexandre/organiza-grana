@@ -8,6 +8,7 @@ class ReceivableAudit {
     this.whodunnit,
     this.receivableAmountCents,
     this.receivableDueDate,
+    this.receivableSequenceNumber,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class ReceivableAudit {
   final String? whodunnit;
   final int? receivableAmountCents;
   final DateTime? receivableDueDate;
+  final int? receivableSequenceNumber;
 
   bool get isCreate => event == 'create';
   bool get isUpdate => event == 'update';
@@ -45,6 +47,7 @@ class ReceivableAudit {
       receivableDueDate: json['receivable_due_date'] != null
           ? DateTime.tryParse(json['receivable_due_date'].toString())
           : null,
+      receivableSequenceNumber: json['receivable_sequence_number'] as int?,
     );
   }
 }

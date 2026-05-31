@@ -99,6 +99,31 @@ class _CompactCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
+            if (bordero.sequenceNumber != null) ...[
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '#',
+                    style: tt.labelSmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.45),
+                      letterSpacing: 0.8,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 9,
+                    ),
+                  ),
+                  Text(
+                    '${bordero.sequenceNumber}',
+                    style: tt.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
+                      height: 1,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+            ],
             Expanded(
               flex: 3,
               child: Column(
