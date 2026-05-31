@@ -9,7 +9,9 @@ import 'package:organizagrana/features/dashboard/data/dashboard_service.dart';
 import 'package:organizagrana/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:organizagrana/features/holidays/data/holidays_service.dart';
 import 'package:organizagrana/features/holidays/presentation/pages/holidays_page.dart';
+import 'package:organizagrana/features/recebiveis/data/receivable_audits_api_client.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
+import 'package:organizagrana/features/recebiveis/presentation/pages/recebiveis_audit_page.dart';
 import 'package:organizagrana/features/recebiveis/presentation/pages/recebiveis_page.dart';
 
 final RouteObserver<ModalRoute<void>> appRouteObserver = RouteObserver<ModalRoute<void>>();
@@ -21,16 +23,19 @@ class AppRouter {
     required BorderoService borderoService,
     required HolidaysService holidaysService,
     required DashboardService dashboardService,
+    required ReceivableAuditsApiClient auditsApiClient,
   })  : _receivablesService = receivablesService,
         _borderoService = borderoService,
         _holidaysService = holidaysService,
-        _dashboardService = dashboardService;
+        _dashboardService = dashboardService,
+        _auditsApiClient = auditsApiClient;
 
   final AuthSessionController _session;
   final ReceivablesService _receivablesService;
   final BorderoService _borderoService;
   final HolidaysService _holidaysService;
   final DashboardService _dashboardService;
+  final ReceivableAuditsApiClient _auditsApiClient;
   // Instância, não estático: um GlobalKey de navigator estático sobrevive a hot
   // reloads e é o gatilho clássico de "Duplicate GlobalKey" no go_router.
   // Defensivo — o app cria um único AppRouter em produção.
@@ -43,11 +48,13 @@ class AppRouter {
   static const String borderoPath = '/dashboard/bordero';
   static const String borderoNovoPath = '/dashboard/bordero/novo';
   static const String holidaysPath = '/dashboard/holidays';
+  static const String auditoriaPath = '/dashboard/auditoria';
 
   static String pathForItem(String itemId) => switch (itemId) {
         'recebiveis' => recebiveisPath,
         'bordero' => borderoPath,
         'holidays' => holidaysPath,
+        'auditoria' => auditoriaPath,
         _ => dashboardPath,
       };
 
@@ -94,6 +101,7 @@ class AppRouter {
             recebiveisPath => 'recebiveis',
             borderoPath => 'bordero',
             holidaysPath => 'holidays',
+            auditoriaPath => 'auditoria',
             _ => 'dashboard',
           };
 
@@ -139,6 +147,12 @@ class AppRouter {
                 path: 'holidays',
                 pageBuilder: (context, state) => NoTransitionPage(
                   child: HolidaysPage(service: _holidaysService),
+                ),
+              ),
+              GoRoute(
+                path: 'auditoria',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: RecebiveisAuditPage(apiClient: _auditsApiClient),
                 ),
               ),
             ],

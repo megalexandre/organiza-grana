@@ -9,6 +9,8 @@ class _Receivables {
   String get list => _path;
   String get export => '$_path/export';
 
+  String get audit => '$_path/audit';
+
   String byId(String id) => '$_path/$id';
   String update(String id) => '$_path/$id';
   String delete(String id) => '$_path/$id';

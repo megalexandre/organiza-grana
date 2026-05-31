@@ -11,6 +11,7 @@ import 'package:organizagrana/features/dashboard/data/dashboard_api_client.dart'
 import 'package:organizagrana/features/dashboard/data/dashboard_service.dart';
 import 'package:organizagrana/features/holidays/data/holidays_api_client.dart';
 import 'package:organizagrana/features/holidays/data/holidays_service.dart';
+import 'package:organizagrana/features/recebiveis/data/receivable_audits_api_client.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_api_client.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
 import 'package:organizagrana/shared/network/http_api_client.dart';
@@ -56,6 +57,10 @@ class AppDependencies {
       ),
       dashboardService: DashboardService(
         HttpDashboardApiClient(tokenProvider, httpClient: featureHttpApiClient),
+      ),
+      auditsApiClient: HttpReceivableAuditsApiClient(
+        tokenProvider,
+        httpClient: featureHttpApiClient,
       ),
     );
 
