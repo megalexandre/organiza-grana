@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:organizagrana/features/recebiveis/data/receivables_service.dart';
+import 'package:organizagrana/shared/utils/web_download.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_sort.dart';
@@ -39,6 +41,7 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
   ReceivableSortDirection _sortDirection = ReceivableSortDirection.asc;
   bool _compactView = true;
   String? _deletingId;
+  bool _exporting = false;
 
   static const _defaultSortBy = ReceivableSortField.dueDate;
   static const _defaultSortDirection = ReceivableSortDirection.asc;
@@ -136,6 +139,23 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
       }
     } finally {
       if (mounted) setState(() => _loadingMore = false);
+    }
+  }
+
+  Future<void> _exportToCsv() async {
+    setState(() => _exporting = true);
+    try {
+      final bytes = await widget.service.exportCsv(
+        withDiscarded: _withDiscarded,
+        sortBy: _sortBy,
+        sortDirection: _sortDirection,
+      );
+      final filename = 'recebiveis_${DateFormat('yyyy-MM-dd').format(DateTime.now())}.csv';
+      downloadFile(bytes, filename, 'text/csv;charset=utf-8');
+    } on ReceivableFailure catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _exporting = false);
     }
   }
 
@@ -468,6 +488,12 @@ class _RecebiveisPageState extends State<RecebiveisPage> {
               icon: _compactView ? Icons.view_agenda_outlined : Icons.view_list,
               tooltip: _compactView ? 'Visualização completa' : 'Visualização compacta',
               onPressed: () => setState(() => _compactView = !_compactView),
+            ),
+            const SizedBox(width: 4),
+            _ToolbarIconButton(
+              icon: Icons.file_download_outlined,
+              tooltip: 'Exportar CSV',
+              onPressed: (_loading || _exporting) ? null : _exportToCsv,
             ),
           ],
         ),

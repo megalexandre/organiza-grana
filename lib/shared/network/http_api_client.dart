@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -54,6 +55,15 @@ class HttpApiClient {
       (token) => _get(uri, bearerToken: token),
     );
     return _parseMapResponse(response);
+  }
+
+  Future<Uint8List> getBytes(Uri uri, {String? bearerToken}) async {
+    final response = await _sendWithRefresh(
+      bearerToken,
+      (token) => _get(uri, bearerToken: token),
+    );
+    _validateStatus(response);
+    return response.bodyBytes;
   }
 
   Future<List<Map<String, dynamic>>> getJsonList(Uri uri, {String? bearerToken}) async {

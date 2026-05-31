@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
@@ -25,6 +27,11 @@ abstract class ReceivablesApiClient {
   Future<void> updateDraft(String id, ReceivableDraft draft);
   Future<void> changeStatus(String id, ReceivableStatus status);
   Future<void> delete(String id);
+  Future<Uint8List> exportCsv({
+    bool withDiscarded = false,
+    ReceivableSortField sortBy = ReceivableSortField.dueDate,
+    ReceivableSortDirection sortDirection = ReceivableSortDirection.asc,
+  });
 }
 
 class ReceivablesApiClientException implements Exception {
@@ -121,6 +128,24 @@ class HttpReceivablesApiClient with AuthenticatedApiClient implements Receivable
         () => httpClient.deleteVoid(Uri.parse(ApiEndpoints.receivables.delete(id))),
         (type) => ReceivablesApiClientException(_toFailureType(type)),
       );
+
+  @override
+  Future<Uint8List> exportCsv({
+    bool withDiscarded = false,
+    ReceivableSortField sortBy = ReceivableSortField.dueDate,
+    ReceivableSortDirection sortDirection = ReceivableSortDirection.asc,
+  }) {
+    final params = <String, String>{
+      'with_discarded': '$withDiscarded',
+      'sort_by': sortBy.toApiValue(),
+      'sort_direction': sortDirection.toApiValue(),
+    };
+    final uri = Uri.parse(ApiEndpoints.receivables.export).replace(queryParameters: params);
+    return guarded(
+      () => httpClient.getBytes(uri),
+      (type) => ReceivablesApiClientException(_toFailureType(type)),
+    );
+  }
 
   ReceivableFailureType _toFailureType(ApiFailureType type) => switch (type) {
         ApiFailureType.network => ReceivableFailureType.network,

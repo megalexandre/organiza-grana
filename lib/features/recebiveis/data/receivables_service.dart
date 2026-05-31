@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:organizagrana/features/recebiveis/data/receivables_api_client.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
@@ -80,6 +82,22 @@ class ReceivablesService {
   Future<void> delete(String id) async {
     try {
       await _apiClient.delete(id);
+    } on ReceivablesApiClientException catch (e) {
+      throw ReceivableFailure(type: e.type, message: _messageFor(e.type));
+    }
+  }
+
+  Future<Uint8List> exportCsv({
+    bool withDiscarded = false,
+    ReceivableSortField sortBy = ReceivableSortField.dueDate,
+    ReceivableSortDirection sortDirection = ReceivableSortDirection.asc,
+  }) async {
+    try {
+      return await _apiClient.exportCsv(
+        withDiscarded: withDiscarded,
+        sortBy: sortBy,
+        sortDirection: sortDirection,
+      );
     } on ReceivablesApiClientException catch (e) {
       throw ReceivableFailure(type: e.type, message: _messageFor(e.type));
     }

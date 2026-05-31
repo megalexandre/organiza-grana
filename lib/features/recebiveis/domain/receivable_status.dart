@@ -45,7 +45,7 @@ enum ReceivableStatus {
   }
 
   ReceivableStatus? get previous {
-    if (this == draft) return null;
+    if (this == draft || this == awaiting) return null;
     final prevVal = value - 1;
     return ReceivableStatus.values.where((s) => s.value == prevVal).firstOrNull;
   }
