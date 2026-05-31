@@ -4,7 +4,6 @@ import 'package:organizagrana/features/recebiveis/data/receivables_service.dart'
 import 'package:organizagrana/features/recebiveis/domain/receivable.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_draft.dart';
 import 'package:organizagrana/features/recebiveis/domain/receivable_failure.dart';
-import 'package:organizagrana/features/recebiveis/domain/receivable_status.dart';
 import 'package:organizagrana/shared/utils/app_formats.dart';
 
 Future<bool?> showAddReceivableSheet(
@@ -148,7 +147,6 @@ class _AddReceivableFormState extends State<_AddReceivableForm> {
       amountCents: amountCents,
       dueDate: _selectedDueDate!,
       changeDate: _selectedChangeDate,
-      status: ReceivableStatus.draft,
     );
     try {
       if (_isEditing) {
